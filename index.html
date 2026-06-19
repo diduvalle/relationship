@@ -175,6 +175,8 @@
   /* cloud login overlay + badge */
   .login-ov{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(1200px 600px at 75% -10%, #1a2030 0%, var(--bg) 55%)}
   .login-card{width:380px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:pop .25s cubic-bezier(.2,.8,.2,1)}
+  .spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .login-brand{display:flex;align-items:center;gap:11px;margin-bottom:6px}
   .cloud-badge{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:4px 10px}
   .cloud-badge .cb-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(54,192,138,.18)}
@@ -632,10 +634,11 @@ function updateCloudBadge(){ const b=document.getElementById("cloudBadge"); if(!
 async function bootstrap(){
   if(!CLOUD){ load(); renderAll(); showHome(); return; }
   cloudStarted=true;
+  showHome("loading");
   await cloudLoad();
   renderAll();
   updateCloudBadge();
-  showHome();
+  renderHome("home");
 }
 
 function defaultTagSet(){ return DEFAULT_TAGS.concat(MODEL_TAGS).map(t=>({cat:t[0],label:t[1],code:t[2],sample:t[3]})); }
@@ -1807,11 +1810,16 @@ function wizardGenerate(){
 /* ============================ ECRÃ DE ENTRADA (Novo / Abrir) ============================ */
 const HOME_BRAND='<div class="login-brand"><svg width="30" height="32" viewBox="0 0 32 34" aria-hidden="true"><path d="M5 32 V13 L13 7 V32 Z" fill="#1f6bff"/><rect x="16" y="12" width="8" height="20" rx="4" fill="#1f6bff"/></svg><div><div style="font-weight:800;font-size:18px;line-height:1">Relation<span style="color:var(--accent)">ship</span></div><div style="font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-top:3px">by Host Hotel Systems</div></div></div>';
 let nf=null;
-function showHome(){ if(!document.getElementById("homeOv")){ const d=document.createElement("div"); d.id="homeOv"; d.className="login-ov"; document.body.appendChild(d); } renderHome("home"); }
+function showHome(view){ if(!document.getElementById("homeOv")){ const d=document.createElement("div"); d.id="homeOv"; d.className="login-ov"; document.body.appendChild(d); } renderHome(view||"home"); }
 function hideHome(){ const d=document.getElementById("homeOv"); if(d) d.remove(); }
 function renderHome(view){
   const d=document.getElementById("homeOv"); if(!d) return;
   const oldCard=d.querySelector(".login-card"); const sc=oldCard?oldCard.scrollTop:0;
+  if(view==="loading"){
+    d.innerHTML='<div class="login-card" style="text-align:center">'+HOME_BRAND+
+      '<div class="hint" style="margin-top:18px;display:flex;align-items:center;justify-content:center;gap:9px"><span class="spin"></span> A carregar os teus projetos…</div></div>';
+    return;
+  }
   if(view==="home"){
     d.innerHTML='<div class="login-card">'+HOME_BRAND+
       '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 18px">Cria a codificação dos emails RelationshipEmail para os teus hotéis.</p>'+
