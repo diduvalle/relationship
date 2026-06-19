@@ -311,10 +311,7 @@
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="brand" title="Relationship by Host Hotel Systems">
-      <svg width="24" height="26" viewBox="0 0 32 34" aria-hidden="true" style="display:block;flex:0 0 auto">
-        <path d="M5 32 V13 L13 7 V32 Z" fill="#1f6bff"/>
-        <rect x="16" y="12" width="8" height="20" rx="4" fill="#1f6bff"/>
-      </svg>
+      <img src="favicon.png" width="24" height="24" alt="Host" style="display:block;flex:0 0 auto">
       <span class="stack">
         <span class="bname">Relation<i>ship</i></span>
         <span class="byhost">by Host Hotel Systems</span>
@@ -1824,7 +1821,7 @@ function wizardGenerate(){
 }
 
 /* ============================ ECRÃ DE ENTRADA (Novo / Abrir) ============================ */
-const HOME_BRAND='<div class="login-brand"><svg width="30" height="32" viewBox="0 0 32 34" aria-hidden="true"><path d="M5 32 V13 L13 7 V32 Z" fill="#1f6bff"/><rect x="16" y="12" width="8" height="20" rx="4" fill="#1f6bff"/></svg><div><div style="font-weight:800;font-size:18px;line-height:1">Relation<span style="color:var(--accent)">ship</span></div><div style="font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-top:3px">by Host Hotel Systems</div></div></div>';
+const HOME_BRAND='<div class="login-brand"><img src="favicon.png" width="32" height="32" alt="Host" style="display:block;flex:0 0 auto"><div><div style="font-weight:800;font-size:18px;line-height:1">Relation<span style="color:var(--accent)">ship</span></div><div style="font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-top:3px">by Host Hotel Systems</div></div></div>';
 let nf=null;
 function showHome(view){ if(!document.getElementById("homeOv")){ const d=document.createElement("div"); d.id="homeOv"; d.className="login-ov"; document.body.appendChild(d); } renderHome(view||"home"); }
 function hideHome(){ const d=document.getElementById("homeOv"); if(d) d.remove(); }
