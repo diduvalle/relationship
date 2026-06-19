@@ -1,0 +1,17 @@
+# segredos / locais — NUNCA publicar
+pw.txt
+*.secret
+*.key
+
+# config de sessão / ferramentas
+.claude/
+
+# backups e temporários
+*.bak
+*.tmp
+*~
+
+# lixo do sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store

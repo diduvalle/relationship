@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relationship by Host — Construtor de Templates de Email</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    /* Host Hotel Systems palette */
+    --bg:#0c1018; --panel:#121826; --panel2:#1a2334; --line:#283246;
+    --txt:#e9edf4; --muted:#93a0b5; --accent:#1f6bff; --accent2:#0f57e6;
+    --ok:#36c08a; --warn:#e0a93f; --danger:#e0556b; --chip:#173766;
+    --navy:#15202e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
+  button{font-family:inherit;cursor:pointer}
+  input,textarea,select{font-family:inherit}
+  .app{display:flex;flex-direction:column;height:100vh}
+
+  /* Top bar */
+  .topbar{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
+  .brand{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .brand:hover .bname{opacity:.85}
+  .brand .bname{font-weight:800;font-size:16px;letter-spacing:.2px;line-height:1}
+  .brand .bname i{color:var(--accent);font-style:normal}
+  .brand .byhost{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:3px}
+  .brand .stack{display:flex;flex-direction:column}
+  .tname{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:6px 10px;border-radius:8px;min-width:220px}
+  .spacer{flex:1}
+  .langtoggle{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .langtoggle button{background:transparent;border:0;color:var(--muted);padding:6px 14px;font-weight:600}
+  .langtoggle button.active{background:var(--accent);color:#fff}
+  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:7px 12px;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent2)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:4px 8px;font-size:12px;border-radius:6px}
+  .savestate{font-size:12px;color:var(--muted)}
+
+  /* Main 3-column */
+  .main{display:flex;flex:1;min-height:0}
+  .col{display:flex;flex-direction:column;min-height:0}
+  .left{width:240px;flex:0 0 240px;background:var(--panel);border-right:1px solid var(--line)}
+  .center{flex:1;background:#0b0d11;overflow:auto}
+  .right{width:300px;flex:0 0 300px;background:var(--panel);border-left:1px solid var(--line)}
+  .scroll{overflow:auto;padding:12px}
+  .sectitle{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:6px 4px 8px}
+
+  /* Left: templates + add blocks */
+  .tpl-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--muted)}
+  .tpl-item:hover{background:var(--panel2)}
+  .tpl-item.active{background:var(--chip);color:#fff}
+  .tpl-item .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tpl-item .ico{font-size:13px;flex:0 0 auto}
+  .tpl-item .badge{flex:0 0 auto;font-size:10px;font-weight:700;background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:1px 7px}
+  .tpl-item.active .badge{background:rgba(255,255,255,.15);color:#fff;border-color:transparent}
+  .prj-item{font-weight:600}
+  .muted-count{font-size:10px;color:var(--muted);font-weight:600}
+  .addgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+  .addgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 4px;font-size:11px}
+  .addgrid button:hover{border-color:var(--accent);color:#fff}
+  .addgrid .ico{font-size:16px}
+
+  /* Center: canvas (email preview/edit) */
+  .canvas-wrap{display:flex;flex-direction:column;align-items:center;padding:24px}
+  .subjectbar{width:600px;max-width:100%;margin-bottom:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .subjectbar label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .subjectbar input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:8px}
+  .email{width:600px;max-width:100%;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+  .blocks{min-height:120px}
+  .blk{position:relative;border:2px solid transparent}
+  .blk.sel{border-color:var(--accent)}
+  .blk:hover .blk-tools{opacity:1}
+  .blk-tools{position:absolute;top:4px;right:4px;display:flex;gap:3px;opacity:0;transition:.15s;z-index:3}
+  .blk-tools button{background:rgba(20,24,32,.92);border:1px solid var(--line);color:#fff;border-radius:6px;width:24px;height:24px;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .blk-tools button:hover{background:var(--accent)}
+  .empty-hint{padding:50px 20px;text-align:center;color:#9aa3b2;font-size:13px}
+
+  /* Right: properties + tags */
+  .tabs{display:flex;border-bottom:1px solid var(--line)}
+  .tabs button{flex:1;background:transparent;border:0;color:var(--muted);padding:10px;font-weight:600;border-bottom:2px solid transparent}
+  .tabs button.active{color:#fff;border-bottom-color:var(--accent)}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+  .field input[type=text],.field input[type=number],.field textarea,.field select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:7px 9px;border-radius:7px}
+  .field textarea{min-height:90px;resize:vertical;line-height:1.5}
+  .row2{display:flex;gap:8px}
+  .row2>.field{flex:1}
+  .colorrow{display:flex;align-items:center;gap:8px}
+  .colorrow input[type=color]{width:36px;height:30px;padding:0;border:1px solid var(--line);border-radius:6px;background:none}
+  .seg{display:flex;gap:0;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .seg button{flex:1;background:var(--panel2);border:0;color:var(--muted);padding:6px}
+  .seg button.active{background:var(--accent);color:#fff}
+
+  .tagsearch{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:8px;margin-bottom:8px}
+  .tagcat{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent);margin:10px 2px 4px;font-weight:700}
+  .tag{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:7px;cursor:pointer;border:1px solid transparent}
+  .tag:hover{background:var(--panel2);border-color:var(--line)}
+  .tag .tlab{flex:1;font-size:12.5px}
+  .tag .tcode{font-size:10px;color:var(--muted);font-family:Consolas,monospace}
+  .tag .ins{font-size:11px;color:var(--accent);opacity:0}
+  .tag:hover .ins{opacity:1}
+  .tag-hint{font-size:11px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:8px;padding:8px;margin-bottom:8px;line-height:1.5}
+
+  /* Modal */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:760px;max-width:92vw;max-height:88vh;display:flex;flex-direction:column}
+  .modal h3{margin:0;padding:16px 18px;border-bottom:1px solid var(--line);font-size:15px}
+  .modal .body{padding:16px 18px;overflow:auto}
+  .modal .foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+  pre.code{background:#0b0d11;border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font-family:Consolas,monospace;font-size:12.5px;line-height:1.55;color:#cdd6e6;white-space:pre-wrap;word-break:break-word;max-height:52vh}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ok);color:#04231a;padding:10px 18px;border-radius:10px;font-weight:700;opacity:0;transition:.25s;z-index:80}
+  .toast.show{opacity:1}
+  .hint{font-size:11px;color:var(--muted);margin-top:4px}
+  .switchmode{display:flex;gap:6px;margin-bottom:12px}
+
+  /* ===================== UI/UX polish ===================== */
+  *{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{background:radial-gradient(1200px 600px at 75% -10%, #1a2030 0%, var(--bg) 55%)}
+  ::selection{background:rgba(91,140,255,.35)}
+  /* scrollbars */
+  *{scrollbar-width:thin;scrollbar-color:#3a414f transparent}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#333a47;border-radius:10px;border:2px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#454e5f;background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+  /* transitions */
+  .btn,.tpl-item,.tab,.tabs button,.addgrid button,.tag,.seg button,.gcard,.langtoggle button{transition:background .15s,border-color .15s,color .15s,transform .12s,box-shadow .15s}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{box-shadow:0 2px 12px rgba(91,140,255,.28)}
+  .btn.primary:hover{box-shadow:0 4px 18px rgba(91,140,255,.42)}
+  /* top bar */
+  .topbar{box-shadow:0 1px 0 rgba(255,255,255,.03),0 6px 18px rgba(0,0,0,.25);backdrop-filter:blur(6px)}
+  .brand{font-size:17px}
+  .tname{transition:border-color .15s,box-shadow .15s}
+  .tname:focus,input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.18)}
+  /* template list */
+  .tpl-item{position:relative;margin-bottom:2px}
+  .tpl-item.active{box-shadow:inset 2px 0 0 var(--accent)}
+  .tpl-item:hover{transform:translateX(2px)}
+  /* add block grid */
+  .addgrid button:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.25)}
+  /* tabs underline animation */
+  .tabs button{position:relative}
+  .tabs button::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:2px;background:var(--accent);border-radius:2px;transform:scaleX(0);transition:transform .18s}
+  .tabs button.active::after{transform:scaleX(1)}
+  .tabs button.active{border-bottom-color:transparent}
+  /* tags */
+  .tag:hover{transform:translateX(2px)}
+  /* email preview card framing */
+  .email{transition:box-shadow .2s}
+  #htmlPrev{box-shadow:0 8px 30px rgba(0,0,0,.18)}
+  /* modal animation */
+  .modal{animation:pop .22s cubic-bezier(.2,.8,.2,1)}
+  .modal-bg{backdrop-filter:blur(3px)}
+  @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+  /* gallery cards */
+  .gcard:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+  /* toast */
+  .toast{box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .toast.show{animation:toastIn .3s cubic-bezier(.2,.8,.2,1)}
+  @keyframes toastIn{from{transform:translateX(-50%) translateY(8px)}to{transform:translateX(-50%) translateY(0)}}
+  /* inputs in right panel inherit nicer focus already; placeholder color */
+  ::placeholder{color:#6b7384}
+  /* lang toggle pill */
+  .langtoggle{box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+  /* quick tag chips */
+  .qtag{background:var(--chip);border:1px solid #2f5394;color:#cfe0ff;font-family:Consolas,monospace;font-size:11px;padding:4px 8px;border-radius:20px;cursor:pointer;transition:background .14s,transform .12s,box-shadow .14s}
+  .qtag:hover{background:#2f5aa0;transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.3)}
+  .qtag:active{transform:translateY(0)}
+  /* cloud login overlay + badge */
+  .login-ov{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(1200px 600px at 75% -10%, #1a2030 0%, var(--bg) 55%)}
+  .login-card{width:380px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:pop .25s cubic-bezier(.2,.8,.2,1)}
+  .login-brand{display:flex;align-items:center;gap:11px;margin-bottom:6px}
+  .cloud-badge{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:4px 10px}
+  .cloud-badge .cb-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(54,192,138,.18)}
+  .cloud-badge .cb-mail{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--txt)}
+  .cloud-badge a{color:var(--accent);text-decoration:none;font-weight:600}
+  /* collapsible accordion (Propriedades) */
+  .acc{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--panel);overflow:hidden}
+  .acc-h{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:700;color:var(--txt);user-select:none;transition:background .14s}
+  .acc-h:hover{background:var(--panel2)}
+  .acc-x{transition:transform .15s;color:var(--muted);font-size:11px}
+  .acc:not(.open) .acc-x{transform:rotate(-90deg)}
+  .acc-b{display:none;padding:2px 12px 12px}
+  .acc.open .acc-b{display:block}
+  /* body items + drag & drop */
+  .bitem{border:1px solid var(--line);border-radius:10px;padding:9px;margin-bottom:8px;background:var(--panel2);transition:box-shadow .1s,opacity .1s}
+  .bitem-h{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+  .bitem-type{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+  .drag-h{cursor:grab;color:var(--muted);font-size:15px;line-height:1;padding:0 3px}
+  .drag-h:hover{color:var(--accent)}
+  .drag-h:active{cursor:grabbing}
+  .bitem.dragging{opacity:.45}
+  .bitem.drop-before{box-shadow:0 -3px 0 var(--accent)}
+  .bitem.drop-after{box-shadow:0 3px 0 var(--accent)}
+  /* construtor do corpo (drag & drop, zona central) */
+  .bld-top{margin-bottom:11px}
+  .bld-ttl{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:800;color:var(--txt);letter-spacing:.2px}
+  .bld-sub{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.55}
+  .bpal{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;padding:11px;border:1px dashed var(--line);border-radius:12px;background:var(--panel)}
+  .bpiece{display:inline-flex;align-items:center;gap:7px;cursor:grab;user-select:none;padding:9px 14px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);color:var(--txt);font-size:12.5px;font-weight:700;transition:transform .1s,border-color .12s,box-shadow .12s}
+  .bpiece:hover{border-color:var(--accent);box-shadow:0 5px 16px rgba(0,0,0,.22);transform:translateY(-1px)}
+  .bpiece:active{cursor:grabbing}
+  .bld-list{display:flex;flex-direction:column}
+  .bdz{height:9px;border-radius:7px;margin:1px 0;transition:height .12s,border-color .12s,background .12s}
+  .bdz.over{height:38px;border:2px dashed var(--accent);background:var(--panel2)}
+  .bcard{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:10px 11px;transition:opacity .1s,box-shadow .12s}
+  .bcard:hover{box-shadow:0 4px 16px rgba(0,0,0,.16)}
+  .bcard.dragging{opacity:.4}
+  .bcard-h{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+  .bcard-t{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent)}
+  .bdrag{cursor:grab;color:var(--muted);font-size:15px;line-height:1;padding:0 2px}
+  .bdrag:hover{color:var(--accent)}
+  .bdrag:active{cursor:grabbing}
+  .bx{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 7px;border-radius:6px;line-height:1}
+  .bx:hover{background:#ff5a5a22;color:#ff6b6b}
+  .bld-empty{padding:24px;text-align:center;color:var(--muted);font-size:12.5px;border:1px dashed var(--line);border-radius:11px}
+  /* design picker com miniaturas */
+  .dgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  #tabStyle .dgrid{grid-template-columns:1fr 1fr}
+  .dcard{cursor:pointer;border:2px solid var(--line);border-radius:10px;padding:6px;background:var(--panel2);transition:border-color .14s,transform .12s}
+  .dcard:hover{transform:translateY(-1px)}
+  .dcard.sel{border-color:var(--accent)}
+  .dthumb{border-radius:6px;overflow:hidden}
+  .dname{font-size:11.5px;font-weight:700;color:var(--txt);text-align:center;margin-top:5px}
+  .dcard.sel .dname{color:var(--accent)}
+  /* font picker visual */
+  .fontgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .fcard{cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:var(--panel2);display:flex;align-items:baseline;gap:8px;transition:border-color .14s}
+  .fcard:hover{border-color:var(--accent)}
+  .fcard.sel{border-color:var(--accent);background:var(--chip)}
+  .fcard .fa{font-size:18px;color:var(--txt);line-height:1}
+  .fcard .fn{font-size:12px;color:var(--muted)}
+  .fcard.sel .fa,.fcard.sel .fn{color:#fff}
+  /* slider de intensidade */
+  .shade-row{display:flex;align-items:center;gap:9px;margin-top:2px}
+  .shade-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);flex:0 0 auto}
+  .shade-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:6px;background:linear-gradient(to right,#9db8ff,var(--accent),#0b2e7a);outline:none}
+  .shade-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--accent);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .shade-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid var(--accent);cursor:pointer}
+  /* lista de templates do form (1 por linha) */
+  .evlist{display:flex;flex-direction:column;gap:6px}
+  .evrow{display:flex;align-items:center;gap:9px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;cursor:pointer}
+  .evrow input{flex:0 0 auto}
+  .evrow .tn{flex:1}
+  .evrow .tc{font-family:Consolas,monospace;font-size:10px;color:var(--muted)}
+  .wsub{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:12px 0 7px}
+  /* galeria de modelos */
+  .gchips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+  .gchip{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.13s}
+  .gchip:hover{border-color:var(--accent);color:var(--txt)}
+  .gchip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .gevhead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .gevcode{font-size:10px;font-weight:700;letter-spacing:.4px;color:#fff;padding:3px 9px;border-radius:20px}
+  .gevname{font-size:14px;font-weight:700;color:var(--txt)}
+  .gvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+  .gvcard{cursor:pointer;border:1px solid var(--line);background:var(--panel2);border-radius:11px;padding:8px;transition:.14s}
+  .gvcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.22)}
+  .gvthumb{border-radius:6px;overflow:hidden;pointer-events:none}
+  .gvmeta{display:flex;align-items:center;gap:6px;margin-top:7px}
+  .gvname{flex:1;font-size:11.5px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gvdots{display:inline-flex;gap:3px}
+  .gvdots i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  /* wizard */
+  .wsec{margin-bottom:16px}
+  .wlbl{font-size:11px;font-weight:700;letter-spacing:.4px;color:var(--accent);text-transform:uppercase;margin-bottom:7px}
+  .wgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .wgrid5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .wcard{cursor:pointer;border:2px solid var(--line);background:var(--panel2);border-radius:10px;padding:10px;transition:border-color .14s,transform .12s}
+  .wcard:hover{transform:translateY(-1px)}
+  .wcard.wsel{border-color:var(--accent);background:var(--chip)}
+  .wcard.wsel *{color:#fff !important}
+  .wtags{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .wtag{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12px;cursor:pointer}
+  .wtag .tn{flex:1}
+  .wtag .tc{font-family:Consolas,monospace;font-size:10px;color:var(--muted)}
+  /* add-to-body buttons (fit 3 across without truncation) */
+  .addbody{display:flex;gap:6px}
+  .addbody>button{flex:1 1 0;min-width:0;white-space:nowrap;font-size:12px;padding:8px 6px;text-align:center}
+  /* active-field readiness banner */
+  .ready{display:flex;align-items:center;gap:6px;font-size:11px;border-radius:8px;padding:7px 10px;margin-bottom:8px;border:1px dashed}
+  .ready.on{color:#9be7c4;background:rgba(54,192,138,.08);border-color:rgba(54,192,138,.4)}
+  .ready.off{color:var(--muted);background:var(--panel2);border-color:var(--line)}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand" title="Relationship by Host Hotel Systems">
+      <svg width="24" height="26" viewBox="0 0 32 34" aria-hidden="true" style="display:block;flex:0 0 auto">
+        <path d="M5 32 V13 L13 7 V32 Z" fill="#1f6bff"/>
+        <rect x="16" y="12" width="8" height="20" rx="4" fill="#1f6bff"/>
+      </svg>
+      <span class="stack">
+        <span class="bname">Relation<i>ship</i></span>
+        <span class="byhost">by Host Hotel Systems</span>
+      </span>
+    </div>
+    <input class="tname" id="tplName" placeholder="Nome do template">
+    <div class="langtoggle" id="langToggle">
+      <button data-lang="pt" class="active">PT</button>
+      <button data-lang="en">EN</button>
+    </div>
+    <div class="spacer"></div>
+    <span class="cloud-badge" id="cloudBadge" style="display:none"></span>
+    <span class="savestate" id="saveState">guardado</span>
+    <button class="btn" id="btnPreview" title="Ver o email em grande, com PT/EN lado a lado">👁 Pré-visualizar</button>
+    <button class="btn primary" id="btnExport" title="Obter o Assunto + HTML para colar no PMS">⤓ Copiar p/ PMS</button>
+  </div>
+
+  <div class="main">
+    <!-- LEFT -->
+    <div class="col left">
+      <div class="scroll">
+        <div class="sectitle">Projetos <span class="muted-count" id="prjCount"></span></div>
+        <div id="prjList"></div>
+        <div style="display:flex;gap:6px;margin-top:6px">
+          <button class="btn sm" id="btnNewPrj" style="flex:1" title="Criar um projeto para um hotel">+ Novo projeto</button>
+          <button class="btn sm" id="btnRenPrj" title="Renomear o hotel/projeto">✎</button>
+          <button class="btn sm" id="btnDelPrj" title="Apagar o projeto">🗑</button>
+        </div>
+
+        <div class="sectitle" id="tplTitle" style="margin-top:18px">Templates</div>
+        <div id="tplList"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn sm" id="btnNewTpl" style="flex:1" title="Criar um novo template em branco">+ Novo</button>
+          <button class="btn sm" id="btnDupTpl" title="Duplicar o template atual">⧉</button>
+          <button class="btn sm" id="btnDelTpl" title="Apagar o template atual">🗑</button>
+        </div>
+        <button class="btn sm primary" id="btnWizard" style="width:100%;margin-top:6px">✨ Gerar template (wizard)</button>
+        <button class="btn sm" id="btnGallery" style="width:100%;margin-top:6px">🎨 Galeria de modelos</button>
+
+        <div class="sectitle" id="addBlockTitle" style="margin-top:18px">Adicionar bloco</div>
+        <div class="addgrid" id="addGrid"></div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="col center">
+      <div class="canvas-wrap">
+        <div class="subjectbar">
+          <label>Assunto do email (<span id="subjLangLbl">PT</span>)</label>
+          <input id="subjectInput" placeholder="Ex.: A sua reserva em @COMMERCIALNAME@ está confirmada">
+        </div>
+        <div class="email">
+          <div class="blocks" id="blocks"></div>
+        </div>
+        <div id="htmlEditor" style="display:none;width:700px;max-width:100%">
+          <div id="htmlSrcWrap">
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Código HTML — edita aqui (insere tags pelo separador «Tags»)</label>
+            <textarea id="htmlSrc" spellcheck="false" style="width:100%;height:220px;margin-top:4px;background:#0b0d11;border:1px solid var(--line);color:#cdd6e6;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;padding:10px;border-radius:8px;resize:vertical"></textarea>
+          </div>
+          <div id="prevLabel" style="margin-top:12px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Pré-visualização (dados de exemplo)</div>
+          <div id="prevWrap" style="background:#e9edf3;border-radius:12px;padding:12px;margin-top:6px">
+            <div id="prevScaler" style="position:relative;margin:0 auto;overflow:hidden;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18)">
+              <iframe id="htmlPrev" scrolling="no" style="position:absolute;top:0;left:0;width:640px;border:0;background:#fff;display:block"></iframe>
+            </div>
+          </div>
+          <div id="builder" style="display:none;margin-top:18px"></div>
+        </div>
+        <div class="hint" id="centerHint" style="margin-top:10px">Clica num bloco para o editar à direita. As tags inserem-se no campo de texto ativo.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col right">
+      <div class="tabs">
+        <button data-tab="props" class="active">Configurações</button>
+        <button data-tab="tags">Tags</button>
+        <button data-tab="style">Estilo geral</button>
+      </div>
+      <div class="scroll" id="tabProps"></div>
+      <div class="scroll" id="tabTags" style="display:none"></div>
+      <div class="scroll" id="tabStyle" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="modalTitle">Código HTML</h3>
+    <div class="body" id="modalBody"></div>
+    <div class="foot" id="modalFoot"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================ TAG LIBRARY ============================ */
+// Referência: tags @Model[0] do editor "Modelos de E-mail" (outro módulo do PMS). Não usadas por defeito.
+const MODEL_TAGS = [
+  // Hóspede
+  ["Hóspede","Nome completo","@Model[0].GuestName","Sr. João Silva"],
+  ["Hóspede","Primeiro nome","@Model[0].GuestFirstName","João"],
+  ["Hóspede","Apelido","@Model[0].GuestLastName","Silva"],
+  ["Hóspede","Tratamento (curto)","@Model[0].GuestShortTitle","Sr."],
+  ["Hóspede","Tratamento (longo)","@Model[0].GuestLongTitle","Senhor"],
+  ["Hóspede","Título","@Model[0].GuestTitle","Sr."],
+  ["Hóspede","Email","@Model[0].GuestEmail","joao.silva@email.com"],
+  ["Hóspede","Email 2","@Model[0].GuestEmail2","j.silva@trabalho.com"],
+  ["Hóspede","Telefone","@Model[0].GuestPhoneNumber","+351 210 000 000"],
+  ["Hóspede","Telemóvel","@Model[0].GuestMobilePhoneNumber","+351 910 000 000"],
+  ["Hóspede","Morada 1","@Model[0].GuestAddress1","Rua das Flores, 123"],
+  ["Hóspede","Morada 2","@Model[0].GuestAddress2","2.º Esq."],
+  ["Hóspede","Código Postal","@Model[0].GuestZIPCODE","1200-001"],
+  ["Hóspede","Localidade","@Model[0].GuestTown","Lisboa"],
+  ["Hóspede","País","@Model[0].GuestCountry","Portugal"],
+  ["Hóspede","Data nascimento",'@Model[0].GuestBirthDate.ToString("dd-MM-yyyy")',"01-01-1985"],
+  ["Hóspede","Recebe newsletter","@Model[0].ReceiveNewsletter","Sim"],
+  ["Hóspede","ID único","@Model[0].Uid","a1b2c3d4"],
+  ["Hóspede","Nº cartão membro","@Model[0].GuestCardNumber","1234567890"],
+  ["Hóspede","ID cartão membro","@Model[0].GuestCardNumberId","ID-001"],
+  ["Hóspede","Pontos cartão","@Model[0].GuestCardPoints","350"],
+  ["Hóspede","Observações","@Model[0].GuestRemarks","Chegada tardia prevista"],
+  ["Hóspede","Observações 2","@Model[0].GuestRemarks2",""],
+  ["Hóspede","Idioma (código)","@Model[0].GuestLanguage_Code","PT"],
+  ["Hóspede","Idioma","@Model[0].GuestLanguage_Description","Português"],
+  ["Hóspede","ID hóspede","@Model[0].GuestId","G-1001"],
+  // Reserva
+  ["Reserva","Nº de reserva","@Model[0].ReservationNumber","RES-2026-00147"],
+  ["Reserva","UID da reserva","@Model[0].ReservationUid","uid-7788"],
+  ["Reserva","Nº de noites","@Model[0].ReservationLen","3"],
+  ["Reserva","Estado da reserva","@Model[0].ResStatus","Confirmada"],
+  ["Reserva","Estado adicional","@Model[0].AdditionalStatus",""],
+  ["Reserva","Nome do grupo","@Model[0].GroupName",""],
+  ["Reserva","Origem (ligação)","@Model[0].ConnectionName","Booking.com"],
+  ["Reserva","Garantia (ID)","@Model[0].GuaranteedID","CC"],
+  ["Reserva","Tipo de garantia","@Model[0].GuaranteedType","Cartão de crédito"],
+  ["Reserva","Descrição da garantia","@Model[0].GuaranteeDescription","Garantido por cartão"],
+  ["Reserva","Voucher","@Model[0].voucher","VCH-2026-001"],
+  ["Reserva","Voucher da reserva","@Model[0].ResVoucher","VCH-2026-001"],
+  ["Reserva","Mercado","@Model[0].MarketCode","Lazer"],
+  ["Reserva","Mercado (código)","@Model[0].MarketCodeCode","LAZ"],
+  ["Reserva","Origem (source)","@Model[0].SourceCode","Online"],
+  ["Reserva","Origem (código)","@Model[0].SourceCodeCode","ONL"],
+  ["Reserva","Canal de distribuição","@Model[0].DistChannel","OTA"],
+  ["Reserva","Canal (código)","@Model[0].DistChannelCode","OTA"],
+  ["Reserva","ID","@Model[0].Id","1"],
+  ["Reserva","ResId","@Model[0].ResId","5001"],
+  ["Reserva","ResDetailId","@Model[0].ResDetailId","9001"],
+  ["Reserva","ResGuestId","@Model[0].ResGuestId","7001"],
+  // Datas
+  ["Datas","Check-in",'@Model[0].CheckIn.ToString("dd-MM-yyyy")',"20-06-2026"],
+  ["Datas","Check-out",'@Model[0].CheckOut.ToString("dd-MM-yyyy")',"23-06-2026"],
+  ["Datas","Data de opção",'@Model[0].OptionDate.ToString("dd-MM-yyyy")',"15-06-2026"],
+  ["Datas","Dias para check-in","@Model[0].DaysForCheckIn","3"],
+  ["Datas","Dias para check-out","@Model[0].DaysForCheckOut","6"],
+  ["Datas","Data do hotel",'@Model[0].HotelDate.ToString("dd-MM-yyyy")',"17-06-2026"],
+  ["Datas","Hora de chegada","@Model[0].ArrivalTime","15:30"],
+  ["Datas","Tem hora de chegada","@Model[0].HasArrivalTime","Sim"],
+  // Quarto / Estadia
+  ["Quarto / Estadia","Tipologia (código)","@Model[0].CategoryCode","DLX"],
+  ["Quarto / Estadia","Tipologia","@Model[0].CategoryDescription","Quarto Duplo Deluxe"],
+  ["Quarto / Estadia","Tipologia (desc. 2)","@Model[0].CategoryDescription2",""],
+  ["Quarto / Estadia","Upgrade (código)","@Model[0].UpgradeCategoryCode","STE"],
+  ["Quarto / Estadia","Upgrade","@Model[0].UpgradeCategoryDescription","Suite"],
+  ["Quarto / Estadia","Upgrade (desc. 2)","@Model[0].UpgradeCategoryDescription2",""],
+  ["Quarto / Estadia","Tipo de casa (cód.)","@Model[0].HouseTypeCode","STD"],
+  ["Quarto / Estadia","Tipo de casa","@Model[0].HouseTypeDescription","Standard"],
+  ["Quarto / Estadia","Nº do quarto","@Model[0].RoomNumber","204"],
+  ["Quarto / Estadia","Descrição do quarto","@Model[0].RoomDescription","Quarto Duplo Deluxe"],
+  ["Quarto / Estadia","Localização do quarto","@Model[0].RoomAddress","Ala Nascente"],
+  ["Quarto / Estadia","Piso","@Model[0].RoomFloor","2"],
+  ["Quarto / Estadia","Package (código)","@Model[0].PackageCode","BB"],
+  ["Quarto / Estadia","Package","@Model[0].PackageDescription","Alojamento e Pequeno-almoço"],
+  ["Quarto / Estadia","Tarifa (código)","@Model[0].Pricelistcode","RACK"],
+  ["Quarto / Estadia","Tarifa","@Model[0].PricelistDescription","Tarifa Balcão"],
+  ["Quarto / Estadia","Camas como unidade","@Model[0].UseBedsAsUnit","Não"],
+  // Ocupação
+  ["Ocupação","Nº de quartos","@Model[0].RoomsTotal","1"],
+  ["Ocupação","Adultos","@Model[0].Adults","2"],
+  ["Ocupação","Adultos (total)","@Model[0].AdultsTotal","2"],
+  ["Ocupação","Crianças grupo 1","@Model[0].ChildrenGroup1","1"],
+  ["Ocupação","Crianças grupo 1 (total)","@Model[0].ChildrenGroup1Total","1"],
+  ["Ocupação","Crianças grupo 2","@Model[0].ChildrenGroup2","0"],
+  ["Ocupação","Crianças grupo 2 (total)","@Model[0].ChildrenGroup2Total","0"],
+  ["Ocupação","Crianças grupo 3","@Model[0].ChildrenGroup3","0"],
+  ["Ocupação","Crianças grupo 3 (total)","@Model[0].ChildrenGroup3Total","0"],
+  ["Ocupação","Crianças (total)","@Model[0].ChildrenTotal","1"],
+  // Valores
+  ["Valores","Tarifa por noite",'@Model[0].Rate.ToString("0.00")',"120.00"],
+  ["Valores","Total da tarifa",'@Model[0].TotalRate.ToString("0.00")',"360.00"],
+  ["Valores","Total (detalhe)",'@Model[0].TotalRateForDetail.ToString("0.00")',"360.00"],
+  ["Valores","Total só alojamento",'@Model[0].TotalRateForDetailAccommodationOnly.ToString("0.00")',"330.00"],
+  ["Valores","Encargos (detalhe)",'@Model[0].DetailCharges.ToString("0.00")',"30.00"],
+  ["Valores","Total de encargos",'@Model[0].TotalCharges.ToString("0.00")',"390.00"],
+  ["Valores","Taxa turística",'@Model[0].citytax.ToString("0.00")',"12.00"],
+  ["Valores","Unidade (termo)","@Model[0].GeneralUnitTerm","noite"],
+  // Pagamento
+  ["Pagamento","Forma de pagamento","@Model[0].PaymentMethod","Cartão de crédito"],
+  ["Pagamento","Valor do depósito",'@Model[0].DepositValue.ToString("0.00")',"108.00"],
+  ["Pagamento","Depósito pago?","@Model[0].DepositIsPaid","Não"],
+  ["Pagamento","Depósito - data limite",'@Model[0].DepositDueDate.ToString("dd-MM-yyyy")',"18-06-2026"],
+  ["Pagamento","Depósito - forma","@Model[0].DepositPaymentMethod","Multibanco"],
+  ["Pagamento","Link de pagamento","@Model[0].PaymentLinkUrl","https://pay.hostpms.com/abc"],
+  ["Pagamento","Multibanco - Entidade","@Model[0].MultibancoPaymentEntity","21800"],
+  ["Pagamento","Multibanco - Referência","@Model[0].MultibancoPaymentReference","123 456 789"],
+  ["Pagamento","Multibanco - Valor",'@Model[0].MultibancoPaymentAmountRequested.ToString("0.00")',"108.00"],
+  ["Pagamento","Banco","@Model[0].BankName","Banco Exemplo"],
+  ["Pagamento","IBAN","@Model[0].BankIBAN","PT50 0000 0000 0000 0000 0000 0"],
+  ["Pagamento","NIB","@Model[0].BankNIB","000000000000000000000"],
+  ["Pagamento","Titular da conta","@Model[0].BankAccountName","Hotel Demo, Lda."],
+  ["Pagamento","SWIFT","@Model[0].BankSWIFT","EXMPPTPL"],
+  ["Pagamento","PayPal (email)","@Model[0].PaypalAccountEmail","pay@hotel.com"],
+  // Check-in online / Links
+  ["Check-in online / Links","Check-in online (URL)","@Model[0].OnlineCheckIn","https://checkin.hostpms.com/abc"],
+  ["Check-in online / Links","Check-in online (curto)","@Model[0].OnlineCheckInShort","checkin.hostpms.com/abc"],
+  ["Check-in online / Links","KeyPass (URL)","@Model[0].KeyPassUrl","https://keypass.hostpms.com/abc"],
+  ["Check-in online / Links","KeyPass (curto)","@Model[0].KeyPassUrlShort","keypass.hostpms.com/abc"],
+  ["Check-in online / Links","PIN da chave","@Model[0].KeyPin","4821"],
+  ["Check-in online / Links","Código da chave","@Model[0].KeyCode","4821"],
+  ["Check-in online / Links","Abrir porta (URL)","@Model[0].OpenDoorUrl","https://door.hostpms.com/abc"],
+  ["Check-in online / Links","QR Code (imagem)","@Model[0].QrCodeImageUrl","https://hostpms.com/qr.png"],
+  ["Check-in online / Links","Perfil / Profile (URL)","@Model[0].ProfileNowUrl","https://profile.hostpms.com/abc"],
+  ["Check-in online / Links","Motor de reservas (URL)","@Model[0].UrlBookingEngine","https://book.hoteldemo.com"],
+  ["Check-in online / Links","Cancelar reserva (URL)","@Model[0].ShowCancelationUrl","https://hoteldemo.com/cancel/abc"],
+  ["Check-in online / Links","Plano de refeições (URL)","@Model[0].MealPlanUrl","https://hoteldemo.com/meals"],
+  // Wi-Fi
+  ["Wi-Fi","Rede (SSID)","@Model[0].WIFISSID","Hotel_Guest"],
+  ["Wi-Fi","Palavra-passe","@Model[0].WIFIKEY","bemvindo2026"],
+  // Oferta
+  ["Oferta","Título da oferta","@Model[0].OfferTitle","Escapadinha de Verão"],
+  ["Oferta","Texto da oferta","@Model[0].OfferLongText","2 noites com pequeno-almoço e late check-out."],
+  ["Oferta","Termos e condições","@Model[0].OfferTermsAndConditions","Sujeito a disponibilidade."],
+  // Empresa
+  ["Empresa","Nome","@Model[0].CompanyName","Empresa Exemplo, Lda."],
+  ["Empresa","Morada 1","@Model[0].CompanyAddress1","Av. da Liberdade, 200"],
+  ["Empresa","Morada 2","@Model[0].CompanyAddress2","Piso 3"],
+  ["Empresa","Código Postal","@Model[0].CompanyZipCode","1250-100"],
+  ["Empresa","Localidade","@Model[0].CompanyTown","Lisboa"],
+  ["Empresa","País","@Model[0].CompanyCountry","Portugal"],
+  ["Empresa","Email 1","@Model[0].CompanyEmail1","geral@empresa.com"],
+  ["Empresa","Email 2","@Model[0].CompanyEmail2","reservas@empresa.com"],
+  ["Empresa","ID empresa","@Model[0].CompanyId","CMP-1"],
+  ["Empresa","ID empresa (res.)","@Model[0].ResCompany_ID","CMP-001"],
+  // Agência
+  ["Agência","Nome","@Model[0].AgencyName","Agência Viagens Sol"],
+  ["Agência","Morada 1","@Model[0].AgencyAddress1","Rua do Comércio, 50"],
+  ["Agência","Morada 2","@Model[0].AgencyAdress2","Loja B"],
+  ["Agência","Código Postal","@Model[0].AgencyZipCode","4000-100"],
+  ["Agência","Localidade","@Model[0].AgencyTown","Porto"],
+  ["Agência","País","@Model[0].AgencyCountry","Portugal"],
+  ["Agência","Email 1","@Model[0].AgencyEmail1","info@agencia.com"],
+  ["Agência","Email 2","@Model[0].AgencyEmail2","reservas@agencia.com"],
+  ["Agência","ID agência (res.)","@Model[0].ResAgency_ID","AG-001"],
+  // CRO
+  ["CRO","Nome","@Model[0].CRO_Name","Central de Reservas"],
+  ["CRO","Morada 1","@Model[0].CRO_Address1","Rua Central, 1"],
+  ["CRO","Morada 2","@Model[0].CRO_Address2",""],
+  ["CRO","Código Postal","@Model[0].CRO_ZipCode","1000-001"],
+  ["CRO","Localidade","@Model[0].CRO_Town","Lisboa"],
+  ["CRO","País","@Model[0].CRO_Country","Portugal"],
+  ["CRO","ID CRO (res.)","@Model[0].ResCRO_ID","CRO-001"],
+  // Hotel
+  ["Hotel","Nome do hotel","@Model[0].HotelName1","Hotel Demo1 Boutique Design"],
+  ["Hotel","Nome do hotel 2","@Model[0].HotelName2",""],
+  ["Hotel","Cidade do hotel","@Model[0].HotelCity","Lisboa"],
+  ["Hotel","Website do hotel","@Model[0].HotelNameWebsite","www.hoteldemo.com"],
+  ["Hotel","Empresa (hotel)","@Model[0].Company","Hotel Demo1 Boutique Design"],
+  // Contactos
+  ["Contactos","Contacto 1 - nome","@Model[0].ContactName1","Receção"],
+  ["Contactos","Contacto 2 - nome","@Model[0].ContactName2",""],
+  ["Contactos","Contacto 3 - nome","@Model[0].ContactName3",""],
+  ["Contactos","Contacto - email","@Model[0].ContactEmail1","rececao@hoteldemo.com"],
+  ["Contactos","Contacto - telefone","@Model[0].ContactTelephone1","+351 210 000 000"],
+  // Outros
+  ["Outros","Agência (texto)","@Model[0].Agency","Agência Viagens Sol"],
+  ["Outros","CRO (texto)","@Model[0].CRO","Central de Reservas"],
+  ["Outros","País (nação)","@Model[0].NationCode","PT"],
+  ["Outros","País (código)","@Model[0].CountryCode","PT"],
+  ["Outros","VIP","@Model[0].VipCode","VIP"],
+  ["Outros","VIP (código)","@Model[0].VipCodeCode","VIP"],
+  ["Outros","VIP (ID)","@Model[0].VipCodeId","1"],
+  ["Outros","Estado adicional (ID)","@Model[0].AdditionalStatusId","0"],
+  ["Outros","Encargos fixos (XML)","@Model[0].FixedChargesXml",""],
+];
+
+// Tokens reais dos modelos RelationshipEmail (formato @TAGNAME@). Confirmados pelos modelos existentes.
+// Acrescenta os restantes em Tags → + Adicionar tag, ou peço a legenda completa ("Modelos - Variáveis").
+const DEFAULT_TAGS = [
+  ["Reserva","Nome do hóspede","@GUESTNAME@","Sr. João Silva"],
+  ["Reserva","Nº de reserva","@RESNO@","RES-2026-00147"],
+  ["Reserva","Tipologia / quarto","@CATEGORYDESCRIPTION@","Quarto Duplo Deluxe"],
+  ["Reserva","Nº do alojamento","@UNITCODE@","204"],
+  ["Datas","Data de chegada","@CHECKIN@","20-06-2026"],
+  ["Datas","Data de saída","@CHECKOUT@","23-06-2026"],
+  ["Hotel","Nome comercial do hotel","@COMMERCIALNAME@","Hotel Demo1 Boutique Design"],
+  ["Links","Check-in online (link)","@ONLINECHECKIN@","https://checkin.hostpms.com/abc"],
+  ["Links","Virtual KeyPass (link)","@KEYPASS@","https://keypass.hostpms.com/abc"],
+];
+
+/* ============================ STATE ============================ */
+const LS_KEY = "relationship.projects.v2";
+const LS_TAGS = "relationship.tags.v4";
+let state = { projects:[], currentProjectId:null, currentTemplateId:null, lang:"pt", selectedBlock:null, activeField:null };
+let tags = loadTags();
+
+/* ============================ CLOUD (Supabase, sem login) ============================ */
+const SUPABASE_URL="https://xaowygyhbyzhjxhavqhh.supabase.co";
+const SUPABASE_KEY="sb_publishable_pYLKsCwEY6zMQjmtEG9PDQ_KzMYNZ_2";
+const CLOUD = !!(SUPABASE_URL && SUPABASE_KEY && window.supabase);
+const sb = CLOUD ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+let cloudStarted=false;
+function setSyncState(msg){ const el=document.getElementById("saveState"); if(el) el.textContent=msg; }
+async function cloudSyncProject(p){
+  if(!CLOUD||!cloudStarted||!p) return;
+  const { error } = await sb.from("projects").upsert({ id:p.id, hotel:p.hotel, content:{templates:p.templates} });
+  setSyncState(error ? ("⚠ "+error.message) : "sincronizado ✓");
+}
+async function cloudDeleteProject(id){ if(!CLOUD) return; try{ await sb.from("projects").delete().eq("id",id); }catch(e){} }
+async function cloudLoad(){
+  const { data, error } = await sb.from("projects").select("*").order("updated_at",{ascending:true});
+  if(error){ toast("Cloud: "+error.message); load(); return; }
+  if(data && data.length){
+    state.projects = data.map(r=>({ id:r.id, hotel:r.hotel, templates:(r.content&&r.content.templates)||[] }));
+  } else {
+    let local=null; try{ const s=localStorage.getItem(LS_KEY); if(s){ local=(JSON.parse(s)||{}).projects; } }catch(e){}
+    if(local && local.length){ state.projects=local; for(const p of state.projects){ await cloudSyncProject(p); } toast("Projetos migrados para a cloud ✓"); }
+    else { const p=newProject("Hotel exemplo"); state.projects=[p]; await cloudSyncProject(p); }
+  }
+  state.currentProjectId=state.projects[0].id;
+  state.currentTemplateId=(state.projects[0].templates[0]||{}).id;
+}
+function updateCloudBadge(){ const b=document.getElementById("cloudBadge"); if(!b) return; b.style.display="flex"; b.innerHTML='<span class="cb-dot"></span><span class="cb-mail">Cloud</span>'; }
+async function bootstrap(){
+  if(!CLOUD){ load(); renderAll(); showHome(); return; }
+  cloudStarted=true;
+  await cloudLoad();
+  renderAll();
+  updateCloudBadge();
+  showHome();
+}
+
+function defaultTagSet(){ return DEFAULT_TAGS.concat(MODEL_TAGS).map(t=>({cat:t[0],label:t[1],code:t[2],sample:t[3]})); }
+function loadTags(){
+  try{ const s=localStorage.getItem(LS_TAGS); if(s) return JSON.parse(s); }catch(e){}
+  return defaultTagSet();
+}
+function tagFormat(code){ return (code||"").indexOf("@Model[0]")===0 ? "model" : "token"; }
+function saveTags(){ try{ localStorage.setItem(LS_TAGS, JSON.stringify(tags)); }catch(e){} }
+
+function uid(){ return "t"+Math.floor(performance.now()*1000).toString(36)+Math.floor(performance.now()%1*1e6).toString(36)+(tags.length); }
+let _ctr=0;
+function newProject(hotel){ return { id:"prj"+(_ctr++)+"_"+Math.floor(performance.now()), hotel: hotel||"Novo hotel", templates: STARTERS.map(instStarter) }; }
+function proj(){ return state.projects.find(p=>p.id===state.currentProjectId) || state.projects[0]; }
+
+/* Block factory */
+function newBlock(type){
+  const b={ id:"b"+(_ctr++)+"_"+Math.floor(performance.now()), type };
+  const d={
+    logo:{src:"",alt:"Logótipo",width:160,align:"center",link:"",padTop:24,padBottom:16},
+    heading:{text:"Bem-vindo, @GUESTNAME@!",size:24,color:"#1a1a2e",align:"center",bold:true,padTop:8,padBottom:8},
+    paragraph:{text:"Caro(a) @GUESTNAME@,\n\nObrigado por escolher o @COMMERCIALNAME@. A sua reserva @RESNO@ está confirmada.",size:15,color:"#444444",align:"left",lineHeight:1.6,padTop:8,padBottom:8},
+    button:{text:"Ver reserva",url:"https://",bg:"#5b8cff",color:"#ffffff",radius:6,align:"center",padTop:12,padBottom:12},
+    image:{src:"",alt:"Imagem",width:600,align:"center",link:"",padTop:0,padBottom:0},
+    divider:{color:"#e3e3e3",thickness:1,padTop:12,padBottom:12,width:100},
+    spacer:{height:24},
+    footer:{text:"@COMMERCIALNAME@\nRecebeu este email por ter uma reserva connosco.",size:12,color:"#9aa3b2",align:"center",padTop:16,padBottom:24}
+  };
+  b.props = Object.assign({}, d[type]);
+  return b;
+}
+
+function blankTemplate(name){
+  const body=()=>[ {t:"h",v:"Caro(a) @GUESTNAME@,"}, {t:"p",v:"Escreva aqui a sua mensagem. Use o separador «Tags» para inserir campos como @RESNO@ ou @CHECKIN@."}, {t:"cta",v:"Ver / fazer algo",u:"@ONLINECHECKIN@"}, {t:"p",v:"Melhores cumprimentos,\nA Direção do @COMMERCIALNAME@"} ];
+  const data=()=>[ ["Hóspede:","@GUESTNAME@"], ["Nº de reserva:","@RESNO@"] ];
+  return {
+    id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()),
+    name: name||"Novo template",
+    mode:"house", design:"moderno", font:"sans", palette:"azul",
+    brand:{ logo:"", hero:"https://picsum.photos/seed/hosthotel/1200/440" },
+    settings:{ width:0 },
+    pt:{ subject:"O seu email", data:data(), body:body() },
+    en:{ subject:"Your email", data:data(), body:body() }
+  };
+}
+
+/* ============================ STARTER TEMPLATES (GALLERY) ============================ */
+const FOOT_PT = "@Model[0].Company\n@Model[0].GuestEmail\nRecebeu este email por ter uma reserva connosco.";
+const FOOT_EN = "@Model[0].Company\n@Model[0].GuestEmail\nYou received this email because you have a booking with us.";
+
+/* ===== Paletas (cor usada como acento; visual claro e moderno) ===== */
+const PALETTES = {
+  azul:     { name:"Azul",    accent:"#2563eb", accentDark:"#1d4ed8", page:"#eef2f8", tint:"#eff4fe", text:"#1f2430", muted:"#6b7280", border:"#e7ebf2" },
+  verde:    { name:"Verde",   accent:"#059669", accentDark:"#047857", page:"#eef4f1", tint:"#ecf7f2", text:"#1f2430", muted:"#6b7280", border:"#e3ece7" },
+  vermelho: { name:"Carmim",  accent:"#e11d48", accentDark:"#be123c", page:"#f6eef0", tint:"#fdeff2", text:"#1f2430", muted:"#6b7280", border:"#f0e4e7" },
+  dourado:  { name:"Âmbar",   accent:"#d97706", accentDark:"#b45309", page:"#f6f2ea", tint:"#fdf5e8", text:"#1f2430", muted:"#6b7280", border:"#efe7d8" },
+  grafite:  { name:"Grafite", accent:"#334155", accentDark:"#1e293b", page:"#eef0f3", tint:"#f3f5f7", text:"#111827", muted:"#6b7280", border:"#e5e8ec" }
+};
+function pal(key){ return PALETTES[key] || PALETTES.azul; }
+/* intensidade da cor (claro↔escuro) */
+function hexToHsl(hex){ hex=(hex||"").replace("#",""); if(hex.length===3) hex=hex.split("").map(c=>c+c).join(""); const r=parseInt(hex.slice(0,2),16)/255,g=parseInt(hex.slice(2,4),16)/255,b=parseInt(hex.slice(4,6),16)/255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h,s,l=(mx+mn)/2; if(mx===mn){h=s=0;}else{const dd=mx-mn; s=l>.5?dd/(2-mx-mn):dd/(mx+mn); switch(mx){case r:h=(g-b)/dd+(g<b?6:0);break;case g:h=(b-r)/dd+2;break;default:h=(r-g)/dd+4;} h/=6;} return {h:h*360,s:s*100,l:l*100}; }
+function hslToHex(h,s,l){ h=((h%360)+360)%360/360; s/=100; l/=100; let r,g,b; if(s===0){r=g=b=l;}else{const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q,hr=(t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}; r=hr(h+1/3);g=hr(h);b=hr(h-1/3);} const to=v=>("0"+Math.round(v*255).toString(16)).slice(-2); return "#"+to(r)+to(g)+to(b); }
+function shadeColor(hex,delta){ const c=hexToHsl(hex); return hslToHex(c.h,c.s,Math.max(8,Math.min(92,c.l+delta))); }
+function shadedPalette(P,shade){ if(shade==null||shade===50) return P; const d=(50-shade)*0.62; return Object.assign({},P,{ accent:shadeColor(P.accent,d), accentDark:shadeColor(P.accentDark,d) }); }
+function shadeGradient(P){ return "linear-gradient(to right,"+shadeColor(P.accent,30)+","+P.accent+","+shadeColor(P.accent,-30)+")"; }
+/* ícones monocromáticos (currentColor) */
+function ic(n,sz){ sz=sz||15; const P={
+  wand:'<path d="M5 19l9-9M14 6l1 1M9 4v2M4 9h2M17.5 3.5l.7.7M21 8h-2M19 4l-.7.7"/><path d="M15 9l-9 9-1 1-2-2 1-1 9-9z"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  building:'<path d="M3 21h18M6 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M14 21V9h4a1 1 0 0 1 1 1v11"/><path d="M9 8h2M9 12h2M9 16h2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h3.5l2 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 7l8.5 6 8.5-6"/>',
+  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  list:'<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
+  doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  pencil:'<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  trash:'<path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+  copy:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'
+}[n]||"";
+  return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;display:inline-block;flex:0 0 auto">'+P+'</svg>';
+}
+/* ===== Tipos de letra (web-safe) ===== */
+const FONTS = {
+  sans:     "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
+  arial:    "Arial,Helvetica,sans-serif",
+  verdana:  "Verdana,Geneva,sans-serif",
+  tahoma:   "Tahoma,Geneva,sans-serif",
+  modern:   "'Trebuchet MS',Verdana,Helvetica,Arial,sans-serif",
+  calibri:  "Calibri,'Segoe UI',Candara,Arial,sans-serif",
+  century:  "'Century Gothic',CenturyGothic,'Apple Gothic','URW Gothic L',sans-serif",
+  serif:    "Georgia,'Times New Roman',Times,serif",
+  times:    "'Times New Roman',Times,serif",
+  elegant:  "'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif",
+  garamond: "Garamond,'Hoefler Text','Times New Roman',serif",
+  cambria:  "Cambria,Georgia,serif",
+  lucida:   "'Lucida Sans Unicode','Lucida Grande',Geneva,Verdana,sans-serif",
+  courier:  "'Courier New',Courier,monospace"
+};
+const FONT_LIST=[
+  ["sans","Sans moderna"],["arial","Arial"],["verdana","Verdana"],["tahoma","Tahoma"],
+  ["modern","Trebuchet MS"],["calibri","Calibri"],["century","Century Gothic"],["lucida","Lucida Sans"],
+  ["serif","Georgia"],["times","Times New Roman"],["elegant","Palatino"],
+  ["garamond","Garamond"],["cambria","Cambria"],["courier","Courier New"]
+];
+function fontFam(k){ return FONTS[k]||FONTS.sans; }
+function fontPickerHTML(sel){
+  return '<div class="fontgrid">'+FONT_LIST.map(([k,nm])=>`<div class="fcard${sel===k?' sel':''}" data-font="${k}" style="font-family:${FONTS[k]}"><span class="fa" style="font-family:${FONTS[k]}">Aa</span><span class="fn">${escText(nm)}</span></div>`).join("")+'</div>';
+}
+const EFONT = FONTS.sans;
+const HOSTLOGO="https://assets-global.website-files.com/640b0b5a87f7f8ce8ee959ad/646f945dc73ac39aad5bd22b_Host_RGB.png";
+const DEFAULT_HERO="https://picsum.photos/seed/hosthotel/1200/440";
+function hostAttribution(P,dark){
+  const mut=dark?"rgba(255,255,255,.5)":P.muted, tx=dark?"#ffffff":P.text;
+  const img=dark?"":`<img src="${HOSTLOGO}" alt="Host" height="13" style="height:13px;vertical-align:middle;display:inline-block;border:0;margin:0 3px">`;
+  return `<a href="https://www.hostpms.com/" target="_blank" rel="noopener" style="font-family:${FONTS.sans};font-size:11px;color:${mut};text-decoration:none;letter-spacing:.3px">powered by${img?" "+img+" ":" "}<strong style="color:${tx}">Host Hotel Systems</strong></a>`;
+}
+function splitBody(body,hasSummary){ body=body||[]; return hasSummary?{intro:body.slice(0,1),rest:body.slice(1)}:{intro:body,rest:[]}; }
+function imgHTML(it,F){ const u=(it.v||"").trim(); if(!u) return ""; const cap=(it.u||"").trim(); return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td align="center"><img src="${tokenizeAttr(u)}" alt="" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px"></td></tr>${cap?`<tr><td style="padding-top:7px"><p style="margin:0;font-family:${F};font-size:12.5px;color:#8a93a6;text-align:center;font-style:italic">${tokenizeText(cap)}</p></td></tr>`:""}</table>`; }
+function realData(o){ return (o.data||[]).filter(d=>d && (d[0]!=null||d[1]!=null)); }
+
+/* ========== DESIGN 1 — MODERNO (claro, hero, cartão de reserva refinado) ========== */
+function designModerno(o){
+  const P=o.palette, W=o.width||600, F=fontFam(o.font);
+  const RES = o.lang==="en" ? "Your reservation" : "A sua reserva";
+  const ds=realData(o);
+  const rows=ds.map((d,i)=>{const bt=i>0?`border-top:1px solid ${P.border};`:"";return `<tr><td style="padding:0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="${bt}padding:12px 0;font-family:${F};font-size:12px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:.7px;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td align="right" style="${bt}padding:12px 0;font-family:${F};font-size:15.5px;font-weight:700;color:${P.text};vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr></table></td></tr>`;}).join("");
+  const summary=ds.length?`    <tr><td style="padding:6px 36px 28px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border:1px solid ${P.border};border-radius:16px;overflow:hidden">
+        <tr><td style="height:4px;background:${P.accent};font-size:0;line-height:0">&nbsp;</td></tr>
+        <tr><td style="padding:18px 24px 2px"><p style="margin:0;font-family:${F};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${P.accent}">${RES}</p></td></tr>
+        <tr><td style="padding:2px 24px 14px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>
+      </table>
+    </td></tr>\n`:"";
+  const cta=(v,u)=>`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:16px auto 20px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:12px;box-shadow:0 8px 22px ${P.accent}40"><a href="${tokenizeAttr(u||'#')}" target="_blank" rel="noopener" style="display:inline-block;padding:16px 42px;font-family:${F};font-size:16px;font-weight:700;color:#fff;text-decoration:none;border-radius:12px;letter-spacing:.2px">${tokenizeText(v)}</a></td></tr></table>`;
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 14px;font-family:${F};font-size:27px;line-height:1.25;font-weight:800;color:${P.accentDark};letter-spacing:-.5px">${tokenizeText(it.v)}</p><div style="width:46px;height:3px;border-radius:3px;background:${P.accent};font-size:0;line-height:0">&nbsp;</div><div style="height:18px;font-size:0">&nbsp;</div>`:it.t==="cta"?cta(it.v,it.u):`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.75;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const sb=splitBody(o.body,!!summary);
+  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
+  const header=o.logo?`    <tr><td align="center" style="padding:30px 36px 6px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="42" style="display:block;border:0;height:42px"/></td></tr>\n`:`    <tr><td align="center" style="padding:30px 36px 6px"><p style="margin:0;font-family:${F};font-size:20px;font-weight:800;letter-spacing:.4px;color:${P.accentDark}">@COMMERCIALNAME@</p></td></tr>\n`;
+  const intro=o.body&&o.body.length?`    <tr><td style="padding:28px 36px ${summary?'4px':'6px'}">${renderB(sb.intro)}</td></tr>\n`:"";
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 8px">${renderB(sb.rest)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="padding:26px 36px 18px;border-top:1px solid ${P.border}"><p style="margin:0 0 6px;font-family:${F};font-size:15px;font-weight:700;color:${P.text};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted};text-align:center">Recebeu este email por ter uma reserva connosco. Para qualquer questão, basta responder.</p></td></tr>
+    <tr><td style="padding:0 36px 26px;text-align:center">${hostAttribution(P,false)}</td></tr>\n`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:36px 16px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;border:1px solid ${P.border};box-shadow:0 18px 50px rgba(20,28,46,.13)">
+${header}${hero}${intro}${summary}${rest}${footer}  </table>
+</td></tr></table>`;
+}
+
+/* ========== DESIGN 2 — LUXO (editorial, cabeçalho escuro, serifa, ornamentos) ========== */
+function designLuxo(o){
+  const P=o.palette, W=o.width||600, F=o.font&&o.font!=="sans"?fontFam(o.font):FONTS.elegant, SF=FONTS.serif;
+  const DK="#201d28", CARD="#ffffff", PG="#ece9e3", LBL="#9a9385";
+  const ds=realData(o);
+  const orn=`<div style="width:64px;height:1px;background:${P.accent};opacity:.85;margin:0 auto;line-height:1;font-size:0">&nbsp;</div>`;
+  const rows=ds.map((d,i)=>`${i>0?`<tr><td colspan="2" style="border-top:1px solid #e2ddd3;font-size:0;line-height:1px;height:1px">&nbsp;</td></tr>`:""}<tr><td style="padding:10px 0;font-family:${SF};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${LBL};width:42%;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td style="padding:10px 0;font-family:${F};font-size:15px;color:#2c2820;vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:4px 48px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f6f3ec" style="background:#f6f3ec;border:1px solid #e2ddd3"><tr><td style="padding:26px 30px"><div style="font-family:${SF};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:16px">Detalhes da reserva</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<h1 style="margin:0 0 14px;font-family:${F};font-size:28px;font-weight:400;line-height:1.35;color:#2c2820;letter-spacing:.3px">${tokenizeText(it.v)}</h1><div style="width:48px;height:2px;background:${P.accent};margin:0 0 22px">&nbsp;</div>`:it.t==="cta"?`<div style="text-align:center;margin:26px 0 6px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;background:${DK};color:#faf8f3;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;padding:16px 42px;text-decoration:none">${tokenizeText(it.v)}</a></div>`:`<p style="margin:0 0 18px;font-family:${F};font-size:15px;line-height:1.85;color:#4a4238">${tokenizeText(it.v)}</p>`).join("\n");
+  const sb=splitBody(o.body,!!summary);
+  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="40" style="display:block;border:0;height:40px;margin:0 auto 6px">`:`<div style="font-family:${SF};font-size:11px;letter-spacing:6px;text-transform:uppercase;color:${P.accent};margin-bottom:8px">Hotel</div><div style="font-family:${F};font-size:30px;color:#faf8f3;letter-spacing:2px;line-height:1.2">@COMMERCIALNAME@</div>`;
+  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
+  const header=`    <tr><td style="background:${DK};padding:44px 48px 34px;text-align:center">${orn}<div style="height:20px"></div>${headLogo}<div style="height:18px"></div>${orn}</td></tr>\n`;
+  const greet=`    <tr><td style="padding:38px 48px 0;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;color:${P.accent}">@COMMERCIALNAME@</td></tr>\n`;
+  const intro=`    <tr><td style="padding:14px 48px 0">${renderB(sb.intro)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:4px 48px 8px">${renderB(sb.rest)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="background:${DK};padding:36px 48px;text-align:center">${orn}<div style="height:18px"></div><div style="font-family:${SF};font-size:13px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:14px">@COMMERCIALNAME@</div><div style="font-family:${SF};font-size:12px;line-height:1.8;color:#8f887b;margin-bottom:18px">Recebeu este email porque tem uma reserva ativa.</div><div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px">${hostAttribution(P,true)}</div></td></tr>\n`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:40px 16px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:${W}px;max-width:100%;background:${CARD};box-shadow:0 4px 32px rgba(44,40,32,.12)">
+${header}${hero}${greet}${intro}${summary}${rest}${footer}  </table>
+</td></tr></table>`;
+}
+
+/* ========== DESIGN 3 — MINIMALISTA (clean, sem caixas, muito espaço) ========== */
+function designMinimal(o){
+  const P=o.palette, W=o.width||560, F=fontFam(o.font);
+  const ds=realData(o);
+  const rows=ds.map((d,i)=>`<tr><td style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:14px;color:${P.muted};width:46%">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:14px;font-weight:600;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:6px 44px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 20px;font-family:${F};font-size:26px;line-height:1.3;font-weight:300;color:${P.text};letter-spacing:-.4px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<div style="margin:8px 0 22px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;font-family:${F};font-size:14px;font-weight:600;color:${P.accent};text-decoration:none;border-bottom:2px solid ${P.accent};padding-bottom:3px;letter-spacing:.3px">${tokenizeText(it.v)} →</a></div>`:`<p style="margin:0 0 18px;font-family:${F};font-size:16px;line-height:1.75;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const sb=splitBody(o.body,!!summary);
+  const header=o.logo?`    <tr><td style="padding:44px 44px 0"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="32" style="border:0;height:32px"/></td></tr>\n`:`    <tr><td style="padding:44px 44px 0;font-family:${F};font-size:15px;font-weight:700;letter-spacing:.5px;color:${P.text}">@COMMERCIALNAME@</td></tr>\n`;
+  const rule=`    <tr><td style="padding:18px 44px 0"><div style="width:40px;height:3px;background:${P.accent}">&nbsp;</div></td></tr>\n`;
+  const hero=o.hero?`    <tr><td style="padding:20px 0 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:26px 44px 0">${renderB(sb.intro)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:6px 44px 0">${renderB(sb.rest)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="padding:30px 44px 40px"><div style="border-top:1px solid ${P.border};padding-top:18px;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted}"><strong style="color:${P.text}">@COMMERCIALNAME@</strong><br>Recebeu este email por ter uma reserva connosco.<br><span style="display:inline-block;margin-top:12px">${hostAttribution(P,false)}</span></div></td></tr>\n`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="background:#fff;margin:0;padding:0"><tr><td align="center" style="padding:24px 16px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff">
+${header}${rule}${hero}${intro}${summary}${rest}${footer}  </table>
+</td></tr></table>`;
+}
+
+/* ========== DESIGN 4 — VIBRANTE (faixa de cor, títulos grandes, CTA forte) ========== */
+function designBold(o){
+  const P=o.palette, W=o.width||600, F=fontFam(o.font);
+  const ds=realData(o);
+  const rows=ds.map((d,i)=>`<tr><td style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:13px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:.5px">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:17px;font-weight:800;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:6px 32px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:4px solid ${P.accent};background:${P.tint}"><tr><td style="padding:14px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 16px;font-family:${F};font-size:30px;line-height:1.15;font-weight:800;color:${P.text};letter-spacing:-.6px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 18px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:10px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:block;padding:17px 24px;font-family:${F};font-size:17px;font-weight:800;color:#fff;text-decoration:none;border-radius:10px;letter-spacing:.3px">${tokenizeText(it.v)}  →</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.65;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const sb=splitBody(o.body,!!summary);
+  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="34" style="border:0;height:34px;display:block">`:`<div style="font-family:${F};font-size:22px;font-weight:800;color:#fff;letter-spacing:.3px">@COMMERCIALNAME@</div>`;
+  const header=`    <tr><td style="background:${P.accent};padding:30px 32px">${headLogo}</td></tr>\n`;
+  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:30px 32px 0">${renderB(sb.intro)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 32px 0">${renderB(sb.rest)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="background:${P.text};padding:26px 32px;text-align:center"><div style="font-family:${F};font-size:15px;font-weight:800;color:#fff;margin-bottom:6px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:rgba(255,255,255,.6);margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${hostAttribution(P,true)}</td></tr>\n`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:30px 16px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.12)">
+${header}${hero}${intro}${summary}${rest}${footer}  </table>
+</td></tr></table>`;
+}
+
+/* ========== DESIGN 5 — BOUTIQUE (suave, cantos redondos, tons quentes, pílula) ========== */
+function designBoutique(o){
+  const P=o.palette, W=o.width||580, F=fontFam(o.font);
+  const ds=realData(o);
+  const rows=ds.map(d=>`<tr><td style="padding:9px 18px;font-family:${F};font-size:13px;color:${P.muted}">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:9px 18px;font-family:${F};font-size:15px;font-weight:700;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join('<tr><td colspan="2" style="padding:0 10px"><div style="border-top:1px solid '+P.border+'"></div></td></tr>');
+  const summary=ds.length?`    <tr><td style="padding:6px 34px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border-radius:20px"><tr><td style="padding:14px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 16px;font-family:${F};font-size:25px;line-height:1.3;font-weight:700;color:${P.accentDark}">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<div style="text-align:center;margin:14px 0 18px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;background:${P.accent};color:#fff;font-family:${F};font-size:16px;font-weight:700;padding:15px 38px;border-radius:40px;text-decoration:none">${tokenizeText(it.v)}</a></div>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.7;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const sb=splitBody(o.body,!!summary);
+  const header=o.logo?`    <tr><td align="center" style="padding:34px 34px 4px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="38" style="border:0;height:38px;display:block;margin:0 auto"/></td></tr>\n`:`    <tr><td align="center" style="padding:34px 34px 4px"><div style="display:inline-block;background:${P.tint};color:${P.accentDark};font-family:${F};font-size:17px;font-weight:800;letter-spacing:.3px;padding:8px 20px;border-radius:30px">@COMMERCIALNAME@</div></td></tr>\n`;
+  const hero=o.hero?`    <tr><td style="padding:14px 22px 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W-44}px;height:auto;border:0;border-radius:18px"/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:24px 34px 0;text-align:center">${renderB(sb.intro)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 34px 0;text-align:center">${renderB(sb.rest)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="padding:22px 34px 30px;text-align:center"><div style="font-family:${F};font-size:14px;font-weight:700;color:${P.text};margin-bottom:5px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:${P.muted};margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${hostAttribution(P,false)}</td></tr>\n`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};margin:0;padding:0"><tr><td align="center" style="padding:32px 16px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.10)">
+${header}${hero}${intro}${summary}${rest}${footer}  </table>
+</td></tr></table>`;
+}
+
+/* ========== DESIGN 6 — ESCURO (fundo escuro elegante, acento luminoso) ========== */
+function designEscuro(o){
+  const P=o.palette, W=o.width||600, F=fontFam(o.font);
+  const PG="#0b0f16", CARD="#141a24", BD="#232b38", BOX="#1b2330", TX="#e9eef6", MUT="#8a93a6";
+  const ds=realData(o);
+  const rows=ds.map((d,i)=>`<tr><td style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:12.5px;font-weight:600;color:${MUT};text-transform:uppercase;letter-spacing:.6px">${tokenizeText(d[0]||"")}</td><td align="right" style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:15px;font-weight:700;color:${TX}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:8px 36px 26px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${BOX}" style="background:${BOX};border:1px solid ${BD};border-radius:14px"><tr><td style="padding:6px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 18px;font-family:${F};font-size:24px;line-height:1.3;font-weight:700;color:#ffffff;letter-spacing:-.3px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:14px auto 18px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:12px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;padding:15px 36px;font-family:${F};font-size:16px;font-weight:600;color:#fff;text-decoration:none;border-radius:12px">${tokenizeText(it.v)}</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.7;color:#c4ccda">${tokenizeText(it.v)}</p>`).join("\n");
+  const sb=splitBody(o.body,!!summary);
+  const header=o.logo?`    <tr><td align="center" style="padding:34px 36px 8px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="40" style="display:block;border:0;height:40px"/></td></tr>\n`:(o.hero?"":`    <tr><td align="center" style="padding:34px 36px 8px"><p style="margin:0;font-family:${F};font-size:19px;font-weight:700;letter-spacing:.3px;color:${P.accent}">@COMMERCIALNAME@</p></td></tr>\n`);
+  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:22px 36px ${summary?'4px':'6px'}">${renderB(sb.intro)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 6px">${renderB(sb.rest)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="padding:24px 36px 14px;border-top:1px solid ${BD}"><p style="margin:0 0 4px;font-family:${F};font-size:14px;font-weight:600;color:${TX};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.6;color:${MUT};text-align:center">Recebeu este email por ter uma reserva connosco.</p></td></tr>
+    <tr><td style="padding:0 36px 24px;text-align:center">${hostAttribution(P,true)}</td></tr>\n`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:34px 16px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:${W}px;max-width:100%;background:${CARD};border-radius:18px;overflow:hidden;border:1px solid ${BD}">
+${hero}${header}${intro}${summary}${rest}${footer}  </table>
+</td></tr></table>`;
+}
+
+const DESIGNS={ moderno:designModerno, luxo:designLuxo, minimal:designMinimal, vibrante:designBold, boutique:designBoutique, escuro:designEscuro };
+const DESIGN_LIST=[["moderno","Moderno","Claro, cartão branco, resumo destacado"],["luxo","Luxo","Editorial, cabeçalho escuro, serifa e ornamentos"],["minimal","Minimalista","Clean, sem caixas, muito espaço em branco"],["vibrante","Vibrante","Faixa de cor, títulos grandes, CTA forte"],["boutique","Boutique","Suave, cantos redondos, tons quentes"],["escuro","Escuro","Fundo escuro elegante, com acento luminoso"]];
+function designThumb(k){
+  const A="#1f6bff";
+  const line=(w,c)=>`<div style="height:4px;border-radius:2px;background:${c||'#cdd5e0'};width:${w};margin:3px 0"></div>`;
+  const btn=(c,r)=>`<div style="height:8px;width:42%;border-radius:${r==null?4:r}px;background:${c}"></div>`;
+  if(k==="moderno") return `<div style="background:#eef2f8;padding:6px;border-radius:5px"><div style="background:#fff;border:1px solid #e7ebf2;border-radius:5px;padding:6px">${line('38%',A)}<div style="background:#eff4fe;border:1px solid #e7ebf2;border-radius:4px;padding:4px;margin:4px 0">${line('80%')}${line('60%')}</div>${btn(A)}</div></div>`;
+  if(k==="luxo") return `<div style="background:#ece9e3;padding:6px;border-radius:5px"><div style="background:#fff;overflow:hidden;border-radius:2px"><div style="background:#201d28;padding:7px 6px"><div style="height:3px;width:34%;background:#b8986a;margin:auto"></div></div><div style="padding:6px">${line('46%','#201d28')}<div style="height:2px;width:18%;background:#b8986a;margin:3px 0"></div>${line('82%')}${btn('#201d28',2)}</div></div></div>`;
+  if(k==="minimal") return `<div style="background:#fff;padding:8px;border:1px solid #eee;border-radius:5px"><div style="height:3px;width:16%;background:${A}"></div><div style="margin-top:6px">${line('52%','#222')}${line('86%')}${line('70%')}</div><div style="height:2px;width:30%;background:${A};margin-top:7px"></div></div>`;
+  if(k==="vibrante") return `<div style="background:#eef2f8;padding:6px;border-radius:5px"><div style="background:#fff;border-radius:5px;overflow:hidden"><div style="background:${A};height:15px"></div><div style="padding:6px">${line('58%','#111')}<div style="border-left:3px solid ${A};background:#eff4fe;padding:3px;margin:4px 0">${line('72%')}</div>${btn(A,5)}</div></div></div>`;
+  if(k==="boutique") return `<div style="background:#eff4fe;padding:7px;border-radius:8px"><div style="background:#fff;border-radius:12px;padding:7px;text-align:center"><div style="height:8px;width:40%;border-radius:20px;background:#eef2f8;margin:auto"></div><div style="margin:6px 0">${line('72%','#222')}</div><div style="height:9px;width:46%;border-radius:20px;background:${A};margin:0 auto"></div></div></div>`;
+  if(k==="escuro") return `<div style="background:#0b0f16;padding:7px;border-radius:5px"><div style="background:#141a24;border:1px solid #232b38;border-radius:5px;padding:6px">${line('38%',A)}<div style="background:#1b2330;border-radius:4px;padding:4px;margin:4px 0">${line('80%','#566178')}${line('60%','#566178')}</div>${btn(A,4)}</div></div>`;
+  return "";
+}
+function houseHTML(o){ o=o||{}; o.palette=o.palette||PALETTES.azul; return (DESIGNS[o.design]||designModerno)(o); }
+
+
+/* ===== Galeria atual: modelos RelationshipEmail no estilo da casa (tokens @TAGNAME@) ===== */
+const H=v=>({t:"h",v}), P=v=>({t:"p",v}), C=(v,u)=>({t:"cta",v,u});
+const STARTERS = [
+  { icon:"📩", name:"Confirmação de reserva", code:"NEW", accent:"#2e8b6b", mode:"house", palette:"azul",
+    desc:"Disparo NEW (nova reserva). Confirma a reserva com o resumo e convida ao check-in online.",
+    brand:{logo:"",hero:"https://picsum.photos/seed/hosthotel/1200/440"},
+    pt:{ subject:"Reserva confirmada — @COMMERCIALNAME@",
+      data:[["Hóspede:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Tipologia:","@CATEGORYDESCRIPTION@"],["Chegada:","@CHECKIN@"],["Saída:","@CHECKOUT@"]],
+      body:[H("Caro(a) @GUESTNAME@,"),P("Temos todo o prazer em confirmar a sua reserva no @COMMERCIALNAME@. Em cima encontra o resumo da sua estadia — estamos ansiosos por recebê-lo(a)!"),P("Para uma chegada mais simples e rápida, pode adiantar já o seu check-in online."),C("Fazer check-in online","@ONLINECHECKIN@"),P("Se precisar de alguma coisa antes da chegada, basta responder a este email — será um prazer ajudar."),P("Melhores cumprimentos,\nA Direção do @COMMERCIALNAME@")] },
+    en:{ subject:"Booking confirmed — @COMMERCIALNAME@",
+      data:[["Guest name:","@GUESTNAME@"],["Reservation number:","@RESNO@"],["Room type:","@CATEGORYDESCRIPTION@"],["Arrival date:","@CHECKIN@"],["Departure date:","@CHECKOUT@"]],
+      body:[H("Dear @GUESTNAME@,"),P("We are delighted to confirm your booking at @COMMERCIALNAME@. Above you'll find your stay summary — we look forward to welcoming you!"),P("For a smoother, faster arrival, you can complete your online check-in in advance."),C("Check in online","@ONLINECHECKIN@"),P("If you need anything before your arrival, just reply to this email — we're happy to help."),P("Kind regards,\nThe Management of @COMMERCIALNAME@")] } },
+  { icon:"🧭", name:"Pré-chegada", code:"BEFORE-CHECKIN", accent:"#1b4fa0", mode:"house", palette:"azul",
+    desc:"Disparo BEFORE-CHECKIN. Convida ao pré-check-in online. Reproduz o teu modelo real.",
+    brand:{logo:"",hero:"https://picsum.photos/seed/hosthotel/1200/440"},
+    pt:{ subject:"A sua chegada ao @COMMERCIALNAME@ está próxima",
+      data:[["Hóspede:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Tipologia:","@CATEGORYDESCRIPTION@"],["Chegada:","@CHECKIN@"],["Saída:","@CHECKOUT@"]],
+      body:[H("Caro(a) @GUESTNAME@,"),P("Apenas um pequeno email de cortesia para lhe dizer que estamos muito ansiosos por recebê-lo(a)."),P("Se precisar de indicações para chegar ao hotel, não hesite em contactar-nos. Do mesmo modo, se tiver uma hora prevista de chegada, teremos todo o gosto em recebê-lo(a) pessoalmente."),P("Para evitar atrasos no check-in, agradecemos que faça o seu pré-check-in online através do botão abaixo."),C("Pré-check-in online","@ONLINECHECKIN@"),P("Se necessitar de qualquer informação, não hesite — os nossos serviços estão sempre disponíveis."),P("Aguardamos a sua chegada.\nMelhores cumprimentos,\nA Direção do @COMMERCIALNAME@")] },
+    en:{ subject:"Your arrival at @COMMERCIALNAME@ is coming up",
+      data:[["Guest name:","@GUESTNAME@"],["Reservation number:","@RESNO@"],["Room type:","@CATEGORYDESCRIPTION@"],["Arrival date:","@CHECKIN@"],["Departure date:","@CHECKOUT@"]],
+      body:[H("Dear @GUESTNAME@,"),P("Just a little courtesy email to let you know we are very much looking forward to welcoming you."),P("If you need any directions to the hotel, please do not hesitate to contact us. Likewise, if you have an estimated arrival time, we'd love to greet you personally."),P("To avoid check-in delays, we kindly ask you to complete your online pre-check-in using the button below."),C("Online Pre Check-in","@ONLINECHECKIN@"),P("If you require any information, please do not hesitate — our services are always available."),P("We look forward to welcoming you.\nKind regards,\nThe Management of @COMMERCIALNAME@")] } },
+  { icon:"🔑", name:"Durante a estadia", code:"AFTER-CHECKIN", accent:"#2f6df0", mode:"house", palette:"azul",
+    desc:"Disparo AFTER-CHECKIN. Estilo da casa, com o Virtual KeyPass. Reproduz o teu modelo real.",
+    brand:{logo:"",hero:"https://picsum.photos/seed/hosthotel/1200/440"},
+    pt:{ subject:"Bem-vindo(a) ao @COMMERCIALNAME@",
+      data:[["Hóspede titular:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Tipologia:","@CATEGORYDESCRIPTION@"],["Nº do alojamento:","@UNITCODE@"],["Chegada:","@CHECKIN@"],["Saída:","@CHECKOUT@"]],
+      body:[H("Estimado(a) @GUESTNAME@,"),P("Apenas um pequeno email de cortesia para o(a) receber no @COMMERCIALNAME@."),P("Aproveitamos para informar que pode usar o botão abaixo, no seu smartphone, tablet ou portátil, para acesso direto a alguns serviços do hotel, bem como a informação sobre a região, serviços disponíveis e pontos de interesse."),C("Virtual KeyPass","@KEYPASS@"),P("Caso necessite de alguma informação ou ajuda adicional, não hesite em contactar-nos pressionando 9 no telefone do seu alojamento, ou diretamente com a receção."),P("Melhores cumprimentos,\nA Direção do @COMMERCIALNAME@")] },
+    en:{ subject:"Welcome to @COMMERCIALNAME@",
+      data:[["Guest name:","@GUESTNAME@"],["Reservation number:","@RESNO@"],["Room type:","@CATEGORYDESCRIPTION@"],["Room number:","@UNITCODE@"],["Arrival date:","@CHECKIN@"],["Departure date:","@CHECKOUT@"]],
+      body:[H("Dear @GUESTNAME@,"),P("Just a little courtesy email to welcome you to @COMMERCIALNAME@."),P("You can use the button below on your smartphone, tablet or laptop for direct access to some hotel services, as well as information about the area, available services and points of interest."),C("Virtual KeyPass","@KEYPASS@"),P("Should you need any further information or assistance, please do not hesitate to contact us by pressing 9 on your room phone, or directly with reception."),P("Kind regards,\nThe Management of @COMMERCIALNAME@")] } },
+  { icon:"🧳", name:"Antes do check-out", code:"BEFORE-CHECKOUT", accent:"#b5852a", mode:"house", palette:"dourado",
+    desc:"Disparo BEFORE-CHECKOUT. Informa a partida e propõe late check-out / fatura.",
+    brand:{logo:"",hero:"https://picsum.photos/seed/hosthotel/1200/440"},
+    pt:{ subject:"A sua partida está próxima",
+      data:[["Hóspede:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Nº do alojamento:","@UNITCODE@"],["Saída:","@CHECKOUT@"]],
+      body:[H("Caro(a) @GUESTNAME@,"),P("O seu check-out está previsto para @CHECKOUT@, até às 11h00. Caso pretenda late check-out, fale connosco — sujeito a disponibilidade."),P("Se desejar adiantar a regularização da conta ou solicitar a fatura, a nossa receção está ao seu dispor (marque 9 do alojamento)."),P("Esperamos que a sua estadia tenha sido do seu agrado.\nMelhores cumprimentos,\nA Direção do @COMMERCIALNAME@")] },
+    en:{ subject:"Your departure is coming up",
+      data:[["Guest name:","@GUESTNAME@"],["Reservation number:","@RESNO@"],["Room number:","@UNITCODE@"],["Departure:","@CHECKOUT@"]],
+      body:[H("Dear @GUESTNAME@,"),P("Your check-out is scheduled for @CHECKOUT@, by 11:00 AM. If you'd like a late check-out, please talk to us — subject to availability."),P("If you wish to settle your bill in advance or request your invoice, our reception is at your disposal (dial 9 from your room)."),P("We hope you have enjoyed your stay.\nKind regards,\nThe Management of @COMMERCIALNAME@")] } },
+  { icon:"👋", name:"Check-out / Boa viagem", code:"CHECKOUT", accent:"#4a6fa5", mode:"house", palette:"grafite",
+    desc:"Disparo CHECKOUT. Despedida no momento da saída e convite a regressar.",
+    brand:{logo:"",hero:"https://picsum.photos/seed/hosthotel/1200/440"},
+    pt:{ subject:"Obrigado pela sua visita — boa viagem!",
+      data:[["Hóspede:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"]],
+      body:[H("Boa viagem, @GUESTNAME@!"),P("Foi um verdadeiro prazer recebê-lo(a) no @COMMERCIALNAME@. Esperamos vê-lo(a) novamente em breve."),P("Se precisar da sua fatura ou de qualquer apoio após a partida, basta responder a este email."),P("Até à próxima!\nA Direção do @COMMERCIALNAME@")] },
+    en:{ subject:"Thank you for your visit — safe travels!",
+      data:[["Guest name:","@GUESTNAME@"],["Reservation number:","@RESNO@"]],
+      body:[H("Safe travels, @GUESTNAME@!"),P("It was a true pleasure to host you at @COMMERCIALNAME@. We hope to see you again soon."),P("If you need your invoice or any assistance after departure, just reply to this email."),P("Until next time!\nThe Management of @COMMERCIALNAME@")] } },
+  { icon:"💬", name:"Agradecimento + avaliação", code:"AFTER-CHECKOUT", accent:"#7b5ea7", mode:"house", palette:"grafite",
+    desc:"Disparo AFTER-CHECKOUT. Agradece e pede avaliação. Substitui o link «#» do botão pelo teu endereço de avaliações.",
+    brand:{logo:"",hero:"https://picsum.photos/seed/hosthotel/1200/440"},
+    pt:{ subject:"Como foi a sua estadia, @GUESTNAME@?",
+      data:[],
+      body:[H("Caro(a) @GUESTNAME@,"),P("Obrigado por ter escolhido o @COMMERCIALNAME@. Esperamos que tenha desfrutado da sua estadia e que regresse em breve."),P("A sua opinião é muito importante para nós e ajuda-nos a melhorar. Levaria apenas um minuto a partilhar a sua experiência?"),C("Avaliar a minha estadia","#"),P("Como agradecimento, da próxima vez que reservar diretamente connosco terá uma condição especial. Até breve!"),P("Melhores cumprimentos,\nA Direção do @COMMERCIALNAME@")] },
+    en:{ subject:"How was your stay, @GUESTNAME@?",
+      data:[],
+      body:[H("Dear @GUESTNAME@,"),P("Thank you for choosing @COMMERCIALNAME@. We hope you enjoyed your stay and look forward to welcoming you back soon."),P("Your feedback is very important to us and helps us improve. Would you take a minute to share your experience?"),C("Review my stay","#"),P("As a thank you, next time you book directly with us you'll enjoy a special rate. See you soon!"),P("Kind regards,\nThe Management of @COMMERCIALNAME@")] } }
+];
+
+function instStarter(st){
+  if(st.mode==="house"){
+    const clone=o=>JSON.parse(JSON.stringify(o));
+    return {
+      id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()),
+      name: st.name, mode:"house", design: st.design||"moderno", font: st.font||"sans", palette: st.palette||"azul",
+      brand: clone(st.brand||{logo:"",hero:""}),
+      settings:{ width:0 },
+      pt:{ subject:st.pt.subject, data:clone(st.pt.data||[]), body:clone(st.pt.body||[]) },
+      en:{ subject:st.en.subject, data:clone(st.en.data||[]), body:clone(st.en.body||[]) }
+    };
+  }
+  if(st.mode==="html"){
+    return {
+      id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()),
+      name: st.name, mode:"html",
+      settings:{ bg:"#f2f4f7", containerBg:"#ffffff", font:'"Segoe UI", Arial, sans-serif', width:815 },
+      pt:{ subject:st.pt.subject, html:st.pt.html },
+      en:{ subject:st.en.subject, html:st.en.html }
+    };
+  }
+  const t={
+    id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()),
+    name: st.name, mode:"blocks",
+    settings:{ bg:"#f2f4f7", containerBg:"#ffffff", font:'"Segoe UI", Arial, sans-serif', width:600 },
+    pt:{ subject:st.pt.subject, blocks:[] },
+    en:{ subject:st.en.subject, blocks:[] }
+  };
+  ["pt","en"].forEach(lang=>{
+    t[lang].blocks = st[lang].blocks.map(([type,over])=>{ const b=newBlock(type); Object.assign(b.props, over||{}); return b; });
+  });
+  return t;
+}
+
+/* ============================ PERSISTENCE ============================ */
+function save(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify({projects:state.projects,currentProjectId:state.currentProjectId,currentTemplateId:state.currentTemplateId})); }
+  catch(e){ document.getElementById("saveState").textContent="⚠ não guardado (usa Backup)"; return; }
+  if(CLOUD && cloudStarted){
+    setSyncState("a sincronizar…");
+    const pid=state.currentProjectId; clearTimeout(window.__cs);
+    window.__cs=setTimeout(()=>{ const p=state.projects.find(x=>x.id===pid); if(p) cloudSyncProject(p); },700);
+  } else { document.getElementById("saveState").textContent="guardado"; }
+}
+function load(){
+  try{
+    const s=localStorage.getItem(LS_KEY);
+    if(s){ const d=JSON.parse(s);
+      if(d.projects){ state.projects=d.projects; state.currentProjectId=d.currentProjectId; state.currentTemplateId=d.currentTemplateId; }
+      else if(d.templates){ // migração do formato antigo (lista plana de templates)
+        const p={ id:"prj"+(_ctr++)+"_"+Math.floor(performance.now()), hotel:"Projeto 1", templates:d.templates };
+        state.projects=[p]; state.currentProjectId=p.id; state.currentTemplateId=d.currentId;
+      }
+    }
+  }catch(e){}
+  if(!state.projects.length){ const p=newProject("Hotel exemplo"); state.projects.push(p); state.currentProjectId=p.id; }
+  if(!proj()) state.currentProjectId=state.projects[0].id;
+  if(!cur()) state.currentTemplateId=(proj().templates[0]||{}).id;
+}
+
+/* ============================ HELPERS ============================ */
+const $=id=>document.getElementById(id);
+function cur(){ const p=proj(); return p ? p.templates.find(t=>t.id===state.currentTemplateId) : null; }
+function curLang(){ return cur()[state.lang]; }
+function escText(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escAttr(s){ return escText(s).replace(/"/g,"&quot;"); }
+const esc=escText; // alias for text contexts
+/* Tokenizer: escapa o texto do utilizador mas mantém as tags @Model[0]... verbatim (o PMS precisa delas exatas). */
+function sortedTagCodes(){ return tags.map(t=>t.code).filter(Boolean).sort((a,b)=>b.length-a.length); }
+function tokenize(str, attr){
+  if(!str) return "";
+  const codes=sortedTagCodes(); let out=""; let i=0;
+  while(i<str.length){
+    let m=null;
+    for(const c of codes){ if(str.startsWith(c,i)){ m=c; break; } }
+    if(m){ out+=m; i+=m.length; }
+    else { const ch=str[i]; out += attr?escAttr(ch):escText(ch); i++; }
+  }
+  return out;
+}
+function tokenizeText(s){ return tokenize(s,false).replace(/\n/g,"<br>"); }
+function tokenizeAttr(s){ return tokenize(s,true); }
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1600); }
+function dirty(){ $("saveState").textContent="a guardar…"; clearTimeout(window.__sv); window.__sv=setTimeout(save,400); }
+
+/* sample data replacement for preview.
+   Highlights tags in text content, but inside HTML tags (attributes like href/src) replaces with plain value. */
+function applySample(html){
+  const sorted=[...tags].sort((a,b)=>b.code.length-a.code.length);
+  const parts=html.split(/(<[^>]*>)/);
+  for(let i=0;i<parts.length;i++){
+    const isTag=parts[i].charAt(0)==="<";
+    let seg=parts[i];
+    for(const t of sorted){
+      if(!t.code) continue;
+      const rep = isTag
+        ? esc(t.sample||"")
+        : '<span style="background:#fff3cd;color:#7a5b00;padding:0 2px;border-radius:3px">'+esc(t.sample||t.code)+'</span>';
+      seg = seg.split(t.code).join(rep);
+    }
+    parts[i]=seg;
+  }
+  return parts.join("");
+}
+
+/* ============================ EMAIL HTML GENERATION ============================ */
+function blockHTML(b){
+  const p=b.props;
+  const pad=(t,bt)=>`padding-top:${t}px;padding-bottom:${bt}px`;
+  switch(b.type){
+    case "logo":
+    case "image":{
+      const w=Math.min(p.width, cur().settings.width);
+      let img = p.src
+        ? `<img src="${tokenizeAttr(p.src)}" alt="${tokenizeAttr(p.alt)}" width="${w}" style="display:block;width:${w}px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none" />`
+        : `<div style="width:${w}px;max-width:100%;height:${b.type==='logo'?60:160}px;background:#eef1f6;border:1px dashed #c7cedb;color:#9aa3b2;font:13px/1.4 Arial;display:flex;align-items:center;justify-content:center">${escText(p.alt||'Imagem')} — sem src</div>`;
+      if(p.link) img=`<a href="${tokenizeAttr(p.link)}" target="_blank" style="text-decoration:none">${img}</a>`;
+      return `<tr><td align="${p.align}" style="${pad(p.padTop,p.padBottom)};padding-left:24px;padding-right:24px">${img}</td></tr>`;
+    }
+    case "heading":
+      return `<tr><td align="${p.align}" style="${pad(p.padTop,p.padBottom)};padding-left:24px;padding-right:24px;font-family:${cur().settings.font};font-size:${p.size}px;font-weight:${p.bold?700:400};color:${p.color};line-height:1.3">${tokenizeText(p.text)}</td></tr>`;
+    case "paragraph":
+      return `<tr><td align="${p.align}" style="${pad(p.padTop,p.padBottom)};padding-left:24px;padding-right:24px;font-family:${cur().settings.font};font-size:${p.size}px;color:${p.color};line-height:${p.lineHeight}">${tokenizeText(p.text)}</td></tr>`;
+    case "button":{
+      const btn=`<table role="presentation" cellpadding="0" cellspacing="0" style="margin:auto"><tr><td align="center" bgcolor="${p.bg}" style="border-radius:${p.radius}px"><a href="${tokenizeAttr(p.url)}" target="_blank" style="display:inline-block;padding:12px 28px;font-family:${cur().settings.font};font-size:15px;font-weight:700;color:${p.color};text-decoration:none;border-radius:${p.radius}px">${tokenizeText(p.text)}</a></td></tr></table>`;
+      return `<tr><td align="${p.align}" style="${pad(p.padTop,p.padBottom)};padding-left:24px;padding-right:24px">${btn}</td></tr>`;
+    }
+    case "divider":
+      return `<tr><td style="${pad(p.padTop,p.padBottom)};padding-left:24px;padding-right:24px"><table role="presentation" width="${p.width}%" cellpadding="0" cellspacing="0" style="margin:auto"><tr><td style="border-top:${p.thickness}px solid ${p.color};font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>`;
+    case "spacer":
+      return `<tr><td style="height:${p.height}px;line-height:${p.height}px;font-size:0">&nbsp;</td></tr>`;
+    case "footer":
+      return `<tr><td align="${p.align}" style="${pad(p.padTop,p.padBottom)};padding-left:24px;padding-right:24px;font-family:${cur().settings.font};font-size:${p.size}px;color:${p.color};line-height:1.5">${tokenizeText(p.text)}</td></tr>`;
+  }
+  return "";
+}
+
+function buildEmail(lang){
+  const t=cur();
+  if(t.mode==="html") return (t[lang] && t[lang].html) || "";
+  if(t.mode==="house"){
+    const L=t[lang]||{};
+    return houseHTML({ design:t.design||"moderno", font:t.font||"sans", lang:lang, palette: shadedPalette(pal(t.palette), t.shade), width: (t.settings&&t.settings.width)||0,
+      logo:(t.brand&&t.brand.logo)||"", hero:(t.brand&&t.brand.hero)||DEFAULT_HERO, data:L.data||[], body:L.body||[] });
+  }
+  const s=t.settings; const L=t[lang];
+  const rows=L.blocks.map(blockHTML).join("\n");
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${s.bg};margin:0;padding:0">
+<tr><td align="center" style="padding:20px 10px">
+<table role="presentation" width="${s.width}" cellpadding="0" cellspacing="0" style="width:${s.width}px;max-width:100%;background-color:${s.containerBg};border-radius:8px;overflow:hidden">
+${rows}
+</table>
+</td></tr>
+</table>`;
+}
+
+/* ============================ RENDER: CANVAS ============================ */
+const BLOCK_TYPES=[
+  ["logo","🏷","Logo"],["heading","H","Título"],["paragraph","¶","Parágrafo"],
+  ["button","▭","Botão"],["image","🖼","Imagem"],["divider","—","Separador"],
+  ["spacer","⇳","Espaço"],["footer","≡","Rodapé"]
+];
+
+const PREV_W=664; // largura lógica do preview (email 600 + margens, com folga)
+function fitPreview(){
+  const f=$("htmlPrev"), wrap=$("prevWrap"), scaler=$("prevScaler");
+  if(!f||!wrap||!scaler) return;
+  if($("htmlEditor") && $("htmlEditor").style.display==="none") return;
+  f.style.width=PREV_W+"px"; f.style.height="";
+  const doc=f.contentDocument||f.contentWindow.document;
+  let ch=0; try{ ch=Math.max(doc.body?doc.body.scrollHeight:0, doc.documentElement?doc.documentElement.scrollHeight:0); }catch(e){}
+  if(!ch) ch=600;
+  f.style.height=ch+"px";
+  const avail=Math.max(120, wrap.clientWidth - 24);
+  const s=Math.min(1, avail/PREV_W);
+  f.style.transformOrigin="top left";
+  f.style.transform="scale("+s+")";
+  scaler.style.width=(PREV_W*s)+"px";
+  scaler.style.height=(ch*s)+"px";
+}
+function refreshHtmlPrev(){
+  const f=$("htmlPrev"); if(!f) return;
+  const doc=f.contentDocument||f.contentWindow.document;
+  doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=664"></head><body style="margin:0;padding:0">'+applySample(buildEmail(state.lang))+'</body></html>'); doc.close();
+  fitPreview();
+  setTimeout(fitPreview,60);
+}
+function renderCanvas(){
+  const t=cur();
+  const sbar=document.querySelector(".subjectbar"); if(sbar) sbar.style.display = t.mode==="house" ? "none" : "";
+  if(t.mode==="house"){
+    document.querySelector(".email").style.display="none";
+    $("htmlEditor").style.display="block";
+    $("htmlSrcWrap").style.display="none";
+    if($("prevLabel")) $("prevLabel").textContent="Pré-visualização ao vivo (dados de exemplo)";
+    if($("centerHint")) $("centerHint").textContent="Monta o corpo no construtor abaixo (arrasta as peças). A paleta e os dados ficam à direita.";
+    refreshHtmlPrev();
+    renderBuilder();
+    return;
+  }
+  if(t.mode==="html"){
+    document.querySelector(".email").style.display="none";
+    $("htmlEditor").style.display="block";
+    if($("builder")) $("builder").style.display="none";
+    $("htmlSrcWrap").style.display="block";
+    if($("prevLabel")) $("prevLabel").textContent="Pré-visualização (dados de exemplo)";
+    if($("centerHint")) $("centerHint").textContent="Modo HTML: edita o código acima; usa o separador «Tags» para inserir tokens.";
+    const ta=$("htmlSrc");
+    if(document.activeElement!==ta) ta.value=curLang().html||"";
+    if(!ta.__bound){ ta.__bound=true;
+      ta.addEventListener("input",()=>{ curLang().html=ta.value; dirty(); refreshHtmlPrev(); });
+      ta.addEventListener("focus",()=>{ state.activeField=ta; });
+    }
+    refreshHtmlPrev();
+    return;
+  }
+  document.querySelector(".email").style.display="";
+  $("htmlEditor").style.display="none";
+  if($("centerHint")) $("centerHint").textContent="Clica num bloco para o editar à direita. As tags inserem-se no campo de texto ativo.";
+  const L=curLang();
+  const wrap=$("blocks"); wrap.innerHTML="";
+  $("blocks").parentElement.style.background=t.settings.containerBg;
+  document.querySelector(".center").style.background="#0b0d11";
+  if(!L.blocks.length){ wrap.innerHTML='<div class="empty-hint">Sem blocos. Adiciona à esquerda.</div>'; return; }
+  L.blocks.forEach((b,i)=>{
+    const div=document.createElement("div");
+    div.className="blk"+(state.selectedBlock===b.id?" sel":"");
+    div.innerHTML=`<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tbody>${blockHTML(b)}</tbody></table>
+      <div class="blk-tools">
+        <button data-act="up" title="Subir">↑</button>
+        <button data-act="down" title="Descer">↓</button>
+        <button data-act="dup" title="Duplicar">⧉</button>
+        <button data-act="del" title="Remover">🗑</button>
+      </div>`;
+    div.addEventListener("click",e=>{
+      const act=e.target.getAttribute("data-act");
+      if(act){ e.stopPropagation(); blockAction(b.id,act); return; }
+      state.selectedBlock=b.id; renderCanvas(); renderProps(); switchTab("props");
+    });
+    wrap.appendChild(div);
+  });
+}
+
+function blockAction(id,act){
+  const L=curLang(); const i=L.blocks.findIndex(b=>b.id===id);
+  if(i<0) return;
+  if(act==="up"&&i>0){ [L.blocks[i-1],L.blocks[i]]=[L.blocks[i],L.blocks[i-1]]; }
+  if(act==="down"&&i<L.blocks.length-1){ [L.blocks[i+1],L.blocks[i]]=[L.blocks[i],L.blocks[i+1]]; }
+  if(act==="dup"){ const c=JSON.parse(JSON.stringify(L.blocks[i])); c.id="b"+(_ctr++)+"_"+Math.floor(performance.now()); L.blocks.splice(i+1,0,c); state.selectedBlock=c.id; }
+  if(act==="del"){ L.blocks.splice(i,1); if(state.selectedBlock===id) state.selectedBlock=null; }
+  dirty(); renderCanvas(); renderProps();
+}
+
+/* ============================ RENDER: PROPS ============================ */
+function field(label,html){ return `<div class="field"><label>${label}</label>${html}</div>`; }
+function textInput(val,onkey){ return `<input type="text" value="${escAttr(val)}" data-bind="${onkey}" data-tagtarget="1">`; }
+function area(val,onkey){ return `<textarea data-bind="${onkey}" data-tagtarget="1">${escText(val)}</textarea>`; }
+function num(val,onkey,min,max){ return `<input type="number" value="${val}" data-bind="${onkey}" min="${min??0}" max="${max??999}">`; }
+function color(val,onkey){ return `<div class="colorrow"><input type="color" value="${val}" data-bind="${onkey}"><input type="text" value="${escAttr(val)}" data-bind="${onkey}" style="flex:1"></div>`; }
+function align(val,onkey){ return `<div class="seg">${["left","center","right"].map(a=>`<button data-seg="${onkey}" data-val="${a}" class="${val===a?'active':''}">${a==='left'?'⬅':a==='center'?'⬌':'➡'}</button>`).join("")}</div>`; }
+
+const HIN="background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:8px;font-size:13px";
+const panelOpen={ logo:false, subject:false, quick:false, data:false, body:false };
+function acc(key,title,inner){
+  return `<div class="acc${panelOpen[key]?' open':''}" data-acc="${key}"><div class="acc-h">${title}<span class="acc-x">▾</span></div><div class="acc-b">${inner}</div></div>`;
+}
+function renderHouseProps(box){
+  const L=curLang();
+  const other=state.lang==="pt"?"EN":"PT";
+  const QT=DEFAULT_TAGS.map(t=>t[2]);
+  const lg=cur().brand.logo||"";
+  // 1 — Logótipo
+  let logoI=`<div style="display:flex;gap:6px;margin-bottom:5px">
+    <input type="text" id="houseLogoP" value="${escAttr(lg)}" placeholder="URL do logótipo…" style="flex:1;min-width:0;${HIN}">
+    <button class="btn sm" data-pubp="logo" title="Carregar e publicar uma imagem">⤴ Publicar</button>
+    <button class="btn sm" data-embp="logo" title="Embeber no HTML (base64)">⧉</button>
+  </div><div class="hint" id="logoStatusP">${lg?'✓ Logótipo definido. Aparece no topo do email.':'Sem logótipo, o topo mostra o nome do hotel em texto.'}</div>`;
+  // 2 — Assunto & idioma
+  let subjI=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    <span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--accent)">A EDITAR · ${state.lang.toUpperCase()}</span><span style="flex:1"></span>
+    <button class="btn sm" id="copyLang" title="Copiar conteúdo de ${state.lang.toUpperCase()} para ${other}">⇄ Copiar p/ ${other}</button>
+  </div><div class="field" style="margin:0"><label>Assunto do email</label><input type="text" id="houseSubject" data-tagtarget="1" value="${escAttr(L.subject||"")}" placeholder="Ex.: Reserva confirmada — @COMMERCIALNAME@" style="width:100%;${HIN}"></div>`;
+  // 3 — Tags rápidas
+  let quickI='<div class="hint" style="margin-bottom:6px">Clica para inserir no campo ativo. Mais no separador «Tags».</div><div style="display:flex;flex-wrap:wrap;gap:5px">'+QT.map(c=>`<button class="qtag" data-qtag="${escAttr(c)}">${escText(c)}</button>`).join("")+'</div>';
+  // 4 — Caixa de dados
+  let dataI='<div class="hint" style="margin-bottom:8px">Linhas <b>etiqueta / valor</b> do resumo. Sem linhas, o resumo não aparece.</div>';
+  (L.data||[]).forEach((row,i)=>{
+    dataI+=`<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+      <input type="text" value="${escAttr(row[0])}" data-drow="${i}" data-dcol="0" data-tagtarget="1" placeholder="Etiqueta" style="flex:1;min-width:0;${HIN}">
+      <input type="text" value="${escAttr(row[1])}" data-drow="${i}" data-dcol="1" data-tagtarget="1" placeholder="Valor / tag" style="flex:1;min-width:0;${HIN}">
+      <button class="btn sm" data-drrem="${i}" title="Remover linha">✕</button>
+    </div>`;
+  });
+  dataI+='<button class="btn sm" data-daddrow="1" style="width:100%;margin-top:2px">＋ Adicionar linha</button>';
+
+  const ah=(n,t)=>`<span style="display:flex;align-items:center;gap:8px">${ic(n,15)}${t}</span>`;
+  box.innerHTML = acc("logo",ah("image","Logótipo do hotel"),logoI)
+    + acc("subject",ah("mail","Assunto & idioma"),subjI)
+    + acc("quick",ah("bolt","Tags rápidas"),quickI)
+    + acc("data",ah("list","Caixa de dados"),dataI);
+
+  box.querySelectorAll(".acc-h").forEach(hd=>hd.addEventListener("click",()=>{ const a=hd.parentElement,k=a.dataset.acc; panelOpen[k]=!panelOpen[k]; a.classList.toggle("open",panelOpen[k]); }));
+
+  const upd=()=>{ dirty(); refreshHtmlPrev(); };
+  const restruct=()=>{ dirty(); renderHouseProps(box); refreshHtmlPrev(); };
+  const lgp=box.querySelector("#houseLogoP");
+  if(lgp) lgp.addEventListener("input",()=>{ cur().brand.logo=lgp.value; dirty(); refreshHtmlPrev(); });
+  const pub=box.querySelector('[data-pubp]'); if(pub) pub.addEventListener("click",()=>publishImageInto(u=>{cur().brand.logo=u;},"logoStatusP"));
+  const emb=box.querySelector('[data-embp]'); if(emb) emb.addEventListener("click",()=>embedImageInto(u=>{cur().brand.logo=u;},"logoStatusP"));
+  const subj=box.querySelector("#houseSubject");
+  subj.addEventListener("input",()=>{ L.subject=subj.value; const sb=$("subjectInput"); if(sb) sb.value=subj.value; dirty(); });
+  subj.addEventListener("focus",()=>{ state.activeField=subj; });
+  box.querySelectorAll("[data-qtag]").forEach(el=>el.addEventListener("mousedown",e=>{ e.preventDefault(); insertTag(el.dataset.qtag); }));
+  box.querySelector("#copyLang").addEventListener("click",()=>{
+    const from=state.lang, to=from==="pt"?"en":"pt";
+    if(!confirm("Substituir o conteúdo "+to.toUpperCase()+" por uma cópia de "+from.toUpperCase()+"? (assunto, dados e corpo)")) return;
+    const t=cur(); t[to].subject=t[from].subject;
+    t[to].data=JSON.parse(JSON.stringify(t[from].data));
+    t[to].body=JSON.parse(JSON.stringify(t[from].body));
+    dirty(); toast("Conteúdo copiado para "+to.toUpperCase());
+  });
+  box.querySelectorAll("[data-drow]").forEach(el=>{
+    el.addEventListener("input",()=>{ L.data[+el.dataset.drow][+el.dataset.dcol]=el.value; upd(); });
+    el.addEventListener("focus",()=>{ state.activeField=el; });
+  });
+  box.querySelectorAll("[data-drrem]").forEach(el=>el.addEventListener("click",()=>{ L.data.splice(+el.dataset.drrem,1); restruct(); }));
+  const addRow=box.querySelector("[data-daddrow]"); if(addRow) addRow.addEventListener("click",()=>{ L.data.push(["",""]); restruct(); });
+}
+// ===== Construtor do corpo (drag & drop, por baixo da pré-visualização) =====
+function newBodyItem(t){ return t==="cta"?{t:"cta",v:"Texto do botão",u:"@ONLINECHECKIN@"}:t==="img"?{t:"img",v:"",u:""}:{t,v:t==="h"?"Novo título":"Escreve aqui o teu parágrafo."}; }
+function builderCard(it,i){
+  const NAME={h:"Título",p:"Parágrafo",cta:"Botão",img:"Imagem"};
+  const ICON={h:"doc",p:"list",cta:"copy",img:"image"};
+  let inner;
+  if(it.t==="cta"){
+    inner=`<input type="text" value="${escAttr(it.v)}" data-bbv="${i}" data-tagtarget="1" placeholder="Texto do botão" style="width:100%;margin-bottom:6px;${HIN}">
+      <input type="text" value="${escAttr(it.u||'')}" data-bbu="${i}" data-tagtarget="1" placeholder="Link / tag (ex.: @ONLINECHECKIN@)" style="width:100%;${HIN}">`;
+  } else if(it.t==="img"){
+    inner=`<div style="display:flex;gap:6px;margin-bottom:6px"><input type="text" value="${escAttr(it.v)}" data-bbv="${i}" placeholder="URL da imagem…" style="flex:1;min-width:0;${HIN}"><button class="btn sm" data-bbpub="${i}" title="Carregar e publicar imagem">⤴</button></div>
+      <input type="text" value="${escAttr(it.u||'')}" data-bbu="${i}" data-tagtarget="1" placeholder="Legenda (opcional)" style="width:100%;${HIN}"><div class="hint" id="bbSt${i}" style="margin-top:4px">${it.v?'✓ Imagem definida.':'Cola um link de imagem ou usa ⤴ para publicar.'}</div>`;
+  } else {
+    inner=`<textarea data-bbv="${i}" data-tagtarget="1" spellcheck="false" style="width:100%;min-height:${it.t==='h'?46:80}px;resize:vertical;line-height:1.5;${HIN}">${escText(it.v)}</textarea>`;
+  }
+  return `<div class="bcard" data-bi="${i}"><div class="bcard-h"><span class="bdrag" draggable="true" title="Arrastar para reordenar">⠿</span><span class="bcard-t">${ic(ICON[it.t]||"list",13)}<span>${NAME[it.t]||"Texto"}</span></span><span style="flex:1"></span><button class="bx" data-bbrem="${i}" title="Remover peça">✕</button></div><div class="bcard-b">${inner}</div></div>`;
+}
+function renderBuilder(){
+  const b=$("builder"); if(!b) return;
+  if(!cur()||cur().mode!=="house"){ b.style.display="none"; return; }
+  b.style.display="block";
+  const L=curLang();
+  const PIECES=[["h","doc","Título"],["p","list","Parágrafo"],["cta","copy","Botão"],["img","image","Imagem"]];
+  let h=`<div class="bld-top"><div class="bld-ttl">${ic("doc",16)}<span>Construtor do corpo</span></div><div class="bld-sub">Arrasta uma peça para dentro do email · reordena pelo ⠿ · edita escrevendo. Tudo atualiza a pré-visualização acima.</div></div>`;
+  h+=`<div class="bpal">${PIECES.map(p=>`<div class="bpiece" draggable="true" data-add="${p[0]}">${ic(p[1],14)}<span>${p[2]}</span></div>`).join("")}</div>`;
+  h+=`<div class="bld-list" id="bldList"><div class="bdz" data-dz="0"></div>`;
+  (L.body||[]).forEach((it,i)=>{ h+=builderCard(it,i)+`<div class="bdz" data-dz="${i+1}"></div>`; });
+  if(!(L.body&&L.body.length)) h+=`<div class="bld-empty">Sem peças. Arrasta «Título», «Parágrafo», «Botão» ou «Imagem» para aqui para começar.</div>`;
+  h+=`</div>`;
+  b.innerHTML=h;
+  bindBuilder(b,L);
+}
+function bindBuilder(b,L){
+  const rebuild=()=>{ dirty(); renderBuilder(); refreshHtmlPrev(); };
+  const live=()=>{ dirty(); refreshHtmlPrev(); };
+  let drag=null;
+  const clearDz=()=>b.querySelectorAll(".bdz").forEach(d=>d.classList.remove("over"));
+  b.querySelectorAll(".bpiece").forEach(p=>{
+    p.addEventListener("dragstart",e=>{ drag={kind:"new",t:p.dataset.add}; e.dataTransfer.effectAllowed="copy"; try{ e.dataTransfer.setData("text/plain","new"); }catch(_){ } });
+    p.addEventListener("dragend",()=>{ drag=null; clearDz(); });
+  });
+  b.querySelectorAll(".bcard").forEach(card=>{
+    const i=+card.dataset.bi, handle=card.querySelector(".bdrag");
+    handle.addEventListener("dragstart",e=>{ drag={kind:"move",i:i}; card.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; try{ e.dataTransfer.setData("text/plain","move"); }catch(_){ } });
+    handle.addEventListener("dragend",()=>{ drag=null; card.classList.remove("dragging"); clearDz(); });
+  });
+  b.querySelectorAll(".bdz").forEach(dz=>{
+    dz.addEventListener("dragover",e=>{ if(!drag)return; e.preventDefault(); e.dataTransfer.dropEffect=drag.kind==="new"?"copy":"move"; dz.classList.add("over"); });
+    dz.addEventListener("dragleave",()=>dz.classList.remove("over"));
+    dz.addEventListener("drop",e=>{ if(!drag)return; e.preventDefault(); const at=+dz.dataset.dz;
+      if(drag.kind==="new"){ L.body.splice(at,0,newBodyItem(drag.t)); }
+      else { const f=drag.i; if(f===at||f===at-1){ drag=null; clearDz(); return; } const item=L.body.splice(f,1)[0]; let to=at; if(f<to)to--; L.body.splice(to,0,item); }
+      drag=null; rebuild();
+    });
+  });
+  b.querySelectorAll("[data-bbv]").forEach(el=>{ el.addEventListener("input",()=>{ L.body[+el.dataset.bbv].v=el.value; live(); }); el.addEventListener("focus",()=>{ state.activeField=el; }); });
+  b.querySelectorAll("[data-bbu]").forEach(el=>{ el.addEventListener("input",()=>{ L.body[+el.dataset.bbu].u=el.value; live(); }); el.addEventListener("focus",()=>{ state.activeField=el; }); });
+  b.querySelectorAll("[data-bbrem]").forEach(el=>el.addEventListener("click",()=>{ L.body.splice(+el.dataset.bbrem,1); rebuild(); }));
+  b.querySelectorAll("[data-bbpub]").forEach(el=>el.addEventListener("click",()=>{ const i=+el.dataset.bbpub; publishImageInto(u=>{ L.body[i].v=u; const inp=b.querySelector('[data-bbv="'+i+'"]'); if(inp) inp.value=u; live(); },"bbSt"+i); }));
+}
+function renderProps(){
+  const box=$("tabProps");
+  if(cur().mode==="house"){ renderHouseProps(box); return; }
+  if(cur().mode==="html"){ box.innerHTML='<div class="tag-hint">Este template está em <b>modo HTML</b>. Edita o código na zona central e usa o separador <b>«Tags»</b> para inserir tokens no ponto do cursor.</div>'; return; }
+  const b=curLang().blocks.find(x=>x.id===state.selectedBlock);
+  if(!b){ box.innerHTML='<div class="tag-hint">Seleciona um bloco no email para editar as suas propriedades.</div>'; return; }
+  const p=b.props; let h=`<div class="sectitle">${b.type}</div>`;
+  const padFields = `<div class="row2">${field("Espaço acima",num(p.padTop,"padTop"))}${field("Espaço abaixo",num(p.padBottom,"padBottom"))}</div>`;
+  switch(b.type){
+    case "logo": case "image":
+      h+=field("URL da imagem",textInput(p.src,"src"));
+      h+=`<div style="display:flex;gap:6px;margin:-4px 0 8px">
+            <button class="btn sm" data-imgaction="publish" style="flex:1">⤴ Publicar imagem</button>
+            <button class="btn sm" data-imgaction="embed" title="Embeber no HTML (base64). Bom para testes; o Outlook/Gmail podem bloquear.">Embeber</button>
+          </div>
+          <div class="hint" id="imgStatus" style="margin:-2px 0 8px"></div>`;
+      h+='<div class="tag-hint">💡 "Publicar imagem" envia o ficheiro para um host gratuito (catbox, sem conta) e coloca aqui o link — precisa da app aberta pelo <b>Relationship.bat</b>. Para produção, o ideal é o link ser do site do hotel.</div>';
+      h+=field("Texto alternativo",textInput(p.alt,"alt"));
+      h+=`<div class="row2">${field("Largura (px)",num(p.width,"width",10,600))}${field("Alinhamento",align(p.align,"align"))}</div>`;
+      h+=field("Link ao clicar (opcional)",textInput(p.link,"link"));
+      h+=padFields; break;
+    case "heading":
+      h+=field("Texto",area(p.text,"text"));
+      h+=`<div class="row2">${field("Tamanho",num(p.size,"size",8,60))}${field("Alinhamento",align(p.align,"align"))}</div>`;
+      h+=field("Cor",color(p.color,"color"));
+      h+=padFields; break;
+    case "paragraph":
+      h+=field("Texto",area(p.text,"text"));
+      h+=`<div class="row2">${field("Tamanho",num(p.size,"size",8,40))}${field("Altura linha",num(p.lineHeight,"lineHeight",1,3))}</div>`;
+      h+=field("Cor",color(p.color,"color"));
+      h+=field("Alinhamento",align(p.align,"align"));
+      h+=padFields; break;
+    case "button":
+      h+=field("Texto",textInput(p.text,"text"));
+      h+=field("Link (URL)",textInput(p.url,"url"));
+      h+=`<div class="row2">${field("Cor fundo",color(p.bg,"bg"))}${field("Cor texto",color(p.color,"color"))}</div>`;
+      h+=`<div class="row2">${field("Arredondado",num(p.radius,"radius",0,40))}${field("Alinhamento",align(p.align,"align"))}</div>`;
+      h+=padFields; break;
+    case "divider":
+      h+=field("Cor",color(p.color,"color"));
+      h+=`<div class="row2">${field("Espessura",num(p.thickness,"thickness",1,10))}${field("Largura (%)",num(p.width,"width",10,100))}</div>`;
+      h+=padFields; break;
+    case "spacer":
+      h+=field("Altura (px)",num(p.height,"height",4,200)); break;
+    case "footer":
+      h+=field("Texto",area(p.text,"text"));
+      h+=`<div class="row2">${field("Tamanho",num(p.size,"size",8,20))}${field("Alinhamento",align(p.align,"align"))}</div>`;
+      h+=field("Cor",color(p.color,"color"));
+      h+=padFields; break;
+  }
+  box.innerHTML=h;
+
+  // bind
+  box.querySelectorAll("[data-bind]").forEach(el=>{
+    const k=el.getAttribute("data-bind");
+    const ev = el.type==="color" ? "input" : "input";
+    el.addEventListener(ev,()=>{
+      let v=el.value;
+      if(el.type==="number") v=parseFloat(v)||0;
+      p[k]=v;
+      // sync paired color/text
+      box.querySelectorAll(`[data-bind="${k}"]`).forEach(o=>{ if(o!==el) o.value=el.value; });
+      dirty(); renderCanvas();
+    });
+    if(el.getAttribute("data-tagtarget")) el.addEventListener("focus",()=>{ state.activeField=el; });
+  });
+  box.querySelectorAll("[data-seg]").forEach(el=>{
+    el.addEventListener("click",()=>{ p[el.getAttribute("data-seg")]=el.getAttribute("data-val"); dirty(); renderProps(); renderCanvas(); });
+  });
+  box.querySelectorAll("[data-imgaction]").forEach(el=>{
+    el.addEventListener("click",()=>{ const a=el.getAttribute("data-imgaction"); if(a==="publish") publishImage(p); else embedImage(p); });
+  });
+}
+
+/* ---- Image publishing / embedding ---- */
+function helperBase(){ return (location.protocol==="http:"||location.protocol==="https:") ? "" : "http://localhost:5500"; }
+function setImgStatus(msg,id){ const el=document.getElementById(id||"imgStatus"); if(el) el.innerHTML=msg; }
+function pickFile(cb){ const i=document.createElement("input"); i.type="file"; i.accept="image/*"; i.onchange=()=>{ if(i.files[0]) cb(i.files[0]); }; i.click(); }
+function publishImageInto(setUrl, statusId){
+  pickFile(async(file)=>{
+    if(file.size>10*1024*1024){ setImgStatus("⚠ Imagem muito grande (>10MB). Reduz primeiro.",statusId); return; }
+    setImgStatus("⏳ A publicar… aguarda.",statusId);
+    try{
+      const res=await fetch(helperBase()+"/upload",{method:"POST",headers:{"X-Filename":file.name,"Content-Type":file.type||"application/octet-stream"},body:file});
+      const txt=(await res.text()).trim();
+      if(!res.ok||!/^https?:\/\//.test(txt)) throw new Error(txt||("HTTP "+res.status));
+      setUrl(txt); dirty(); renderAll(); toast("Imagem publicada ✓");
+    }catch(e){
+      setImgStatus('⚠ Não consegui publicar. Abre a app pelo <b>Relationship.bat</b> (o ajudante tem de estar a correr).<br><span style="color:#888">'+escText(e.message)+'</span>',statusId);
+    }
+  });
+}
+function embedImageInto(setUrl, statusId){
+  pickFile((file)=>{
+    if(file.size>1.2*1024*1024){ setImgStatus("⚠ Para base64 usa imagens pequenas (<1MB) — o HTML fica enorme.",statusId); }
+    const r=new FileReader();
+    r.onload=()=>{ setUrl(r.result); dirty(); renderAll(); toast("Imagem embebida (base64)"); };
+    r.readAsDataURL(file);
+  });
+}
+function publishImage(p){ publishImageInto(u=>{p.src=u;}); }
+function embedImage(p){ embedImageInto(u=>{p.src=u;}); }
+
+/* ============================ RENDER: TAGS ============================ */
+function renderTags(filter){
+  const box=$("tabTags");
+  if(!state.tagFmt) state.tagFmt="token";
+  filter=(filter||"").toLowerCase();
+  const nTok=tags.filter(t=>tagFormat(t.code)==="token").length;
+  const nMod=tags.filter(t=>tagFormat(t.code)==="model").length;
+  const fbtn=(v,lbl)=>`<button class="btn sm ${state.tagFmt===v?'primary':''}" data-fmt="${v}" style="flex:1">${lbl}</button>`;
+  let h=`<div style="display:flex;gap:6px;margin-bottom:8px">${fbtn("token","@TAGNAME@ ("+nTok+")")}${fbtn("model","@Model[0] ("+nMod+")")}${fbtn("all","Todas")}</div>`;
+  h+=`<input class="tagsearch" id="tagSearch" placeholder="🔎 Procurar tag…" value="${esc(filter)}">`;
+  h+='<div class="ready off" id="tagReady"></div>';
+  h+='<div class="tag-hint">Os teus modelos RelationshipEmail usam <b>@TAGNAME@</b>. A lista <b>@Model[0]</b> é do outro editor.</div>';
+  const cats={};
+  tags.filter(t=> (state.tagFmt==="all"||tagFormat(t.code)===state.tagFmt) &&
+                  (!filter || (t.label.toLowerCase().includes(filter)||t.code.toLowerCase().includes(filter)||t.cat.toLowerCase().includes(filter))))
+      .forEach(t=>{ (cats[t.cat]=cats[t.cat]||[]).push(t); });
+  const keys=Object.keys(cats);
+  if(!keys.length) h+='<div class="tag-hint">Sem resultados.</div>';
+  for(const c of keys){
+    h+=`<div class="tagcat">${escText(c)}</div>`;
+    cats[c].forEach(t=>{
+      h+=`<div class="tag" data-code="${escAttr(t.code)}"><div><div class="tlab">${escText(t.label)}</div><div class="tcode">${escText(t.code)}</div></div><div class="ins">inserir ＋</div></div>`;
+    });
+  }
+  h+=`<div style="margin-top:14px;display:flex;gap:6px"><button class="btn sm" id="btnAddTag" style="flex:1">+ Adicionar tag</button><button class="btn sm" id="btnResetTags">↺ Repor</button></div>`;
+  box.innerHTML=h;
+  box.querySelectorAll("[data-fmt]").forEach(el=>el.addEventListener("click",()=>{ state.tagFmt=el.getAttribute("data-fmt"); renderTags($("tagSearch").value); }));
+  $("tagSearch").addEventListener("input",e=>renderTags(e.target.value));
+  box.querySelectorAll(".tag").forEach(el=>{
+    el.addEventListener("mousedown",e=>{ e.preventDefault(); insertTag(el.getAttribute("data-code")); });
+  });
+  updateTagReady();
+  $("btnAddTag").addEventListener("click",addTagDialog);
+  $("btnResetTags").addEventListener("click",()=>{ if(confirm("Repor a lista de tags por defeito?")){ tags=defaultTagSet(); saveTags(); renderTags(); } });
+}
+
+function updateTagReady(){
+  const el=document.getElementById("tagReady"); if(!el) return;
+  const ok=state.activeField && document.body.contains(state.activeField);
+  el.className="ready "+(ok?"on":"off");
+  el.innerHTML = ok ? "✓ Pronto — a tag entra no campo ativo" : "○ Clica primeiro num campo (assunto, dados ou corpo), depois numa tag";
+}
+function insertTag(code){
+  const el=state.activeField;
+  if(!el || !document.body.contains(el)){ toast("Clica primeiro num campo de texto"); return; }
+  const s=el.selectionStart??el.value.length, e=el.selectionEnd??el.value.length;
+  el.value = el.value.slice(0,s)+code+el.value.slice(e);
+  const pos=s+code.length; el.focus(); el.setSelectionRange(pos,pos);
+  el.dispatchEvent(new Event("input"));
+  state.activeField=el;
+}
+
+function addTagDialog(){
+  const label=prompt("Nome amigável da tag (ex.: Data check-in):"); if(!label) return;
+  const code=prompt("Código exato do PMS (ex.: @Model[0].CheckInDate):"); if(!code) return;
+  const cat=prompt("Categoria (Hóspede, Reserva, Empresa, Agência, CRO, Outros):","Reserva")||"Outros";
+  const sample=prompt("Valor de exemplo para o preview:","")||"";
+  tags.push({cat,label,code,sample}); saveTags(); renderTags(); toast("Tag adicionada");
+}
+
+/* ============================ RENDER: STYLE ============================ */
+function renderHouseStyle(box){
+  const t=cur();
+  const sc=box.scrollTop;
+  let h='<div class="sectitle">Design do template</div>';
+  h+='<div class="dgrid">';
+  DESIGN_LIST.forEach(([k,nm,ds])=>{ const sel=(t.design||"moderno")===k;
+    h+=`<div class="dcard${sel?' sel':''}" data-design="${k}" title="${escAttr(ds)}"><div class="dthumb">${designThumb(k)}</div><div class="dname">${nm}${sel?' ✓':''}</div></div>`; });
+  h+='</div>';
+  h+='<div class="sectitle" style="margin-top:16px">Tipo de letra</div>'+fontPickerHTML(t.font||"sans");
+  h+='<div class="sectitle" style="margin-top:16px">Paleta de cores</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">';
+  Object.keys(PALETTES).forEach(k=>{
+    const P=PALETTES[k], sel=t.palette===k;
+    h+=`<div data-pal="${k}" style="cursor:pointer;border:2px solid ${sel?'var(--accent)':'var(--line)'};border-radius:10px;padding:8px;background:var(--panel2);transition:.15s">
+      <div style="display:flex;gap:4px;margin-bottom:6px">
+        <span style="flex:1;height:22px;border-radius:5px;background:${P.accent}"></span>
+        <span style="width:22px;height:22px;border-radius:5px;background:${P.accentDark}"></span>
+        <span style="width:22px;height:22px;border-radius:5px;background:${P.tint};border:1px solid ${P.border}"></span>
+      </div>
+      <div style="font-size:11.5px;color:${sel?'#fff':'var(--muted)'};font-weight:${sel?'700':'400'}">${P.name}${sel?' ✓':''}</div>
+    </div>`;
+  });
+  h+='</div>';
+  h+='<div class="shade-row"><span class="shade-lbl">Claro</span><input type="range" id="houseShade" min="0" max="100" value="'+(t.shade==null?50:t.shade)+'" class="shade-slider" style="background:'+shadeGradient(pal(t.palette))+'"><span class="shade-lbl">Escuro</span></div>';
+  h+='<div class="hint" style="margin:-2px 0 4px">Intensidade do tom — arrasta para clarear ou escurecer a cor.</div>';
+  h+='<div class="sectitle" style="margin-top:18px">Imagens (partilhadas PT/EN)</div>';
+  h+=`<div class="field"><label>Logótipo (URL)</label><input type="text" id="brandLogo" value="${escAttr(t.brand.logo||'')}" placeholder="https://… ou publica abaixo" style="width:100%;${HIN}"></div>
+      <div style="display:flex;gap:6px;margin:-4px 0 4px"><button class="btn sm" data-pub="logo" style="flex:1">⤴ Publicar</button><button class="btn sm" data-emb="logo">Embeber</button></div>
+      <div class="hint" id="logoStatus" style="margin-bottom:10px"></div>`;
+  h+=`<div class="field"><label>Imagem de topo / hero (URL)</label><input type="text" id="brandHero" value="${escAttr(t.brand.hero||'')}" placeholder="https://… (opcional)" style="width:100%;${HIN}"></div>
+      <div style="display:flex;gap:6px;margin:-4px 0 4px"><button class="btn sm" data-pub="hero" style="flex:1">⤴ Publicar</button><button class="btn sm" data-emb="hero">Embeber</button></div>
+      <div class="hint" id="heroStatus"></div>`;
+  h+='<div class="sectitle" style="margin-top:18px">Largura (opcional)</div>';
+  h+=`<div class="field"><input type="number" id="houseWidth" value="${t.settings.width||''}" placeholder="auto (do design)" min="480" max="800" style="width:100%;${HIN}"><div class="hint">Deixa vazio para a largura natural do design.</div></div>`;
+  h+='<div class="tag-hint" style="margin-top:8px">Design, paleta, letra e imagens aplicam-se aos dois idiomas. O texto edita-se no separador «Propriedades».</div>';
+  box.innerHTML=h;
+  box.querySelectorAll("[data-design]").forEach(el=>el.addEventListener("click",()=>{ t.design=el.dataset.design; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
+  box.querySelectorAll("[data-font]").forEach(el=>el.addEventListener("click",()=>{ t.font=el.dataset.font; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
+  box.querySelectorAll("[data-pal]").forEach(el=>el.addEventListener("click",()=>{ t.palette=el.dataset.pal; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
+  const shd=box.querySelector("#houseShade"); if(shd) shd.addEventListener("input",()=>{ t.shade=parseInt(shd.value); dirty(); refreshHtmlPrev(); });
+  const lg=box.querySelector("#brandLogo"); lg.addEventListener("input",()=>{ t.brand.logo=lg.value; dirty(); refreshHtmlPrev(); });
+  const hr=box.querySelector("#brandHero"); hr.addEventListener("input",()=>{ t.brand.hero=hr.value; dirty(); refreshHtmlPrev(); });
+  const wd=box.querySelector("#houseWidth"); wd.addEventListener("input",()=>{ t.settings.width=parseInt(wd.value)||0; dirty(); refreshHtmlPrev(); });
+  box.querySelectorAll("[data-pub]").forEach(el=>el.addEventListener("click",()=>{ const k=el.dataset.pub; publishImageInto(u=>{t.brand[k]=u;}, k+"Status"); }));
+  box.querySelectorAll("[data-emb]").forEach(el=>el.addEventListener("click",()=>{ const k=el.dataset.emb; embedImageInto(u=>{t.brand[k]=u;}, k+"Status"); }));
+  box.scrollTop=sc;
+}
+function renderStyle(){
+  const box=$("tabStyle");
+  if(cur().mode==="house"){ renderHouseStyle(box); return; }
+  if(cur().mode==="html"){ box.innerHTML='<div class="tag-hint">Template em modo HTML — o estilo controla-se diretamente no código.</div>'; return; }
+  const s=cur().settings;
+  box.innerHTML=
+    `<div class="sectitle">Estilo geral do email</div>`+
+    field("Cor de fundo (fora do cartão)",color(s.bg,"bg"))+
+    field("Cor do cartão",color(s.containerBg,"containerBg"))+
+    `<div class="field"><label>Largura do email (px)</label><input type="number" value="${s.width}" data-sbind="width" min="320" max="800"></div>`+
+    `<div class="field"><label>Tipo de letra</label><select data-sbind="font">
+      <option value='"Segoe UI", Arial, sans-serif'>Segoe UI / Arial</option>
+      <option value='Arial, Helvetica, sans-serif'>Arial</option>
+      <option value='Georgia, "Times New Roman", serif'>Georgia (serif)</option>
+      <option value='"Trebuchet MS", sans-serif'>Trebuchet MS</option>
+      <option value='Verdana, Geneva, sans-serif'>Verdana</option>
+      <option value='Tahoma, sans-serif'>Tahoma</option>
+     </select></div>`+
+    `<div class="tag-hint">Estes estilos aplicam-se aos dois idiomas (PT e EN).</div>`;
+  box.querySelector("[data-sbind='font']").value=s.font;
+  box.querySelectorAll("[data-bind],[data-sbind]").forEach(el=>{
+    const k=el.getAttribute("data-bind")||el.getAttribute("data-sbind");
+    el.addEventListener("input",()=>{ let v=el.value; if(el.type==="number")v=parseInt(v)||600; s[k]=v;
+      box.querySelectorAll(`[data-bind="${k}"]`).forEach(o=>{if(o!==el)o.value=el.value;});
+      dirty(); renderCanvas(); });
+  });
+}
+
+/* ============================ TABS ============================ */
+function switchTab(name){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("active",b.getAttribute("data-tab")===name));
+  $("tabProps").style.display=name==="props"?"block":"none";
+  $("tabTags").style.display=name==="tags"?"block":"none";
+  $("tabStyle").style.display=name==="style"?"block":"none";
+  if(name==="tags") renderTags($("tagSearch")?.value||"");
+  if(name==="style") renderStyle();
+}
+
+/* ============================ PROJECTS + TEMPLATE LIST ============================ */
+function renderPrjList(){
+  const box=$("prjList"); if(!box) return; box.innerHTML="";
+  $("prjCount").textContent="("+state.projects.length+")";
+  const sorted=[...state.projects].sort((a,b)=>(a.hotel||"").localeCompare(b.hotel||"","pt",{sensitivity:"base"}));
+  sorted.forEach(p=>{
+    const d=document.createElement("div");
+    d.className="tpl-item prj-item"+(p.id===state.currentProjectId?" active":"");
+    d.innerHTML=`<span class="ico">${ic("building",14)}</span><span class="nm">${esc(p.hotel)}</span><span class="badge">${p.templates.length}</span>`;
+    d.addEventListener("click",()=>{ if(p.id===state.currentProjectId) return; state.currentProjectId=p.id; state.currentTemplateId=(p.templates[0]||{}).id; state.selectedBlock=null; save(); renderAll(); });
+    box.appendChild(d);
+  });
+}
+function renderTplList(){
+  const box=$("tplList"); box.innerHTML="";
+  const p=proj(); if(!p) return;
+  $("tplTitle").innerHTML='Templates · <span style="color:var(--accent)">'+esc(p.hotel)+'</span>';
+  p.templates.forEach(t=>{
+    const d=document.createElement("div");
+    d.className="tpl-item"+(t.id===state.currentTemplateId?" active":"");
+    d.innerHTML=`<span class="nm">${esc(t.name)}</span>`;
+    d.addEventListener("click",()=>{ state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
+    box.appendChild(d);
+  });
+}
+
+/* ============================ ADD BLOCK GRID ============================ */
+function renderAddGrid(){
+  const g=$("addGrid"); g.innerHTML="";
+  BLOCK_TYPES.forEach(([type,ico,lbl])=>{
+    const b=document.createElement("button");
+    b.innerHTML=`<span class="ico">${ico}</span>${lbl}`;
+    b.addEventListener("click",()=>{
+      const L=curLang(); const blk=newBlock(type);
+      // insert after selected, else end
+      const i=L.blocks.findIndex(x=>x.id===state.selectedBlock);
+      if(i>=0) L.blocks.splice(i+1,0,blk); else L.blocks.push(blk);
+      state.selectedBlock=blk.id; dirty(); renderCanvas(); renderProps(); switchTab("props");
+    });
+    g.appendChild(b);
+  });
+}
+
+/* ============================ EXPORT / PREVIEW MODALS ============================ */
+function showModal(title,bodyHTML,footHTML){
+  $("modalTitle").textContent=title; $("modalBody").innerHTML=bodyHTML; $("modalFoot").innerHTML=footHTML||"";
+  $("modalBg").classList.add("show");
+}
+function closeModal(){ $("modalBg").classList.remove("show"); }
+
+function openExport(){
+  const lang=state.lang;
+  const html=buildEmail(lang);
+  const subject=curLang().subject;
+  showModal(`Copiar para o PMS — ${lang.toUpperCase()}`,
+    `<div class="tag-hint" style="margin-bottom:10px">No PMS (Modelos de E-mail): cola o <b>Assunto</b> no campo «Assunto» e o <b>HTML</b> no campo «Texto», no idioma certo (${lang.toUpperCase()}).</div>
+     <div class="switchmode">
+       <button class="btn sm ${lang==='pt'?'primary':''}" onclick="window.__expLang('pt')">PT</button>
+       <button class="btn sm ${lang==='en'?'primary':''}" onclick="window.__expLang('en')">EN</button>
+     </div>
+     <div class="field"><label>1 · Assunto (campo "Assunto" do PMS)</label>
+       <input type="text" id="expSubject" value="${escAttr(subject)}" style="width:100%;background:#0b0d11;border:1px solid var(--line);color:var(--txt);padding:8px;border-radius:7px"></div>
+     <label style="font-size:11px;color:var(--muted)">2 · HTML (campo "Texto" do PMS)</label>
+     <pre class="code" id="expCode">${esc(html)}</pre>`,
+    `<button class="btn" onclick="window.__copy('expSubject',true)">Copiar assunto</button>
+     <button class="btn primary" onclick="window.__copy('expCode')">⧉ Copiar HTML</button>
+     <button class="btn ghost" onclick="window.__closeModal()">Fechar</button>`);
+}
+window.__expLang=l=>{ state.lang=l; setLangUI(); openExport(); };
+window.__copy=(id,isInput)=>{
+  const el=$(id); const txt=isInput?el.value:el.textContent;
+  navigator.clipboard.writeText(txt).then(()=>toast("Copiado!"),()=>{
+    const r=document.createRange(); r.selectNode(el); getSelection().removeAllRanges(); getSelection().addRange(r);
+    try{document.execCommand("copy");toast("Copiado!");}catch(e){toast("Copia manualmente (Ctrl+C)");}
+  });
+};
+window.__closeModal=closeModal;
+
+function openPreview(){
+  const lang=state.lang;
+  const html=applySample(buildEmail(lang));
+  showModal(`Pré-visualização — ${lang.toUpperCase()} (com dados de exemplo)`,
+    `<div class="switchmode">
+       <button class="btn sm ${lang==='pt'?'primary':''}" onclick="window.__prevLang('pt')">PT</button>
+       <button class="btn sm ${lang==='en'?'primary':''}" onclick="window.__prevLang('en')">EN</button>
+       <span style="flex:1"></span>
+       <span style="font-size:11px;color:var(--muted);align-self:center">Os valores a amarelo são exemplos das tags</span>
+     </div>
+     <div style="background:#e9edf3;border-radius:10px;padding:10px"><iframe id="prevFrame" style="width:100%;height:52vh;border:0;background:#fff;border-radius:6px"></iframe></div>`,
+    `<button class="btn ghost" onclick="window.__closeModal()">Fechar</button>`);
+  const f=document.getElementById("prevFrame");
+  const doc=f.contentDocument||f.contentWindow.document;
+  doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0">'+html+'</body></html>'); doc.close();
+}
+window.__prevLang=l=>{ state.lang=l; setLangUI(); openPreview(); };
+
+// 5 modelos predefinidos por evento (mesmo conteúdo, visual distinto)
+const GAL_VARIANTS=[
+  {design:"moderno",  palette:"azul",     font:"sans",    shade:50, label:"Moderno"},
+  {design:"luxo",     palette:"grafite",  font:"elegant", shade:42, label:"Luxo"},
+  {design:"minimal",  palette:"verde",    font:"sans",    shade:55, label:"Minimal"},
+  {design:"vibrante", palette:"vermelho", font:"sans",    shade:50, label:"Vibrante"},
+  {design:"boutique", palette:"dourado",  font:"elegant", shade:46, label:"Boutique"}
+];
+const GAL_POOL=[
+  {design:"escuro",   palette:"azul",     font:"sans",    shade:50, label:"Escuro"},
+  {design:"moderno",  palette:"verde",    font:"century", shade:44, label:"Moderno verde"},
+  {design:"vibrante", palette:"grafite",  font:"modern",  shade:52, label:"Vibrante grafite"},
+  {design:"luxo",     palette:"dourado",  font:"garamond",shade:40, label:"Luxo âmbar"},
+  {design:"minimal",  palette:"vermelho", font:"serif",   shade:58, label:"Minimal carmim"},
+  {design:"boutique", palette:"azul",     font:"elegant", shade:48, label:"Boutique azul"},
+  {design:"escuro",   palette:"vermelho", font:"sans",    shade:50, label:"Escuro carmim"}
+];
+let galSel=0; let galExtra={};
+function galVars(ei){ return GAL_VARIANTS.concat(galExtra[ei]||[]); }
+function openGallery(){
+  galSel=0; galExtra={};
+  showModal("Galeria de modelos",
+    `<div class="tag-hint">Escolhe o <b>evento</b> (em cima) e depois um dos <b>modelos prontos</b>. Cria um template novo já preenchido em PT e EN, pronto a personalizar.</div><div id="galWrap"></div>`,
+    `<button class="btn ghost" onclick="window.__closeModal()">Fechar</button>`);
+  renderGal();
+}
+function renderGal(){
+  const w=$("galWrap"); if(!w) return;
+  const chips=STARTERS.map((st,i)=>`<button class="gchip${i===galSel?' on':''}" data-gev="${i}" title="${escAttr(st.code||"")}">${ic("mail",15)}<span>${escText(st.name)}</span></button>`).join("");
+  const st=STARTERS[galSel];
+  const cards=galVars(galSel).map((v,vi)=>{
+    const P=pal(v.palette);
+    return `<div class="gvcard" data-gvi="${vi}" title="${escAttr(v.design+" · "+P.name)}">
+      <div class="gvthumb">${designThumb(v.design)}</div>
+      <div class="gvmeta"><span class="gvname">${escText(v.label)}</span><span class="gvdots"><i style="background:${P.accent}"></i><i style="background:${P.accentDark}"></i></span></div>
+    </div>`;
+  }).join("");
+  w.innerHTML=`<div class="gchips">${chips}</div>
+    <div class="gevhead"><span class="gevcode" style="background:${st.accent}">${escText(st.code||"")}</span><span class="gevname">${escText(st.name)}</span><span style="flex:1"></span><button class="btn sm" id="galMore" title="Gerar mais uma variante visual deste evento">${ic("wand",14)} Gerar mais</button></div>
+    <div class="gvgrid">${cards}</div>`;
+  w.querySelectorAll("[data-gev]").forEach(el=>el.addEventListener("click",()=>{ galSel=+el.dataset.gev; renderGal(); }));
+  w.querySelectorAll("[data-gvi]").forEach(el=>el.addEventListener("click",()=>galPick(+el.dataset.gvi)));
+  const more=$("galMore"); if(more) more.addEventListener("click",galMore);
+}
+function galPick(vi){
+  const st=STARTERS[galSel], v=galVars(galSel)[vi];
+  const t=instStarter(st);
+  t.design=v.design; t.palette=v.palette; t.font=v.font; t.shade=v.shade;
+  proj().templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
+  save(); closeModal(); renderAll(); toast("Modelo «"+st.name+" · "+v.label+"» criado em "+proj().hotel);
+}
+function galMore(){
+  const shown=galVars(galSel).map(v=>v.design+"/"+v.palette);
+  const next=GAL_POOL.find(v=>shown.indexOf(v.design+"/"+v.palette)<0);
+  if(!next){ toast("Já tens todas as variantes deste evento."); return; }
+  (galExtra[galSel]=galExtra[galSel]||[]).push(next);
+  renderGal();
+}
+
+/* ============================ WIZARD (gerar template) ============================ */
+const WZ_ENLBL={'@GUESTNAME@':'Guest name','@RESNO@':'Reservation','@CATEGORYDESCRIPTION@':'Room type','@UNITCODE@':'Room number','@CHECKIN@':'Arrival','@CHECKOUT@':'Departure','@COMMERCIALNAME@':'Hotel','@ONLINECHECKIN@':'Online check-in','@KEYPASS@':'KeyPass'};
+let wz=null;
+function wzPtLabel(code){ const t=DEFAULT_TAGS.find(x=>x[2]===code); return t?t[1]:code; }
+function wzDefaultTags(idx){ return (STARTERS[idx].pt.data||[]).map(d=>d[1]); }
+function openWizard(){
+  wz={ typeIdx:0, design:"moderno", palette:"azul", font:"sans", shade:50, tags:wzDefaultTags(0) };
+  renderWizard();
+}
+function renderWizard(){
+  const mbOld=document.getElementById("modalBody"); const wsc=mbOld?mbOld.scrollTop:0;
+  const allTags=DEFAULT_TAGS.map(t=>t[2]);
+  const typeOpts=STARTERS.map((st,i)=>`<option value="${i}" ${wz.typeIdx===i?"selected":""}>${escText(st.name)} (${escText(st.code||"")})</option>`).join("");
+  const designCards=DESIGN_LIST.map(([k,nm,ds])=>`<div class="dcard${wz.design===k?' sel':''}" data-wdesign="${k}" title="${escAttr(ds)}"><div class="dthumb">${designThumb(k)}</div><div class="dname">${nm}</div></div>`).join("");
+  const palSwatch=Object.keys(PALETTES).map(k=>{const P=PALETTES[k];return `<div class="wcard${wz.palette===k?' wsel':''}" data-wpal="${k}" style="text-align:center"><div style="display:flex;gap:3px;margin-bottom:5px"><span style="flex:1;height:18px;border-radius:4px;background:${P.accent}"></span><span style="width:18px;height:18px;border-radius:4px;background:${P.accentDark}"></span></div><div style="font-size:11px">${P.name}</div></div>`;}).join("");
+  const tagChecks=allTags.map(code=>`<label class="wtag"><input type="checkbox" data-wtag="${escAttr(code)}" ${wz.tags.includes(code)?"checked":""}> <span class="tn">${escText(wzPtLabel(code))}</span> <span class="tc">${escText(code)}</span></label>`).join("");
+  const body=`
+    <div class="wsec"><div class="wlbl">1 · Tipo de email</div><select id="wzType" style="width:100%;${HIN}">${typeOpts}</select></div>
+    <div class="wsec"><div class="wlbl">2 · Design</div><div class="dgrid" id="wzDesign">${designCards}</div></div>
+    <div class="wsec"><div class="wlbl">3 · Paleta de cores</div><div class="wgrid5" id="wzPal">${palSwatch}</div>
+      <div class="shade-row" style="margin-top:8px"><span class="shade-lbl">Claro</span><input type="range" id="wzShade" min="0" max="100" value="${wz.shade==null?50:wz.shade}" class="shade-slider" style="background:${shadeGradient(pal(wz.palette))}"><span class="shade-lbl">Escuro</span></div></div>
+    <div class="wsec"><div class="wlbl">4 · Tipo de letra</div>${fontPickerHTML(wz.font)}</div>
+    <div class="wsec"><div class="wlbl">5 · Tags no resumo da reserva</div><div class="wtags">${tagChecks}</div></div>`;
+  showModal("Gerar template",
+    `<div class="tag-hint" style="margin-bottom:12px">Escolhe as opções e o wizard cria um template novo, já com o conteúdo do tipo de email, no design, paleta e letra que escolheres.</div>${body}`,
+    `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button><button class="btn primary" id="wzGo">Gerar template</button>`);
+  const wsh=document.getElementById("wzShade"); if(wsh) wsh.addEventListener("input",()=>{ wz.shade=parseInt(wsh.value); });
+  $("wzType").addEventListener("change",e=>{ wz.typeIdx=+e.target.value; wz.tags=wzDefaultTags(wz.typeIdx); renderWizard(); });
+  document.querySelectorAll("#modalBody [data-font]").forEach(el=>el.addEventListener("click",()=>{ wz.font=el.dataset.font; renderWizard(); }));
+  document.querySelectorAll("#wzDesign [data-wdesign]").forEach(el=>el.addEventListener("click",()=>{ wz.design=el.dataset.wdesign; renderWizard(); }));
+  document.querySelectorAll("#wzPal [data-wpal]").forEach(el=>el.addEventListener("click",()=>{ wz.palette=el.dataset.wpal; renderWizard(); }));
+  document.querySelectorAll("[data-wtag]").forEach(el=>el.addEventListener("change",()=>{ const c=el.dataset.wtag; if(el.checked){ if(!wz.tags.includes(c)) wz.tags.push(c); } else { wz.tags=wz.tags.filter(x=>x!==c); } }));
+  $("wzGo").addEventListener("click",wizardGenerate);
+  const mbNew=document.getElementById("modalBody"); if(mbNew) mbNew.scrollTop=wsc;
+}
+function wizardGenerate(){
+  const st=STARTERS[wz.typeIdx];
+  const t=instStarter(st);
+  t.design=wz.design; t.font=wz.font; t.palette=wz.palette; t.shade=wz.shade;
+  const order=DEFAULT_TAGS.map(x=>x[2]).filter(c=>wz.tags.includes(c));
+  t.pt.data=order.map(c=>[wzPtLabel(c)+":", c]);
+  t.en.data=order.map(c=>[(WZ_ENLBL[c]||wzPtLabel(c))+":", c]);
+  proj().templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
+  save(); closeModal(); renderAll(); toast("Template gerado: "+st.name);
+}
+
+/* ============================ ECRÃ DE ENTRADA (Novo / Abrir) ============================ */
+const HOME_BRAND='<div class="login-brand"><svg width="30" height="32" viewBox="0 0 32 34" aria-hidden="true"><path d="M5 32 V13 L13 7 V32 Z" fill="#1f6bff"/><rect x="16" y="12" width="8" height="20" rx="4" fill="#1f6bff"/></svg><div><div style="font-weight:800;font-size:18px;line-height:1">Relation<span style="color:var(--accent)">ship</span></div><div style="font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-top:3px">by Host Hotel Systems</div></div></div>';
+let nf=null;
+function showHome(){ if(!document.getElementById("homeOv")){ const d=document.createElement("div"); d.id="homeOv"; d.className="login-ov"; document.body.appendChild(d); } renderHome("home"); }
+function hideHome(){ const d=document.getElementById("homeOv"); if(d) d.remove(); }
+function renderHome(view){
+  const d=document.getElementById("homeOv"); if(!d) return;
+  const oldCard=d.querySelector(".login-card"); const sc=oldCard?oldCard.scrollTop:0;
+  if(view==="home"){
+    d.innerHTML='<div class="login-card">'+HOME_BRAND+
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 18px">Cria a codificação dos emails RelationshipEmail para os teus hotéis.</p>'+
+      '<div style="display:flex;gap:10px">'+
+        '<button class="btn primary" id="hNew" style="flex:1;padding:14px;font-size:14px">'+ic("plus",16)+' Novo Projeto</button>'+
+        '<button class="btn" id="hOpen" style="flex:1;padding:14px;font-size:14px">'+ic("folder",16)+' Abrir Projeto</button>'+
+      '</div>'+
+      '<div class="hint" style="margin-top:12px;text-align:center">'+state.projects.length+' projeto(s) guardado(s)</div></div>';
+    document.getElementById("hNew").addEventListener("click",()=>{ nf={ hotel:"", events:[], design:"moderno", palette:"azul", font:"sans", shade:50 }; renderHome("new"); const hi=document.getElementById("nfHotel"); if(hi) hi.focus(); });
+    document.getElementById("hOpen").addEventListener("click",hideHome);
+    return;
+  }
+  // ----- formulário Novo Projeto -----
+  const evRow=i=>{ const st=STARTERS[i]; return `<label class="evrow"><input type="checkbox" data-nfev="${i}" ${nf.events.includes(i)?"checked":""}><span class="tn">${escText(st.name)}</span><span class="tc">${escText(st.code||"")}</span></label>`; };
+  const mainEv=STARTERS.map((st,i)=>evRow(i)).join("");
+  const designCards=DESIGN_LIST.map(([k,nm,ds])=>`<div class="dcard${nf.design===k?' sel':''}" data-nfdesign="${k}" title="${escAttr(ds)}"><div class="dthumb">${designThumb(k)}</div><div class="dname">${nm}</div></div>`).join("");
+  const palSwatch=Object.keys(PALETTES).map(k=>{const P=PALETTES[k];return `<div class="wcard${nf.palette===k?' wsel':''}" data-nfpal="${k}" style="text-align:center;padding:7px"><div style="display:flex;gap:3px;margin-bottom:4px"><span style="flex:1;height:16px;border-radius:4px;background:${P.accent}"></span><span style="width:16px;height:16px;border-radius:4px;background:${P.accentDark}"></span></div><div style="font-size:10.5px">${P.name}</div></div>`;}).join("");
+  d.innerHTML='<div class="login-card" style="width:580px;max-height:92vh;overflow:auto">'+HOME_BRAND+
+    '<div class="wlbl" style="margin-top:14px">Nome do hotel</div>'+
+    '<input id="nfHotel" type="text" placeholder="Ex.: Grand Palácio Lisboa" value="'+escAttr(nf.hotel)+'" style="width:100%;'+HIN+';padding:11px 13px">'+
+    '<div class="wlbl" style="margin-top:16px">Templates a desenvolver</div>'+
+    '<div class="evlist">'+mainEv+'</div>'+
+    '<div class="wlbl" style="margin-top:16px">Design</div><div class="dgrid" id="nfDesign">'+designCards+'</div>'+
+    '<div class="wlbl" style="margin-top:16px">Paleta de cores</div><div class="wgrid5" id="nfPal">'+palSwatch+'</div>'+
+    '<div class="shade-row"><span class="shade-lbl">Claro</span><input type="range" id="nfShade" min="0" max="100" value="'+(nf.shade==null?50:nf.shade)+'" class="shade-slider" style="background:'+shadeGradient(pal(nf.palette))+'"><span class="shade-lbl">Escuro</span></div>'+
+    '<div class="hint" style="margin:-2px 0 0">Tom da cor escolhida.</div>'+
+    '<div class="wlbl" style="margin-top:16px">Tipo de letra</div>'+fontPickerHTML(nf.font)+
+    '<div id="nfMsg" class="hint" style="min-height:15px;margin-top:10px;color:var(--danger)"></div>'+
+    '<div style="display:flex;gap:8px;margin-top:6px"><button class="btn" id="nfBack">← Voltar</button><button class="btn primary" id="nfCreate" style="flex:1;padding:11px">Criar projeto</button></div></div>';
+  const nc=d.querySelector(".login-card"); if(nc) nc.scrollTop=sc;
+  const hotel=document.getElementById("nfHotel");
+  hotel.addEventListener("input",()=>{ nf.hotel=hotel.value; });
+  d.querySelectorAll("[data-nfev]").forEach(el=>el.addEventListener("change",()=>{ const i=+el.dataset.nfev; if(el.checked){ if(!nf.events.includes(i)) nf.events.push(i); } else { nf.events=nf.events.filter(x=>x!==i); } }));
+  d.querySelectorAll("[data-nfdesign]").forEach(el=>el.addEventListener("click",()=>{ nf.design=el.dataset.nfdesign; renderHome("new"); }));
+  d.querySelectorAll("[data-nfpal]").forEach(el=>el.addEventListener("click",()=>{ nf.palette=el.dataset.nfpal; renderHome("new"); }));
+  d.querySelectorAll("[data-font]").forEach(el=>el.addEventListener("click",()=>{ nf.font=el.dataset.font; renderHome("new"); }));
+  const nshd=document.getElementById("nfShade"); if(nshd) nshd.addEventListener("input",()=>{ nf.shade=parseInt(nshd.value); });
+  document.getElementById("nfBack").addEventListener("click",()=>renderHome("home"));
+  document.getElementById("nfCreate").addEventListener("click",createProjectFromForm);
+}
+function createProjectFromForm(){
+  const m=document.getElementById("nfMsg");
+  const name=(nf.hotel||"").trim();
+  if(!name){ if(m) m.textContent="Dá um nome ao hotel."; return; }
+  if(!nf.events.length){ if(m) m.textContent="Escolhe pelo menos um template a desenvolver."; return; }
+  const p={ id:"prj"+(_ctr++)+"_"+Math.floor(performance.now()), hotel:name, templates:[] };
+  nf.events.slice().sort((a,b)=>a-b).forEach(i=>{ const t=instStarter(STARTERS[i]); t.design=nf.design; t.font=nf.font; t.palette=nf.palette; t.shade=nf.shade; p.templates.push(t); });
+  state.projects.push(p); state.currentProjectId=p.id; state.currentTemplateId=p.templates[0].id; state.selectedBlock=null; state.lang="pt";
+  cloudSyncProject(p); save(); hideHome(); renderAll(); toast("Projeto «"+name+"» criado");
+}
+
+/* ============================ LANG UI ============================ */
+function setLangUI(){
+  document.querySelectorAll("#langToggle button").forEach(b=>b.classList.toggle("active",b.getAttribute("data-lang")===state.lang));
+  $("subjLangLbl").textContent=state.lang.toUpperCase();
+  $("subjectInput").value=curLang().subject;
+}
+
+/* ============================ RENDER ALL ============================ */
+function renderAll(){
+  renderPrjList();
+  if(!cur()){ if(proj()&&proj().templates[0]) state.currentTemplateId=proj().templates[0].id; }
+  const t=cur();
+  $("tplName").value=t?t.name:"";
+  const blocksMode=t&&t.mode==="blocks";
+  $("addBlockTitle").style.display=blocksMode?"":"none";
+  $("addGrid").style.display=blocksMode?"":"none";
+  setLangUI();
+  renderTplList(); renderAddGrid(); renderCanvas(); renderProps();
+  const at=document.querySelector(".tabs button.active")?.getAttribute("data-tab")||"props";
+  if(at==="tags")renderTags(); if(at==="style")renderStyle();
+}
+
+/* ============================ EVENTS ============================ */
+$("tplName").addEventListener("input",e=>{ cur().name=e.target.value; renderTplList(); dirty(); });
+$("subjectInput").addEventListener("input",e=>{ curLang().subject=e.target.value; dirty(); });
+$("subjectInput").addEventListener("focus",e=>{ state.activeField=e.target; });
+document.querySelectorAll("#langToggle button").forEach(b=>b.addEventListener("click",()=>{ state.lang=b.getAttribute("data-lang"); state.selectedBlock=null; setLangUI(); renderCanvas(); renderProps(); }));
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.getAttribute("data-tab"))));
+$("btnNewTpl").addEventListener("click",()=>{ const p=proj(); const t=blankTemplate("Novo template "+(p.templates.length+1)); p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
+$("btnDupTpl").addEventListener("click",()=>{ const p=proj(); const c=JSON.parse(JSON.stringify(cur())); c.id="tpl"+(_ctr++)+"_"+Math.floor(performance.now()); c.name=cur().name+" (cópia)"; p.templates.push(c); state.currentTemplateId=c.id; save(); renderAll(); });
+$("btnDelTpl").addEventListener("click",()=>{ const p=proj(); if(p.templates.length<=1){toast("O projeto tem de ter pelo menos 1 template");return;} if(confirm("Apagar este template?")){ p.templates=p.templates.filter(t=>t.id!==state.currentTemplateId); state.currentTemplateId=p.templates[0].id; save(); renderAll(); } });
+$("btnNewPrj").addEventListener("click",()=>{ const name=prompt("Nome do hotel / projeto:"); if(!name) return; const p=newProject(name.trim()); state.projects.push(p); state.currentProjectId=p.id; state.currentTemplateId=p.templates[0].id; state.selectedBlock=null; save(); renderAll(); toast("Projeto criado"); });
+$("btnRenPrj").addEventListener("click",()=>{ const p=proj(); const name=prompt("Renomear hotel / projeto:",p.hotel); if(!name) return; p.hotel=name.trim(); save(); renderAll(); });
+$("btnDelPrj").addEventListener("click",()=>{ if(state.projects.length<=1){toast("Tem de existir pelo menos 1 projeto");return;} if(confirm("Apagar o projeto «"+proj().hotel+"» e todos os seus templates?")){ const delId=state.currentProjectId; state.projects=state.projects.filter(p=>p.id!==delId); state.currentProjectId=state.projects[0].id; state.currentTemplateId=(state.projects[0].templates[0]||{}).id; cloudDeleteProject(delId); save(); renderAll(); } });
+$("btnGallery").addEventListener("click",openGallery);
+$("btnWizard").addEventListener("click",openWizard);
+document.querySelector(".brand").addEventListener("click",showHome);
+// ícones monocromáticos nos botões
+$("btnWizard").innerHTML=ic("wand",15)+" Gerar template";
+$("btnGallery").innerHTML=ic("grid",15)+" Galeria de modelos";
+$("btnNewPrj").innerHTML=ic("plus",15)+" Novo projeto";
+$("btnRenPrj").innerHTML=ic("pencil",14);
+$("btnDelPrj").innerHTML=ic("trash",14);
+$("btnNewTpl").innerHTML=ic("plus",14)+" Novo";
+$("btnPreview").innerHTML=ic("eye",15)+" Pré-visualizar";
+$("btnExport").innerHTML=ic("copy",15)+" Copiar p/ PMS";
+$("btnExport").addEventListener("click",openExport);
+$("btnPreview").addEventListener("click",openPreview);
+$("modalBg").addEventListener("click",e=>{ if(e.target===$("modalBg")) closeModal(); });
+// Track active text field globally for tag insertion + readiness feedback
+document.addEventListener("focusin",e=>{ const el=e.target; if(el&&el.getAttribute&&el.getAttribute("data-tagtarget")){ state.activeField=el; } updateTagReady(); });
+window.addEventListener("resize",()=>{ clearTimeout(window.__rz); window.__rz=setTimeout(fitPreview,80); });
+
+/* ============================ INIT ============================ */
+bootstrap();
+</script>
+</body>
+</html>
