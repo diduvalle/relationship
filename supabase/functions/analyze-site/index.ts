@@ -6,7 +6,7 @@
 // Secrets: GEMINI_API_KEY (obrigatório), JINA_API_KEY (opcional, melhora sites SPA).
 // Deploy: ver EDGE-FUNCTION-SETUP.md.
 
-const MODEL = "gemini-2.0-flash"; // grátis; alternativas: "gemini-1.5-flash", "gemini-2.5-flash"
+const MODEL = "gemini-2.5-flash"; // grátis; alternativas: "gemini-2.0-flash", "gemini-1.5-flash" (pode vir override no body p/ teste)
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
 const CORS: Record<string, string> = {
@@ -114,8 +114,9 @@ Deno.serve(async (req: Request) => {
     const key = Deno.env.get("GEMINI_API_KEY");
     if (!key) return json({ error: "GEMINI_API_KEY não configurada" }, 500);
 
-    const { url } = await req.json().catch(() => ({ url: "" }));
-    const target = normUrl(url);
+    const reqBody = await req.json().catch(() => ({}));
+    const target = normUrl(reqBody?.url || "");
+    const model = (typeof reqBody?.model === "string" && reqBody.model) ? reqBody.model : MODEL;
     if (!target) return json({ error: "URL em falta" }, 400);
 
     // 1) conteúdo da homepage
@@ -144,7 +145,7 @@ Deno.serve(async (req: Request) => {
     parts.push({ text: PROMPT + "\n\nWEBSITE: " + target + "\n\nCONTEUDO:\n" + body });
 
     const gRes = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + encodeURIComponent(key),
+      "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key),
       {
         method: "POST",
         headers: { "content-type": "application/json" },
