@@ -194,7 +194,7 @@
   .qtag:hover{background:#2f5aa0;transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.3)}
   .qtag:active{transform:translateY(0)}
   /* cloud login overlay + badge */
-  .login-ov{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(1200px 600px at 75% -10%, #1a2030 0%, var(--bg) 55%)}
+  .login-ov{position:fixed;inset:0;z-index:120;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;padding:20px;background:radial-gradient(1200px 600px at 75% -10%, #1a2030 0%, var(--bg) 55%)}
   .login-card{width:380px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:pop .25s cubic-bezier(.2,.8,.2,1)}
   .spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -2008,7 +2008,7 @@ function showHome(view){ if(!document.getElementById("homeOv")){ const d=documen
 function hideHome(){ const d=document.getElementById("homeOv"); if(d) d.remove(); }
 function renderHome(view){
   const d=document.getElementById("homeOv"); if(!d) return;
-  const oldCard=d.querySelector(".login-card"); const sc=oldCard?oldCard.scrollTop:0;
+  const sc=d.scrollTop||0;
   if(view==="loading"){
     d.innerHTML='<div class="login-card" style="text-align:center">'+HOME_BRAND+
       '<div class="hint" style="margin-top:18px;display:flex;align-items:center;justify-content:center;gap:9px"><span class="spin"></span> A carregar os teus projetos…</div></div>';
@@ -2031,7 +2031,7 @@ function renderHome(view){
   const mainEv=STARTERS.map((st,i)=>evRow(i)).join("");
   const designCards=DESIGN_LIST.map(([k,nm,ds])=>`<div class="dcard${nf.design===k?' sel':''}" data-nfdesign="${k}" title="${escAttr(ds)}"><div class="dthumb">${designThumb(k)}</div><div class="dname">${nm}</div></div>`).join("");
   const palSwatch=Object.keys(PALETTES).map(k=>{const P=PALETTES[k];return `<div class="wcard${nf.palette===k?' wsel':''}" data-nfpal="${k}" style="text-align:center;padding:7px"><div style="display:flex;gap:3px;margin-bottom:4px"><span style="flex:1;height:16px;border-radius:4px;background:${P.accent}"></span><span style="width:16px;height:16px;border-radius:4px;background:${P.accentDark}"></span></div><div style="font-size:10.5px">${P.name}</div></div>`;}).join("");
-  d.innerHTML='<div class="login-card" style="width:580px;max-height:92vh;overflow:auto">'+HOME_BRAND+
+  d.innerHTML='<div class="login-card" style="width:580px">'+HOME_BRAND+
     '<div class="wlbl" style="margin-top:14px">Nome do hotel</div>'+
     '<input id="nfHotel" type="text" placeholder="Ex.: Grand Palácio Lisboa" value="'+escAttr(nf.hotel)+'" style="width:100%;'+HIN+';padding:11px 13px">'+
     '<div class="wlbl" style="margin-top:16px">Website do hotel <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(opcional — capta cor, letra, logótipo e contactos)</span></div>'+
@@ -2049,7 +2049,7 @@ function renderHome(view){
     '<div class="wlbl" style="margin-top:16px">Tipo de letra</div>'+fontPickerHTML(nf.font)+
     '<div id="nfMsg" class="hint" style="min-height:15px;margin-top:10px;color:var(--danger)"></div>'+
     '<div style="display:flex;gap:8px;margin-top:6px"><button class="btn" id="nfBack">← Voltar</button><button class="btn primary" id="nfCreate" style="flex:1;padding:11px">Criar projeto</button></div></div>';
-  const nc=d.querySelector(".login-card"); if(nc) nc.scrollTop=sc;
+  d.scrollTop=sc;
   const hotel=document.getElementById("nfHotel");
   hotel.addEventListener("input",()=>{ nf.hotel=hotel.value; });
   const site=document.getElementById("nfSite"); if(site) site.addEventListener("input",()=>{ nf.website=site.value; });
