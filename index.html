@@ -1871,9 +1871,13 @@ async function analyzeSite(url){
   const r=analyzeHtml(html,url);
   r.contacts=r.contacts||{};
   if(!r.font) r.font=detectFontFromHtml(html);
-  // cor: do logótipo (se o CDN da imagem permitir CORS)
+  // cor: do logótipo (canvas; se o host não tiver CORS, tenta via proxy de imagem weserv)
   if(!r.color && r.logo && r.logo.indexOf("s2/favicons")<0){
-    try{ const col=await dominantColorFromImage(r.logo); if(col) r.color=col; }catch(_){}
+    try{
+      let col=await dominantColorFromImage(r.logo);
+      if(!col){ const px="https://images.weserv.nl/?url="+encodeURIComponent(r.logo.replace(/^https?:\/\//,"")); col=await dominantColorFromImage(px); }
+      if(col) r.color=col;
+    }catch(_){}
   }
   // contactos podem estar numa subpágina (ex.: /contactos)
   if(!r.contacts.email || !r.contacts.phone){
@@ -1929,9 +1933,9 @@ function dominantColorFromImage(url){
         for(let i=0;i<d.length;i+=4){
           const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3]; if(a<128) continue;
           const mx=Math.max(r,g,b),mn=Math.min(r,g,b), sat=mx===0?0:(mx-mn)/mx, val=mx/255;
-          if(sat<0.28||val<0.18||val>0.96) continue;
+          if(sat<0.30||val<0.22||val>0.96) continue;
           const key=(r>>4)+","+(g>>4)+","+(b>>4); counts[key]=(counts[key]||0)+1;
-          const score=counts[key]*(0.6+sat); if(score>bestScore){ bestScore=score; best=[r,g,b]; }
+          const score=counts[key]*(0.55+sat); if(score>bestScore){ bestScore=score; best=[r,g,b]; }
         }
         if(best){ const to=v=>("0"+v.toString(16)).slice(-2); finish("#"+to(best[0])+to(best[1])+to(best[2])); } else finish("");
       }catch(_){ finish(""); } };
@@ -1967,8 +1971,14 @@ function analyzeHtml(html, baseUrl){
   const abs=u=>{ if(!u) return ""; try{ return new URL(u, baseUrl).href; }catch(_){ return u; } };
   const meta=(sel)=>{ const el=doc.querySelector(sel); return el?(el.getAttribute("content")||el.getAttribute("href")||""):""; };
   const name = meta('meta[property="og:site_name"]') || meta('meta[property="og:title"]') || (doc.title||"").split(/[|\-–—•]/)[0].trim();
-  let logo = meta('meta[property="og:image"]') || meta('link[rel~="apple-touch-icon"]') || meta('link[rel="icon"]') || meta('link[rel~="icon"]');
-  if(!logo){ const im=doc.querySelector('header img, nav img, a[href="/"] img, a[href="'+origin+'"] img, a[href="'+origin+'/"] img, img'); if(im) logo=im.getAttribute("src")||im.getAttribute("data-src")||""; }
+  const imgSrc=el=>el?(el.getAttribute("src")||el.getAttribute("data-src")||el.getAttribute("data-lazy-src")||el.getAttribute("data-original")||""):"";
+  // logótipo: prioriza imagens explicitamente "logo" (não o og:image, que muitas vezes é um banner)
+  let logo = imgSrc(doc.querySelector('img[src*="logo" i],img[alt*="logo" i],img[class*="logo" i],[class*="logo" i] img,[id*="logo" i] img'));
+  if(!logo) logo = meta('link[rel~="apple-touch-icon"]');
+  if(!logo) logo = imgSrc(doc.querySelector('header img, nav img, a[href="/"] img, a[href="'+origin+'"] img, a[href="'+origin+'/"] img'));
+  if(!logo) logo = meta('meta[property="og:image"]');
+  if(!logo) logo = meta('link[rel="icon"]') || meta('link[rel~="icon"]');
+  if(!logo) logo = imgSrc(doc.querySelector('img'));
   logo = abs(logo);
   if(!logo) logo = "https://www.google.com/s2/favicons?domain="+encodeURIComponent(origin)+"&sz=128";
   let color = normHex(meta('meta[name="theme-color"]'));
@@ -1990,10 +2000,6 @@ function nearestPaletteKey(hex){
     if(dh<bestD){ bestD=dh; best=k; }
   }
   return best;
-}
-function shadeForColor(hex,palKey){
-  const t=hexToHsl(hex), p=hexToHsl(PALETTES[palKey].accent);
-  return Math.max(0,Math.min(100,Math.round(50+(p.l-t.l))));
 }
 /* ============================ ECRÃ DE ENTRADA (Novo / Abrir) ============================ */
 const HOME_BRAND='<div class="login-brand"><img src="favicon.png" width="32" height="32" alt="Host" style="display:block;flex:0 0 auto"><div><div style="font-weight:800;font-size:18px;line-height:1">Relation<span style="color:var(--accent)">ship</span></div><div style="font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-top:3px">by Host Hotel Systems</div></div></div>';
@@ -2076,7 +2082,7 @@ async function doAnalyze(){
   if(msg) msg.innerHTML='<span style="display:inline-flex;align-items:center;gap:7px"><span class="spin"></span> A ler '+escText(url)+'… (pode demorar uns segundos)</span>';
   try{
     const a=await analyzeSite(url);
-    if(a.color){ nf.palette=nearestPaletteKey(a.color); nf.shade=shadeForColor(a.color,nf.palette); nf.detectedColor=a.color; }
+    if(a.color){ nf.palette=nearestPaletteKey(a.color); nf.shade=50; nf.detectedColor=a.color; }
     if(a.font) nf.font=a.font;
     if(a.logo) nf.logo=a.logo;
     if(a.name && !(nf.hotel||"").trim()) nf.hotel=a.name;
