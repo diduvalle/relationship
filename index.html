@@ -198,6 +198,9 @@
   .login-card{width:380px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px 24px;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:pop .25s cubic-bezier(.2,.8,.2,1)}
   .spin{width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin .7s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
+  .achips{display:flex;flex-wrap:wrap;gap:6px}
+  .achip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:var(--txt)}
+  .adot{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(255,255,255,.25)}
   .login-brand{display:flex;align-items:center;gap:11px;margin-bottom:6px}
   .cloud-badge{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:4px 10px}
   .cloud-badge .cb-dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(54,192,138,.18)}
@@ -774,6 +777,17 @@ function hostAttribution(P,dark){
   const mut=dark?"rgba(255,255,255,.5)":P.muted, tx=dark?"#ffffff":P.text;
   return `<a href="https://www.hostpms.com/" target="_blank" rel="noopener" style="font-family:${FONTS.sans};font-size:11px;color:${mut};text-decoration:none;letter-spacing:.3px">powered by <strong style="color:${tx};font-size:11px">Host Hotel Systems</strong></a>`;
 }
+function contactsLine(o,P,dark,F){
+  const c=o&&o.contacts; if(!c||!Object.keys(c).some(k=>c[k])) return "";
+  const col=dark?"rgba(255,255,255,.66)":P.muted, lk=dark?"#ffffff":P.text;
+  const items=[];
+  if(c.phone){ const tel=(""+c.phone).replace(/[^+\d]/g,""); items.push(`<a href="tel:${escAttr(tel)}" style="color:${lk};text-decoration:none">${escText(c.phone)}</a>`); }
+  if(c.email){ items.push(`<a href="mailto:${escAttr(c.email)}" style="color:${lk};text-decoration:none">${escText(c.email)}</a>`); }
+  if(c.website){ const w=(""+c.website).replace(/^https?:\/\//i,"").replace(/\/+$/,""); items.push(`<a href="${escAttr(normUrl(c.website))}" target="_blank" rel="noopener" style="color:${lk};text-decoration:none">${escText(w)}</a>`); }
+  if(c.address){ items.push(`<span>${escText(c.address)}</span>`); }
+  if(!items.length) return "";
+  return `<p style="margin:7px 0 0;font-family:${F};font-size:12px;line-height:1.7;color:${col}">${items.join(' &nbsp;&middot;&nbsp; ')}</p>`;
+}
 function splitBody(body,hasSummary){ body=body||[]; return hasSummary?{intro:body.slice(0,1),rest:body.slice(1)}:{intro:body,rest:[]}; }
 function imgHTML(it,F){ const u=(it.v||"").trim(); if(!u) return ""; const cap=(it.u||"").trim(); return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td align="center"><img src="${tokenizeAttr(u)}" alt="" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px"></td></tr>${cap?`<tr><td style="padding-top:7px"><p style="margin:0;font-family:${F};font-size:12.5px;color:#8a93a6;text-align:center;font-style:italic">${tokenizeText(cap)}</p></td></tr>`:""}</table>`; }
 function realData(o){ return (o.data||[]).filter(d=>d && (d[0]!=null||d[1]!=null)); }
@@ -798,7 +812,7 @@ function designModerno(o){
   const header=o.logo?`    <tr><td align="center" style="padding:30px 36px 6px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="42" style="display:block;border:0;height:42px"/></td></tr>\n`:`    <tr><td align="center" style="padding:30px 36px 6px"><p style="margin:0;font-family:${F};font-size:20px;font-weight:800;letter-spacing:.4px;color:${P.accentDark}">@COMMERCIALNAME@</p></td></tr>\n`;
   const intro=o.body&&o.body.length?`    <tr><td style="padding:28px 36px ${summary?'4px':'6px'}">${renderB(sb.intro)}</td></tr>\n`:"";
   const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 8px">${renderB(sb.rest)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:26px 36px 18px;border-top:1px solid ${P.border}"><p style="margin:0 0 6px;font-family:${F};font-size:15px;font-weight:700;color:${P.text};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted};text-align:center">Recebeu este email por ter uma reserva connosco. Para qualquer questão, basta responder.</p></td></tr>
+  const footer=`    <tr><td style="padding:26px 36px 18px;border-top:1px solid ${P.border}"><p style="margin:0 0 6px;font-family:${F};font-size:15px;font-weight:700;color:${P.text};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted};text-align:center">Recebeu este email por ter uma reserva connosco. Para qualquer questão, basta responder.</p><div style="text-align:center">${contactsLine(o,P,false,F)}</div></td></tr>
     <tr><td style="padding:0 36px 26px;text-align:center">${hostAttribution(P,false)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:36px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;border:1px solid ${P.border};box-shadow:0 18px 50px rgba(20,28,46,.13)">
@@ -822,7 +836,7 @@ function designLuxo(o){
   const greet=`    <tr><td style="padding:38px 48px 0;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;color:${P.accent}">@COMMERCIALNAME@</td></tr>\n`;
   const intro=`    <tr><td style="padding:14px 48px 0">${renderB(sb.intro)}</td></tr>\n`;
   const rest=sb.rest.length?`    <tr><td style="padding:4px 48px 8px">${renderB(sb.rest)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="background:${DK};padding:36px 48px;text-align:center">${orn}<div style="height:18px"></div><div style="font-family:${SF};font-size:13px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:14px">@COMMERCIALNAME@</div><div style="font-family:${SF};font-size:12px;line-height:1.8;color:#8f887b;margin-bottom:18px">Recebeu este email porque tem uma reserva ativa.</div><div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px">${hostAttribution(P,true)}</div></td></tr>\n`;
+  const footer=`    <tr><td style="background:${DK};padding:36px 48px;text-align:center">${orn}<div style="height:18px"></div><div style="font-family:${SF};font-size:13px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:14px">@COMMERCIALNAME@</div><div style="font-family:${SF};font-size:12px;line-height:1.8;color:#8f887b;margin-bottom:18px">Recebeu este email porque tem uma reserva ativa.</div>${contactsLine(o,P,true,SF)}<div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px;margin-top:16px">${hostAttribution(P,true)}</div></td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:40px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:${W}px;max-width:100%;background:${CARD};box-shadow:0 4px 32px rgba(44,40,32,.12)">
 ${header}${hero}${greet}${intro}${summary}${rest}${footer}  </table>
@@ -842,7 +856,7 @@ function designMinimal(o){
   const hero=o.hero?`    <tr><td style="padding:20px 0 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
   const intro=`    <tr><td style="padding:26px 44px 0">${renderB(sb.intro)}</td></tr>\n`;
   const rest=sb.rest.length?`    <tr><td style="padding:6px 44px 0">${renderB(sb.rest)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:30px 44px 40px"><div style="border-top:1px solid ${P.border};padding-top:18px;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted}"><strong style="color:${P.text}">@COMMERCIALNAME@</strong><br>Recebeu este email por ter uma reserva connosco.<br><span style="display:inline-block;margin-top:12px">${hostAttribution(P,false)}</span></div></td></tr>\n`;
+  const footer=`    <tr><td style="padding:30px 44px 40px"><div style="border-top:1px solid ${P.border};padding-top:18px;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted}"><strong style="color:${P.text}">@COMMERCIALNAME@</strong><br>Recebeu este email por ter uma reserva connosco.${contactsLine(o,P,false,F)}<br><span style="display:inline-block;margin-top:12px">${hostAttribution(P,false)}</span></div></td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="background:#fff;margin:0;padding:0"><tr><td align="center" style="padding:24px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff">
 ${header}${rule}${hero}${intro}${summary}${rest}${footer}  </table>
@@ -862,7 +876,7 @@ function designBold(o){
   const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
   const intro=`    <tr><td style="padding:30px 32px 0">${renderB(sb.intro)}</td></tr>\n`;
   const rest=sb.rest.length?`    <tr><td style="padding:2px 32px 0">${renderB(sb.rest)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="background:${P.text};padding:26px 32px;text-align:center"><div style="font-family:${F};font-size:15px;font-weight:800;color:#fff;margin-bottom:6px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:rgba(255,255,255,.6);margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${hostAttribution(P,true)}</td></tr>\n`;
+  const footer=`    <tr><td style="background:${P.text};padding:26px 32px;text-align:center"><div style="font-family:${F};font-size:15px;font-weight:800;color:#fff;margin-bottom:6px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:rgba(255,255,255,.6);margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${contactsLine(o,P,true,F)}<div style="height:12px;font-size:0">&nbsp;</div>${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:30px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.12)">
 ${header}${hero}${intro}${summary}${rest}${footer}  </table>
@@ -881,7 +895,7 @@ function designBoutique(o){
   const hero=o.hero?`    <tr><td style="padding:14px 22px 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W-44}px;height:auto;border:0;border-radius:18px"/></td></tr>\n`:"";
   const intro=`    <tr><td style="padding:24px 34px 0;text-align:center">${renderB(sb.intro)}</td></tr>\n`;
   const rest=sb.rest.length?`    <tr><td style="padding:2px 34px 0;text-align:center">${renderB(sb.rest)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:22px 34px 30px;text-align:center"><div style="font-family:${F};font-size:14px;font-weight:700;color:${P.text};margin-bottom:5px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:${P.muted};margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${hostAttribution(P,false)}</td></tr>\n`;
+  const footer=`    <tr><td style="padding:22px 34px 30px;text-align:center"><div style="font-family:${F};font-size:14px;font-weight:700;color:${P.text};margin-bottom:5px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:${P.muted};margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${contactsLine(o,P,false,F)}<div style="height:10px;font-size:0">&nbsp;</div>${hostAttribution(P,false)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};margin:0;padding:0"><tr><td align="center" style="padding:32px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.10)">
 ${header}${hero}${intro}${summary}${rest}${footer}  </table>
@@ -901,7 +915,7 @@ function designEscuro(o){
   const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
   const intro=`    <tr><td style="padding:22px 36px ${summary?'4px':'6px'}">${renderB(sb.intro)}</td></tr>\n`;
   const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 6px">${renderB(sb.rest)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:24px 36px 14px;border-top:1px solid ${BD}"><p style="margin:0 0 4px;font-family:${F};font-size:14px;font-weight:600;color:${TX};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.6;color:${MUT};text-align:center">Recebeu este email por ter uma reserva connosco.</p></td></tr>
+  const footer=`    <tr><td style="padding:24px 36px 14px;border-top:1px solid ${BD}"><p style="margin:0 0 4px;font-family:${F};font-size:14px;font-weight:600;color:${TX};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.6;color:${MUT};text-align:center">Recebeu este email por ter uma reserva connosco.</p><div style="text-align:center">${contactsLine(o,P,true,F)}</div></td></tr>
     <tr><td style="padding:0 36px 24px;text-align:center">${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:34px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:${W}px;max-width:100%;background:${CARD};border-radius:18px;overflow:hidden;border:1px solid ${BD}">
@@ -1128,7 +1142,7 @@ function buildEmail(lang){
   if(t.mode==="house"){
     const L=t[lang]||{};
     return houseHTML({ design:t.design||"moderno", font:t.font||"sans", lang:lang, palette: shadedPalette(pal(t.palette), t.shade), width: (t.settings&&t.settings.width)||0,
-      logo:(t.brand&&t.brand.logo)||"", hero:(t.brand&&t.brand.hero)||DEFAULT_HERO, data:L.data||[], body:L.body||[] });
+      logo:(t.brand&&t.brand.logo)||"", hero:(t.brand&&t.brand.hero)||DEFAULT_HERO, contacts:t.contacts||null, data:L.data||[], body:L.body||[] });
   }
   const s=t.settings; const L=t[lang];
   const rows=L.blocks.map(blockHTML).join("\n");
@@ -1247,7 +1261,7 @@ function color(val,onkey){ return `<div class="colorrow"><input type="color" val
 function align(val,onkey){ return `<div class="seg">${["left","center","right"].map(a=>`<button data-seg="${onkey}" data-val="${a}" class="${val===a?'active':''}">${a==='left'?'⬅':a==='center'?'⬌':'➡'}</button>`).join("")}</div>`; }
 
 const HIN="background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:8px;font-size:13px";
-const panelOpen={ logo:false, subject:false, quick:false, data:false, body:false };
+const panelOpen={ logo:false, subject:false, quick:false, data:false, contacts:false, body:false };
 function acc(key,title,inner){
   return `<div class="acc${panelOpen[key]?' open':''}" data-acc="${key}"><div class="acc-h">${title}<span class="acc-x">▾</span></div><div class="acc-b">${inner}</div></div>`;
 }
@@ -1279,12 +1293,20 @@ function renderHouseProps(box){
     </div>`;
   });
   dataI+='<button class="btn sm" data-daddrow="1" style="width:100%;margin-top:2px">＋ Adicionar linha</button>';
+  // 6 — Contactos (rodapé)
+  const ct=cur().contacts||{};
+  let contactsI='<div class="hint" style="margin-bottom:8px">Aparecem no rodapé do email. Captados do website ou preenchidos à mão.</div>'
+    +`<div class="field" style="margin:0 0 7px"><label>Telefone</label><input type="text" value="${escAttr(ct.phone||"")}" data-ct="phone" placeholder="+351 ..." style="width:100%;${HIN}"></div>`
+    +`<div class="field" style="margin:0 0 7px"><label>Email</label><input type="text" value="${escAttr(ct.email||"")}" data-ct="email" placeholder="reservas@hotel.pt" style="width:100%;${HIN}"></div>`
+    +`<div class="field" style="margin:0 0 7px"><label>Website</label><input type="text" value="${escAttr(ct.website||"")}" data-ct="website" placeholder="www.hotel.pt" style="width:100%;${HIN}"></div>`
+    +`<div class="field" style="margin:0"><label>Morada</label><input type="text" value="${escAttr(ct.address||"")}" data-ct="address" placeholder="Rua ..., Cidade" style="width:100%;${HIN}"></div>`;
 
   const ah=(n,t)=>`<span style="display:flex;align-items:center;gap:8px">${ic(n,15)}${t}</span>`;
   box.innerHTML = acc("logo",ah("image","Logótipo do hotel"),logoI)
     + acc("subject",ah("mail","Assunto & idioma"),subjI)
     + acc("quick",ah("bolt","Tags rápidas"),quickI)
-    + acc("data",ah("list","Caixa de dados"),dataI);
+    + acc("data",ah("list","Caixa de dados"),dataI)
+    + acc("contacts",ah("building","Contactos (rodapé)"),contactsI);
 
   box.querySelectorAll(".acc-h").forEach(hd=>hd.addEventListener("click",()=>{ const a=hd.parentElement,k=a.dataset.acc; panelOpen[k]=!panelOpen[k]; a.classList.toggle("open",panelOpen[k]); }));
 
@@ -1312,6 +1334,7 @@ function renderHouseProps(box){
   });
   box.querySelectorAll("[data-drrem]").forEach(el=>el.addEventListener("click",()=>{ L.data.splice(+el.dataset.drrem,1); restruct(); }));
   const addRow=box.querySelector("[data-daddrow]"); if(addRow) addRow.addEventListener("click",()=>{ L.data.push(["",""]); restruct(); });
+  box.querySelectorAll("[data-ct]").forEach(el=>el.addEventListener("input",()=>{ const t=cur(); if(!t.contacts) t.contacts={}; t.contacts[el.dataset.ct]=el.value; upd(); }));
 }
 // ===== Construtor do corpo (drag & drop, por baixo da pré-visualização) =====
 function newBodyItem(t){ return t==="cta"?{t:"cta",v:"Texto do botão",u:"@ONLINECHECKIN@"}:t==="img"?{t:"img",v:"",u:""}:{t,v:t==="h"?"Novo título":"Escreve aqui o teu parágrafo."}; }
@@ -1823,6 +1846,96 @@ function wizardGenerate(){
   save(); closeModal(); renderAll(); toast("Template gerado: "+st.name);
 }
 
+/* ============================ AUTO-ANÁLISE DO WEBSITE (captação de marca) ============================ */
+const CORS_PROXIES=[
+  u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
+  u=>"https://corsproxy.io/?url="+encodeURIComponent(u)
+];
+function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
+function normHex(c){ c=(c||"").trim(); const m=c.match(/^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/); if(!m) return ""; let h=m[1]; if(h.length===3) h=h.split("").map(x=>x+x).join(""); return "#"+h.toLowerCase(); }
+function fontLabel(key){ const f=FONT_LIST.find(x=>x[0]===key); return f?f[1]:key; }
+async function fetchViaProxy(url){
+  let lastErr;
+  for(const mk of CORS_PROXIES){
+    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),15000);
+    try{
+      const r=await fetch(mk(url),{redirect:"follow",signal:ctrl.signal});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const t=await r.text();
+      if(t && t.length>200) return t;
+    }catch(e){ lastErr=e; }
+    finally{ clearTimeout(to); }
+  }
+  throw lastErr||new Error("sem resposta");
+}
+function detectFontKey(doc){
+  let fam="";
+  const gf=doc.querySelector('link[href*="fonts.googleapis.com"]');
+  if(gf){ const m=(gf.getAttribute("href")||"").match(/family=([^:&]+)/); if(m) fam=decodeURIComponent(m[1].replace(/\+/g," ")); }
+  if(!fam){ const styles=Array.prototype.map.call(doc.querySelectorAll("style"),s=>s.textContent).join(" "); const m=styles.match(/font-family\s*:\s*([^;}{]+)/i); if(m) fam=m[1]; }
+  fam=(fam||"").toLowerCase();
+  if(!fam) return "";
+  const isSerif=/(serif|playfair|merriweather|lora|georgia|times|garamond|cormorant|baskerville|pt serif|noto serif|cambria)/.test(fam) && !/sans/.test(fam);
+  if(isSerif){ if(/playfair|cormorant|garamond/.test(fam)) return "garamond"; if(/georgia/.test(fam)) return "serif"; if(/times/.test(fam)) return "times"; return "elegant"; }
+  if(/trebuchet/.test(fam)) return "modern";
+  if(/verdana/.test(fam)) return "verdana";
+  if(/tahoma/.test(fam)) return "tahoma";
+  if(/century|gothic|poppins|futura|montserrat|raleway/.test(fam)) return "century";
+  return "sans";
+}
+function parseJsonLd(doc){
+  const out={};
+  const blocks=Array.prototype.slice.call(doc.querySelectorAll('script[type="application/ld+json"]'));
+  for(const b of blocks){
+    let data; try{ data=JSON.parse(b.textContent); }catch(_){ continue; }
+    const arr=Array.isArray(data)?data:(data["@graph"]?data["@graph"]:[data]);
+    for(const node of arr){
+      if(!node||typeof node!=="object") continue;
+      if(node.telephone && !out.phone) out.phone=(""+node.telephone).trim();
+      if(node.email && !out.email) out.email=(""+node.email).replace(/^mailto:/i,"").trim();
+      if(node.url && !out.website && typeof node.url==="string") out.website=node.url.trim();
+      if(node.address && !out.address){
+        const a=node.address;
+        if(typeof a==="string") out.address=a.trim();
+        else if(typeof a==="object") out.address=[a.streetAddress,a.postalCode,a.addressLocality,a.addressCountry].filter(Boolean).join(", ");
+      }
+    }
+  }
+  return out;
+}
+function analyzeHtml(html, baseUrl){
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  let origin=baseUrl; try{ origin=new URL(baseUrl).origin; }catch(_){}
+  const abs=u=>{ if(!u) return ""; try{ return new URL(u, baseUrl).href; }catch(_){ return u; } };
+  const meta=(sel)=>{ const el=doc.querySelector(sel); return el?(el.getAttribute("content")||el.getAttribute("href")||""):""; };
+  const name = meta('meta[property="og:site_name"]') || meta('meta[property="og:title"]') || (doc.title||"").split(/[|\-–—•]/)[0].trim();
+  let logo = meta('meta[property="og:image"]') || meta('link[rel~="apple-touch-icon"]') || meta('link[rel="icon"]') || meta('link[rel~="icon"]');
+  logo = abs(logo);
+  if(!logo) logo = "https://www.google.com/s2/favicons?domain="+encodeURIComponent(origin)+"&sz=128";
+  let color = normHex(meta('meta[name="theme-color"]'));
+  const font = detectFontKey(doc);
+  const contacts = parseJsonLd(doc);
+  if(!contacts.phone){ const tel=doc.querySelector('a[href^="tel:"]'); if(tel) contacts.phone=(tel.getAttribute("href")||"").replace(/^tel:/i,"").trim(); }
+  if(!contacts.email){ const ml=doc.querySelector('a[href^="mailto:"]'); if(ml) contacts.email=(ml.getAttribute("href")||"").replace(/^mailto:/i,"").split("?")[0].trim(); }
+  if(!contacts.website) contacts.website=origin;
+  return { name:(name||"").slice(0,80), logo, color, font, contacts };
+}
+function nearestPaletteKey(hex){
+  const t=hexToHsl(hex);
+  if(t.s<14) return "grafite";
+  let best="azul", bestD=1e9;
+  for(const k of Object.keys(PALETTES)){
+    const ph=hexToHsl(PALETTES[k].accent);
+    let dh=Math.abs(ph.h-t.h); if(dh>180) dh=360-dh;
+    if(k==="grafite") dh+=120; // só para cores cinzentas (tratado acima)
+    if(dh<bestD){ bestD=dh; best=k; }
+  }
+  return best;
+}
+function shadeForColor(hex,palKey){
+  const t=hexToHsl(hex), p=hexToHsl(PALETTES[palKey].accent);
+  return Math.max(0,Math.min(100,Math.round(50+(p.l-t.l))));
+}
 /* ============================ ECRÃ DE ENTRADA (Novo / Abrir) ============================ */
 const HOME_BRAND='<div class="login-brand"><img src="favicon.png" width="32" height="32" alt="Host" style="display:block;flex:0 0 auto"><div><div style="font-weight:800;font-size:18px;line-height:1">Relation<span style="color:var(--accent)">ship</span></div><div style="font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);margin-top:3px">by Host Hotel Systems</div></div></div>';
 let nf=null;
@@ -1856,6 +1969,12 @@ function renderHome(view){
   d.innerHTML='<div class="login-card" style="width:580px;max-height:92vh;overflow:auto">'+HOME_BRAND+
     '<div class="wlbl" style="margin-top:14px">Nome do hotel</div>'+
     '<input id="nfHotel" type="text" placeholder="Ex.: Grand Palácio Lisboa" value="'+escAttr(nf.hotel)+'" style="width:100%;'+HIN+';padding:11px 13px">'+
+    '<div class="wlbl" style="margin-top:16px">Website do hotel <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(opcional — capta cor, letra, logótipo e contactos)</span></div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<input id="nfSite" type="text" placeholder="ex.: www.hotelexemplo.pt" value="'+escAttr(nf.website||"")+'" style="flex:1;min-width:0;'+HIN+';padding:11px 13px">'+
+      '<button class="btn" id="nfAnalyze" style="white-space:nowrap">'+ic("wand",14)+' Analisar</button>'+
+    '</div>'+
+    '<div id="nfSiteMsg" class="hint" style="margin-top:7px">'+analysisSummaryHtml()+'</div>'+
     '<div class="wlbl" style="margin-top:16px">Templates a desenvolver</div>'+
     '<div class="evlist">'+mainEv+'</div>'+
     '<div class="wlbl" style="margin-top:16px">Design</div><div class="dgrid" id="nfDesign">'+designCards+'</div>'+
@@ -1868,6 +1987,8 @@ function renderHome(view){
   const nc=d.querySelector(".login-card"); if(nc) nc.scrollTop=sc;
   const hotel=document.getElementById("nfHotel");
   hotel.addEventListener("input",()=>{ nf.hotel=hotel.value; });
+  const site=document.getElementById("nfSite"); if(site) site.addEventListener("input",()=>{ nf.website=site.value; });
+  const anbtn=document.getElementById("nfAnalyze"); if(anbtn) anbtn.addEventListener("click",doAnalyze);
   d.querySelectorAll("[data-nfev]").forEach(el=>el.addEventListener("change",()=>{ const i=+el.dataset.nfev; if(el.checked){ if(!nf.events.includes(i)) nf.events.push(i); } else { nf.events=nf.events.filter(x=>x!==i); } }));
   d.querySelectorAll("[data-nfdesign]").forEach(el=>el.addEventListener("click",()=>{ nf.design=el.dataset.nfdesign; renderHome("new"); }));
   d.querySelectorAll("[data-nfpal]").forEach(el=>el.addEventListener("click",()=>{ nf.palette=el.dataset.nfpal; renderHome("new"); }));
@@ -1876,13 +1997,53 @@ function renderHome(view){
   document.getElementById("nfBack").addEventListener("click",()=>renderHome("home"));
   document.getElementById("nfCreate").addEventListener("click",createProjectFromForm);
 }
+function analysisSummaryHtml(){
+  if(!nf||!nf.analyzed) return 'Opcional — escreve o website e clica «Analisar» para captar cor, letra, logótipo e contactos automaticamente.';
+  const a=nf.analyzed, c=a.contacts||{}, chips=[];
+  if(nf.detectedColor) chips.push('<span class="achip"><span class="adot" style="background:'+escAttr(nf.detectedColor)+'"></span>Cor</span>');
+  if(a.font) chips.push('<span class="achip">Letra: '+escText(fontLabel(a.font))+'</span>');
+  if(a.logo) chips.push('<span class="achip">Logótipo</span>');
+  if(c.phone) chips.push('<span class="achip">Telefone</span>');
+  if(c.email) chips.push('<span class="achip">Email</span>');
+  if(c.address) chips.push('<span class="achip">Morada</span>');
+  return '<div style="color:var(--accent);margin-bottom:6px">Detetado do website (ajusta tudo abaixo se quiseres):</div><div class="achips">'+(chips.length?chips.join(""):'<span class="achip">Sem dados claros — preenche à mão</span>')+'</div>';
+}
+async function doAnalyze(){
+  const site=document.getElementById("nfSite"), msg=document.getElementById("nfSiteMsg"), btn=document.getElementById("nfAnalyze");
+  const url=normUrl(site?site.value:nf.website);
+  if(!url){ if(msg) msg.innerHTML='<span style="color:var(--danger)">Escreve o endereço do website primeiro.</span>'; return; }
+  nf.website=url;
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> A analisar…'; }
+  if(msg) msg.innerHTML='<span style="display:inline-flex;align-items:center;gap:7px"><span class="spin"></span> A ler '+escText(url)+'…</span>';
+  try{
+    const html=await fetchViaProxy(url);
+    const a=analyzeHtml(html,url);
+    if(a.color){ nf.palette=nearestPaletteKey(a.color); nf.shade=shadeForColor(a.color,nf.palette); nf.detectedColor=a.color; }
+    if(a.font) nf.font=a.font;
+    if(a.logo) nf.logo=a.logo;
+    if(a.name && !(nf.hotel||"").trim()) nf.hotel=a.name;
+    nf.contacts=a.contacts||{};
+    nf.analyzed=a;
+    renderHome("new");
+  }catch(e){
+    if(msg) msg.innerHTML='<span style="color:var(--danger)">Não consegui ler o site (o proxy pode estar indisponível ou o site bloquear). Tenta de novo ou preenche à mão.</span>';
+    if(btn){ btn.disabled=false; btn.innerHTML=ic("wand",14)+' Analisar'; }
+  }
+}
 function createProjectFromForm(){
   const m=document.getElementById("nfMsg");
   const name=(nf.hotel||"").trim();
   if(!name){ if(m) m.textContent="Dá um nome ao hotel."; return; }
   if(!nf.events.length){ if(m) m.textContent="Escolhe pelo menos um template a desenvolver."; return; }
-  const p={ id:"prj"+(_ctr++)+"_"+Math.floor(performance.now()), hotel:name, templates:[] };
-  nf.events.slice().sort((a,b)=>a-b).forEach(i=>{ const t=instStarter(STARTERS[i]); t.design=nf.design; t.font=nf.font; t.palette=nf.palette; t.shade=nf.shade; p.templates.push(t); });
+  const hasContacts = nf.contacts && Object.keys(nf.contacts).some(k=>nf.contacts[k]);
+  const p={ id:"prj"+(_ctr++)+"_"+Math.floor(performance.now()), hotel:name, website:nf.website||"", templates:[] };
+  nf.events.slice().sort((a,b)=>a-b).forEach(i=>{
+    const t=instStarter(STARTERS[i]);
+    t.design=nf.design; t.font=nf.font; t.palette=nf.palette; t.shade=nf.shade;
+    if(nf.logo) t.brand.logo=nf.logo;
+    if(hasContacts) t.contacts=JSON.parse(JSON.stringify(nf.contacts));
+    p.templates.push(t);
+  });
   state.projects.push(p); state.currentProjectId=p.id; state.currentTemplateId=p.templates[0].id; state.selectedBlock=null; state.lang="pt";
   cloudSyncProject(p); save(); hideHome(); renderAll(); toast("Projeto «"+name+"» criado");
 }
