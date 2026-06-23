@@ -1,11 +1,13 @@
 // Relationship by Host — Edge Function "analyze-site"
-// Lê o website de um hotel (renderizado, via Jina Reader) e usa o Google Gemini
-// (grátis) para extrair marca + contactos. Vê a imagem do logótipo para captar
-// a cor mesmo quando o site não a expõe.
+// Lê o website de um hotel e usa o Google Gemini (grátis) para extrair marca +
+// contactos. Vê a imagem do logótipo para captar a cor mesmo quando o site não
+// a expõe. Lê o site diretamente; se existir JINA_API_KEY usa o Jina (renderiza JS).
 //
-// Deploy: ver EDGE-FUNCTION-SETUP.md. Precisa do secret GEMINI_API_KEY.
+// Secrets: GEMINI_API_KEY (obrigatório), JINA_API_KEY (opcional, melhora sites SPA).
+// Deploy: ver EDGE-FUNCTION-SETUP.md.
 
 const MODEL = "gemini-2.0-flash"; // grátis; alternativas: "gemini-1.5-flash", "gemini-2.5-flash"
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -15,7 +17,7 @@ const CORS: Record<string, string> = {
 
 const PROMPT = `És um assistente que analisa o website de um hotel e extrai a identidade da marca e os contactos, para personalizar emails.
 
-Recebes o conteúdo da página (markdown) e, quando disponível, a imagem do logótipo do hotel.
+Recebes o conteúdo da página (HTML ou markdown) e, quando disponível, a imagem do logótipo do hotel.
 
 Responde APENAS com um objeto JSON (sem texto à volta, sem markdown) com EXATAMENTE estas chaves:
 - "hotelName": nome do hotel (sem slogan/cidade), ou null.
@@ -32,34 +34,48 @@ function normUrl(u: string): string {
   return u;
 }
 
-async function jina(url: string): Promise<string> {
+// Lê o conteúdo do site. Usa o Jina (renderiza JS) se houver JINA_API_KEY; senão lê direto.
+async function fetchContent(url: string): Promise<string> {
+  const jk = Deno.env.get("JINA_API_KEY");
+  if (jk) {
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 25000);
+      const r = await fetch("https://r.jina.ai/" + url, { headers: { Authorization: "Bearer " + jk }, signal: ctrl.signal });
+      clearTimeout(t);
+      if (r.ok) { const tx = await r.text(); if (tx && tx.length > 80) return tx; }
+    } catch { /* cai no fetch direto */ }
+  }
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 25000);
+  const t = setTimeout(() => ctrl.abort(), 20000);
   try {
-    const r = await fetch("https://r.jina.ai/" + url, { signal: ctrl.signal });
-    if (!r.ok) throw new Error("Jina HTTP " + r.status);
-    return await r.text();
+    const r = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "pt-PT,pt;q=0.9,en;q=0.8" }, redirect: "follow", signal: ctrl.signal });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const html = await r.text();
+    // remove só os scripts de código (mantém ld+json) e os estilos
+    return html
+      .replace(/<script\b(?![^>]*application\/ld\+json)[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<!--[\s\S]*?-->/g, "");
   } finally {
     clearTimeout(t);
   }
 }
 
-function firstImage(md: string, base: string): string | null {
-  const m = md.match(/!\[[^\]]*\]\(([^)\s]+)/);
+function firstImage(content: string, base: string): string | null {
+  let m = content.match(/!\[[^\]]*\]\(([^)\s]+)/)
+    || content.match(/<img[^>]+(?:src|data-src)=["']([^"'>]*logo[^"'>]*)["']/i)
+    || content.match(/property=["']og:image["'][^>]*content=["']([^"']+)["']/i)
+    || content.match(/<link[^>]+rel=["'][^"']*apple-touch-icon[^"']*["'][^>]*href=["']([^"']+)["']/i)
+    || content.match(/<img[^>]+(?:src|data-src)=["']([^"'>]+)["']/i);
   if (!m) return null;
-  try {
-    return new URL(m[1], base).href;
-  } catch {
-    return m[1];
-  }
+  try { return new URL(m[1], base).href; } catch { return m[1]; }
 }
 
 function toBase64(bytes: Uint8Array): string {
   let bin = "";
   const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
+  for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode(...bytes.subarray(i, i + chunk));
   return btoa(bin);
 }
 
@@ -67,14 +83,14 @@ async function imagePart(url: string): Promise<unknown | null> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 12000);
-    const r = await fetch(url, { signal: ctrl.signal });
+    const r = await fetch(url, { headers: { "User-Agent": UA }, signal: ctrl.signal });
     clearTimeout(t);
     if (!r.ok) return null;
     let mt = (r.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
     if (!/^image\/(png|jpeg|jpg|gif|webp)$/.test(mt)) return null;
     if (mt === "image/jpg") mt = "image/jpeg";
     const buf = new Uint8Array(await r.arrayBuffer());
-    if (buf.length > 3 * 1024 * 1024) return null; // evita imagens enormes
+    if (buf.length > 3 * 1024 * 1024) return null;
     return { inline_data: { mime_type: mt, data: toBase64(buf) } };
   } catch {
     return null;
@@ -102,8 +118,8 @@ Deno.serve(async (req: Request) => {
     const target = normUrl(url);
     if (!target) return json({ error: "URL em falta" }, 400);
 
-    // 1) conteúdo renderizado da homepage
-    const home = await jina(target);
+    // 1) conteúdo da homepage
+    const home = await fetchContent(target);
     let body = home.slice(0, 40000);
 
     // 1b) contactos costumam estar numa subpágina
@@ -112,8 +128,8 @@ Deno.serve(async (req: Request) => {
     if (!/@|tel:|telefone|contacto/i.test(home)) {
       for (const p of ["contactos", "contacto", "contact"]) {
         try {
-          const sub = await jina(origin.replace(/\/+$/, "") + "/" + p);
-          if (sub && /@|\d{3}/.test(sub)) { body += "\n\n[PÁGINA DE CONTACTOS]\n" + sub.slice(0, 8000); break; }
+          const sub = await fetchContent(origin.replace(/\/+$/, "") + "/" + p);
+          if (sub && /@|\d{3}/.test(sub)) { body += "\n\n[PAGINA DE CONTACTOS]\n" + sub.slice(0, 8000); break; }
         } catch { /* tenta a próxima */ }
       }
     }
@@ -125,7 +141,7 @@ Deno.serve(async (req: Request) => {
     // 3) Gemini extrai a marca + contactos
     const parts: unknown[] = [];
     if (img) parts.push(img);
-    parts.push({ text: PROMPT + "\n\nWEBSITE: " + target + "\n\nCONTEÚDO:\n" + body });
+    parts.push({ text: PROMPT + "\n\nWEBSITE: " + target + "\n\nCONTEUDO:\n" + body });
 
     const gRes = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + encodeURIComponent(key),
