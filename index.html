@@ -2071,7 +2071,8 @@ function analysisSummaryHtml(){
   if(c.phone) chips.push('<span class="achip">Telefone</span>');
   if(c.email) chips.push('<span class="achip">Email</span>');
   if(c.address) chips.push('<span class="achip">Morada</span>');
-  return '<div style="color:var(--accent);margin-bottom:6px">Detetado do website (ajusta tudo abaixo se quiseres):</div><div class="achips">'+(chips.length?chips.join(""):'<span class="achip">Sem dados claros — preenche à mão</span>')+'</div>';
+  const colorNote = nf.detectedColor ? '' : '<div style="margin-top:6px;color:var(--muted)">Cor da marca não detetada (logótipo sem cor ou site sem cor definida) — escolhe a paleta abaixo.</div>';
+  return '<div style="color:var(--accent);margin-bottom:6px">Detetado do website (ajusta tudo abaixo se quiseres):</div><div class="achips">'+(chips.length?chips.join(""):'<span class="achip">Sem dados claros — preenche à mão</span>')+'</div>'+colorNote;
 }
 async function doAnalyze(){
   const site=document.getElementById("nfSite"), msg=document.getElementById("nfSiteMsg"), btn=document.getElementById("nfAnalyze");
