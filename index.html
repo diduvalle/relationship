@@ -2122,6 +2122,7 @@ function analysisSummaryHtml(){
   if(a.font) chips.push('<span class="achip">Letra: '+escText(fontLabel(a.font))+'</span>');
   if(a.design){ const d=DESIGN_LIST.find(x=>x[0]===a.design); chips.push('<span class="achip">Design: '+escText(d?d[1]:a.design)+'</span>'); }
   if(a.logo) chips.push('<span class="achip">Logótipo</span>');
+  if(a.hero) chips.push('<span class="achip">Imagem de topo</span>');
   if(c.phone) chips.push('<span class="achip">Telefone</span>');
   if(c.email) chips.push('<span class="achip">Email</span>');
   if(c.address) chips.push('<span class="achip">Morada</span>');
@@ -2141,6 +2142,7 @@ async function analyzeViaCloud(url){
       font: (data.font && FONTS[data.font]) ? data.font : "",
       design: (data.design && DESIGNS[data.design]) ? data.design : "",
       logo: data.logoUrl||"",
+      hero: data.heroUrl||"",
       contacts: data.contacts||{},
       viaAI: true
     };
@@ -2161,6 +2163,7 @@ async function doAnalyze(){
     if(a.font && FONTS[a.font]) nf.font=a.font;
     if(a.design && DESIGNS[a.design]) nf.design=a.design;
     if(a.logo) nf.logo=a.logo;
+    if(a.hero) nf.hero=a.hero;
     if(a.name && !(nf.hotel||"").trim()) nf.hotel=a.name;
     nf.contacts=a.contacts||{};
     nf.analyzed=a;
@@ -2181,6 +2184,7 @@ function createProjectFromForm(){
     const t=instStarter(STARTERS[i]);
     t.design=nf.design; t.font=nf.font; t.palette=nf.palette; t.shade=nf.shade;
     if(nf.logo) t.brand.logo=nf.logo;
+    if(nf.hero) t.brand.hero=nf.hero;
     if(hasContacts) t.contacts=JSON.parse(JSON.stringify(nf.contacts));
     p.templates.push(t);
   });
