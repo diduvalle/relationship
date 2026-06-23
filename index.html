@@ -2067,6 +2067,7 @@ function analysisSummaryHtml(){
   const a=nf.analyzed, c=a.contacts||{}, chips=[];
   if(nf.detectedColor) chips.push('<span class="achip"><span class="adot" style="background:'+escAttr(nf.detectedColor)+'"></span>Cor</span>');
   if(a.font) chips.push('<span class="achip">Letra: '+escText(fontLabel(a.font))+'</span>');
+  if(a.design){ const d=DESIGN_LIST.find(x=>x[0]===a.design); chips.push('<span class="achip">Design: '+escText(d?d[1]:a.design)+'</span>'); }
   if(a.logo) chips.push('<span class="achip">Logótipo</span>');
   if(c.phone) chips.push('<span class="achip">Telefone</span>');
   if(c.email) chips.push('<span class="achip">Email</span>');
@@ -2085,6 +2086,7 @@ async function analyzeViaCloud(url){
       color: data.brandColorHex||"",
       palette: (data.palette && PALETTES[data.palette]) ? data.palette : "",
       font: (data.font && FONTS[data.font]) ? data.font : "",
+      design: (data.design && DESIGNS[data.design]) ? data.design : "",
       logo: data.logoUrl||"",
       contacts: data.contacts||{},
       viaAI: true
@@ -2104,6 +2106,7 @@ async function doAnalyze(){
     if(a.palette && PALETTES[a.palette]){ nf.palette=a.palette; nf.shade=50; nf.detectedColor=a.color||null; }
     else if(a.color){ nf.palette=nearestPaletteKey(a.color); nf.shade=50; nf.detectedColor=a.color; }
     if(a.font && FONTS[a.font]) nf.font=a.font;
+    if(a.design && DESIGNS[a.design]) nf.design=a.design;
     if(a.logo) nf.logo=a.logo;
     if(a.name && !(nf.hotel||"").trim()) nf.hotel=a.name;
     nf.contacts=a.contacts||{};
