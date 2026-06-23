@@ -1870,6 +1870,11 @@ async function analyzeSite(url){
   const html=await jinaFetch(url,true);
   const r=analyzeHtml(html,url);
   r.contacts=r.contacts||{};
+  if(!r.font) r.font=detectFontFromHtml(html);
+  // cor: do logótipo (se o CDN da imagem permitir CORS)
+  if(!r.color && r.logo && r.logo.indexOf("s2/favicons")<0){
+    try{ const col=await dominantColorFromImage(r.logo); if(col) r.color=col; }catch(_){}
+  }
   // contactos podem estar numa subpágina (ex.: /contactos)
   if(!r.contacts.email || !r.contacts.phone){
     const base=origin.replace(/\/+$/,"");
@@ -1886,11 +1891,7 @@ async function analyzeSite(url){
 function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
 function normHex(c){ c=(c||"").trim(); const m=c.match(/^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/); if(!m) return ""; let h=m[1]; if(h.length===3) h=h.split("").map(x=>x+x).join(""); return "#"+h.toLowerCase(); }
 function fontLabel(key){ const f=FONT_LIST.find(x=>x[0]===key); return f?f[1]:key; }
-function detectFontKey(doc){
-  let fam="";
-  const gf=doc.querySelector('link[href*="fonts.googleapis.com"]');
-  if(gf){ const m=(gf.getAttribute("href")||"").match(/family=([^:&]+)/); if(m) fam=decodeURIComponent(m[1].replace(/\+/g," ")); }
-  if(!fam){ const styles=Array.prototype.map.call(doc.querySelectorAll("style"),s=>s.textContent).join(" "); const m=styles.match(/font-family\s*:\s*([^;}{]+)/i); if(m) fam=m[1]; }
+function mapFontFamily(fam){
   fam=(fam||"").toLowerCase();
   if(!fam) return "";
   const isSerif=/(serif|playfair|merriweather|lora|georgia|times|garamond|cormorant|baskerville|pt serif|noto serif|cambria)/.test(fam) && !/sans/.test(fam);
@@ -1898,8 +1899,47 @@ function detectFontKey(doc){
   if(/trebuchet/.test(fam)) return "modern";
   if(/verdana/.test(fam)) return "verdana";
   if(/tahoma/.test(fam)) return "tahoma";
-  if(/century|gothic|poppins|futura|montserrat|raleway/.test(fam)) return "century";
+  if(/century|gothic|poppins|futura|montserrat|raleway|oswald|bebas|nunito|work sans|dm sans/.test(fam)) return "century";
   return "sans";
+}
+function detectFontKey(doc){
+  let fam="";
+  const gf=doc.querySelector('link[href*="fonts.googleapis.com"]');
+  if(gf){ const m=(gf.getAttribute("href")||"").match(/family=([^:&]+)/); if(m) fam=decodeURIComponent(m[1].replace(/\+/g," ")); }
+  if(!fam){ const styles=Array.prototype.map.call(doc.querySelectorAll("style"),s=>s.textContent).join(" "); const m=styles.match(/font-family\s*:\s*([^;}{]+)/i); if(m) fam=m[1]; }
+  return mapFontFamily(fam);
+}
+function detectFontFromHtml(html){
+  let fam="";
+  const m=html.match(/fonts\.googleapis\.com[^"'<> ]*[?&]family=([A-Za-z][A-Za-z0-9+]*)/i);
+  if(m) fam=decodeURIComponent(m[1]).replace(/\+/g," ");
+  if(!fam){ const s=html.match(/font-family\s*:\s*([^;}{"']+)/i); if(s) fam=s[1]; }
+  return mapFontFamily(fam);
+}
+// extrai a cor dominante (saturada) da imagem do logótipo, via canvas (precisa de CORS na imagem)
+function dominantColorFromImage(url){
+  return new Promise(function(resolve){
+    let done=false; const finish=v=>{ if(!done){ done=true; resolve(v); } };
+    try{
+      const img=new Image(); img.crossOrigin="anonymous";
+      img.onload=function(){ try{
+        const w=52,h=52, cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+        const ctx=cv.getContext("2d"); ctx.drawImage(img,0,0,w,h);
+        const d=ctx.getImageData(0,0,w,h).data, counts={}; let best=null,bestScore=-1;
+        for(let i=0;i<d.length;i+=4){
+          const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3]; if(a<128) continue;
+          const mx=Math.max(r,g,b),mn=Math.min(r,g,b), sat=mx===0?0:(mx-mn)/mx, val=mx/255;
+          if(sat<0.28||val<0.18||val>0.96) continue;
+          const key=(r>>4)+","+(g>>4)+","+(b>>4); counts[key]=(counts[key]||0)+1;
+          const score=counts[key]*(0.6+sat); if(score>bestScore){ bestScore=score; best=[r,g,b]; }
+        }
+        if(best){ const to=v=>("0"+v.toString(16)).slice(-2); finish("#"+to(best[0])+to(best[1])+to(best[2])); } else finish("");
+      }catch(_){ finish(""); } };
+      img.onerror=function(){ finish(""); };
+      img.src=url;
+      setTimeout(()=>finish(""), 8000);
+    }catch(_){ finish(""); }
+  });
 }
 function parseJsonLd(doc){
   const out={};
