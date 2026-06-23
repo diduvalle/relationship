@@ -151,7 +151,7 @@ Deno.serve(async (req: Request) => {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.2, maxOutputTokens: 1024 },
+          generationConfig: { responseMimeType: "application/json", temperature: 0.2, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } },
         }),
       },
     );
@@ -161,6 +161,7 @@ Deno.serve(async (req: Request) => {
     const text = g?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "";
     const data = extractJson(text);
     if (logo && !data.logoUrl) data.logoUrl = logo;
+    if (!text) (data as Record<string, unknown>)._finish = g?.candidates?.[0]?.finishReason || "vazio";
 
     return json(data);
   } catch (e) {
