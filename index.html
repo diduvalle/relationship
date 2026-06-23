@@ -796,9 +796,10 @@ function contactsLine(o,P,dark,F){
   if(c.phone){ const tel=(""+c.phone).replace(/[^+\d]/g,""); items.push(`<a href="tel:${escAttr(tel)}" style="color:${lk};text-decoration:none">${escText(c.phone)}</a>`); }
   if(c.email){ items.push(`<a href="mailto:${escAttr(c.email)}" style="color:${lk};text-decoration:none">${escText(c.email)}</a>`); }
   if(c.website){ const w=(""+c.website).replace(/^https?:\/\//i,"").replace(/\/+$/,""); items.push(`<a href="${escAttr(normUrl(c.website))}" target="_blank" rel="noopener" style="color:${lk};text-decoration:none">${escText(w)}</a>`); }
-  if(c.address){ items.push(`<span>${escText(c.address)}</span>`); }
-  if(!items.length) return "";
-  return `<p style="margin:7px 0 0;font-family:${F};font-size:12px;line-height:1.7;color:${col}">${items.join(' &nbsp;&middot;&nbsp; ')}</p>`;
+  let out="";
+  if(items.length) out+=`<p style="margin:7px 0 0;font-family:${F};font-size:12px;line-height:1.7;color:${col}">${items.join(' &nbsp;&middot;&nbsp; ')}</p>`;
+  if(c.address) out+=`<p style="margin:3px 0 0;font-family:${F};font-size:12px;line-height:1.6;color:${col}">${escText(c.address)}</p>`;
+  return out;
 }
 function splitBody(body,hasSummary){ body=body||[]; return hasSummary?{intro:body.slice(0,1),rest:body.slice(1)}:{intro:body,rest:[]}; }
 function imgHTML(it,F){ const u=(it.v||"").trim(); if(!u) return ""; const cap=(it.u||"").trim(); return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td align="center"><img src="${tokenizeAttr(u)}" alt="" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px"></td></tr>${cap?`<tr><td style="padding-top:7px"><p style="margin:0;font-family:${F};font-size:12.5px;color:#8a93a6;text-align:center;font-style:italic">${tokenizeText(cap)}</p></td></tr>`:""}</table>`; }
