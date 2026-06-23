@@ -53,6 +53,9 @@
   .langtoggle{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
   .langtoggle button{background:transparent;border:0;color:var(--muted);padding:6px 14px;font-weight:600}
   .langtoggle button.active{background:var(--accent);color:#fff}
+  .prevtog{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .prevtog button{background:transparent;border:0;color:var(--muted);padding:4px 11px;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+  .prevtog button.active{background:var(--accent);color:#fff}
   .btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:7px 12px;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1}
   .btn:hover{border-color:var(--accent)}
   .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -381,7 +384,14 @@
             <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Código HTML — edita aqui (insere tags pelo separador «Tags»)</label>
             <textarea id="htmlSrc" spellcheck="false" style="width:100%;height:220px;margin-top:4px;background:#0b0d11;border:1px solid var(--line);color:#cdd6e6;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;padding:10px;border-radius:8px;resize:vertical"></textarea>
           </div>
-          <div id="prevLabel" style="margin-top:12px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Pré-visualização (dados de exemplo)</div>
+          <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+            <div id="prevLabel" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Pré-visualização (dados de exemplo)</div>
+            <span style="flex:1"></span>
+            <div class="prevtog" id="prevTog">
+              <button data-pv="desktop" class="active" title="Vista de computador">Desktop</button>
+              <button data-pv="mobile" title="Vista de telemóvel">Telemóvel</button>
+            </div>
+          </div>
           <div id="prevWrap" style="background:#e9edf3;border-radius:12px;padding:12px;margin-top:6px">
             <div id="prevScaler" style="position:relative;margin:0 auto;overflow:hidden;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.18)">
               <iframe id="htmlPrev" scrolling="no" style="position:absolute;top:0;left:0;width:640px;border:0;background:#fff;display:block"></iframe>
@@ -1164,27 +1174,28 @@ const BLOCK_TYPES=[
   ["spacer","⇳","Espaço"],["footer","≡","Rodapé"]
 ];
 
-const PREV_W=664; // largura lógica do preview (email 600 + margens, com folga)
+const PREV_DESKTOP=664, PREV_MOBILE=390; // larguras lógicas do preview
+let previewW=PREV_DESKTOP;
 function fitPreview(){
   const f=$("htmlPrev"), wrap=$("prevWrap"), scaler=$("prevScaler");
   if(!f||!wrap||!scaler) return;
   if($("htmlEditor") && $("htmlEditor").style.display==="none") return;
-  f.style.width=PREV_W+"px"; f.style.height="";
+  f.style.width=previewW+"px"; f.style.height="";
   const doc=f.contentDocument||f.contentWindow.document;
   let ch=0; try{ ch=Math.max(doc.body?doc.body.scrollHeight:0, doc.documentElement?doc.documentElement.scrollHeight:0); }catch(e){}
   if(!ch) ch=600;
   f.style.height=ch+"px";
   const avail=Math.max(120, wrap.clientWidth - 24);
-  const s=Math.min(1, avail/PREV_W);
+  const s=Math.min(1, avail/previewW);
   f.style.transformOrigin="top left";
   f.style.transform="scale("+s+")";
-  scaler.style.width=(PREV_W*s)+"px";
+  scaler.style.width=(previewW*s)+"px";
   scaler.style.height=(ch*s)+"px";
 }
 function refreshHtmlPrev(){
   const f=$("htmlPrev"); if(!f) return;
   const doc=f.contentDocument||f.contentWindow.document;
-  doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=664"></head><body style="margin:0;padding:0">'+applySample(buildEmail(state.lang))+'</body></html>'); doc.close();
+  doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width='+previewW+'"></head><body style="margin:0;padding:0">'+applySample(buildEmail(state.lang))+'</body></html>'); doc.close();
   fitPreview();
   setTimeout(fitPreview,60);
 }
@@ -1355,13 +1366,30 @@ function builderCard(it,i){
   }
   return `<div class="bcard" data-bi="${i}"><div class="bcard-h"><span class="bdrag" draggable="true" title="Arrastar para reordenar">⠿</span><span class="bcard-t">${ic(ICON[it.t]||"list",13)}<span>${NAME[it.t]||"Texto"}</span></span><span style="flex:1"></span><button class="bx" data-bbrem="${i}" title="Remover peça">✕</button></div><div class="bcard-b">${inner}</div></div>`;
 }
+async function builderAIWrite(btn){
+  if(!CLOUD || !sb){ toast("A IA precisa da cloud configurada."); return; }
+  const t=cur(), L=curLang();
+  if(L.body && L.body.length && !confirm("Gerar o texto deste email com IA? Substitui o texto atual do corpo ("+state.lang.toUpperCase()+").")) return;
+  const old=btn?btn.innerHTML:"";
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> A escrever…'; }
+  try{
+    const { data, error } = await sb.functions.invoke("analyze-site", { body:{ action:"write", hotel: proj().hotel, purpose: t.name, lang: state.lang } });
+    if(error || !data || data.error || !Array.isArray(data.blocks) || !data.blocks.length) throw new Error((data&&data.error)||"sem resposta");
+    L.body = data.blocks.map(function(bk){ const ty=bk.type==="cta"?"cta":(bk.type==="h"?"h":"p"); return ty==="cta"?{t:"cta",v:String(bk.text||""),u:String(bk.url||"#")}:{t:ty,v:String(bk.text||"")}; }).filter(function(x){return x.v;});
+    dirty(); renderBuilder(); refreshHtmlPrev();
+    toast("Texto gerado pela IA — revê e ajusta.");
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.innerHTML=old; }
+    toast("Não consegui gerar o texto. Tenta de novo.");
+  }
+}
 function renderBuilder(){
   const b=$("builder"); if(!b) return;
   if(!cur()||cur().mode!=="house"){ b.style.display="none"; return; }
   b.style.display="block";
   const L=curLang();
   const PIECES=[["h","doc","Título"],["p","list","Parágrafo"],["cta","copy","Botão"],["img","image","Imagem"]];
-  let h=`<div class="bld-top"><div class="bld-ttl">${ic("doc",16)}<span>Construtor do corpo</span></div><div class="bld-sub">Arrasta uma peça para dentro do email · reordena pelo ⠿ · edita escrevendo. Tudo atualiza a pré-visualização acima.</div></div>`;
+  let h=`<div class="bld-top"><div style="display:flex;align-items:center;gap:10px"><div class="bld-ttl">${ic("doc",16)}<span>Construtor do corpo</span></div><span style="flex:1"></span><button class="btn sm" id="bldAI" title="Gerar o texto deste email com IA">${ic("wand",14)} Texto com IA</button></div><div class="bld-sub">Arrasta uma peça para dentro do email · reordena pelo ⠿ · edita escrevendo. Tudo atualiza a pré-visualização acima.</div></div>`;
   h+=`<div class="bpal">${PIECES.map(p=>`<div class="bpiece" draggable="true" data-add="${p[0]}">${ic(p[1],14)}<span>${p[2]}</span></div>`).join("")}</div>`;
   h+=`<div class="bld-list" id="bldList"><div class="bdz" data-dz="0"></div>`;
   (L.body||[]).forEach((it,i)=>{ h+=builderCard(it,i)+`<div class="bdz" data-dz="${i+1}"></div>`; });
@@ -1373,6 +1401,7 @@ function renderBuilder(){
 function bindBuilder(b,L){
   const rebuild=()=>{ dirty(); renderBuilder(); refreshHtmlPrev(); };
   const live=()=>{ dirty(); refreshHtmlPrev(); };
+  const aiBtn=b.querySelector("#bldAI"); if(aiBtn) aiBtn.addEventListener("click",()=>builderAIWrite(aiBtn));
   let drag=null;
   const clearDz=()=>b.querySelectorAll(".bdz").forEach(d=>d.classList.remove("over"));
   b.querySelectorAll(".bpiece").forEach(p=>{
@@ -1596,7 +1625,9 @@ function renderHouseStyle(box){
       <div class="hint" id="heroStatus"></div>`;
   h+='<div class="sectitle" style="margin-top:18px">Largura (opcional)</div>';
   h+=`<div class="field"><input type="number" id="houseWidth" value="${t.settings.width||''}" placeholder="auto (do design)" min="480" max="800" style="width:100%;${HIN}"><div class="hint">Deixa vazio para a largura natural do design.</div></div>`;
-  h+='<div class="tag-hint" style="margin-top:8px">Design, paleta, letra e imagens aplicam-se aos dois idiomas. O texto edita-se no separador «Propriedades».</div>';
+  h+='<div class="tag-hint" style="margin-top:8px">Design, paleta, letra e imagens aplicam-se aos dois idiomas. O texto edita-se no separador «Configurações».</div>';
+  h+='<button class="btn" id="applyAll" style="width:100%;margin-top:12px">'+ic("copy",14)+' Aplicar esta marca a todo o projeto</button>';
+  h+='<div class="hint" style="margin-top:5px">Copia design, paleta, letra, tom, logótipo, hero e contactos para <b>todos</b> os templates de «'+escText(proj().hotel)+'».</div>';
   box.innerHTML=h;
   box.querySelectorAll("[data-design]").forEach(el=>el.addEventListener("click",()=>{ t.design=el.dataset.design; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
   box.querySelectorAll("[data-font]").forEach(el=>el.addEventListener("click",()=>{ t.font=el.dataset.font; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
@@ -1607,6 +1638,19 @@ function renderHouseStyle(box){
   const wd=box.querySelector("#houseWidth"); wd.addEventListener("input",()=>{ t.settings.width=parseInt(wd.value)||0; dirty(); refreshHtmlPrev(); });
   box.querySelectorAll("[data-pub]").forEach(el=>el.addEventListener("click",()=>{ const k=el.dataset.pub; publishImageInto(u=>{t.brand[k]=u;}, k+"Status"); }));
   box.querySelectorAll("[data-emb]").forEach(el=>el.addEventListener("click",()=>{ const k=el.dataset.emb; embedImageInto(u=>{t.brand[k]=u;}, k+"Status"); }));
+  const aa=box.querySelector("#applyAll"); if(aa) aa.addEventListener("click",()=>{
+    const p=proj(), n=p.templates.length;
+    if(!confirm("Aplicar o design, paleta, letra, tom, logótipo, hero e contactos deste template aos "+n+" templates de «"+p.hotel+"»?")) return;
+    const hasContacts = t.contacts && Object.keys(t.contacts).some(k=>t.contacts[k]);
+    p.templates.forEach(tp=>{
+      tp.design=t.design; tp.font=t.font; tp.palette=t.palette; tp.shade=t.shade;
+      if(tp.settings) tp.settings.width=t.settings.width;
+      if(!tp.brand) tp.brand={};
+      tp.brand.logo=t.brand.logo; tp.brand.hero=t.brand.hero;
+      if(hasContacts) tp.contacts=JSON.parse(JSON.stringify(t.contacts));
+    });
+    dirty(); renderAll(); toast("Marca aplicada a "+n+" templates de «"+p.hotel+"»");
+  });
   box.scrollTop=sc;
 }
 function renderStyle(){
@@ -2170,6 +2214,7 @@ $("tplName").addEventListener("input",e=>{ cur().name=e.target.value; renderTplL
 $("subjectInput").addEventListener("input",e=>{ curLang().subject=e.target.value; dirty(); });
 $("subjectInput").addEventListener("focus",e=>{ state.activeField=e.target; });
 document.querySelectorAll("#langToggle button").forEach(b=>b.addEventListener("click",()=>{ state.lang=b.getAttribute("data-lang"); state.selectedBlock=null; setLangUI(); renderCanvas(); renderProps(); }));
+document.querySelectorAll("#prevTog button").forEach(b=>b.addEventListener("click",()=>{ document.querySelectorAll("#prevTog button").forEach(x=>x.classList.toggle("active",x===b)); previewW=b.getAttribute("data-pv")==="mobile"?PREV_MOBILE:PREV_DESKTOP; refreshHtmlPrev(); }));
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.getAttribute("data-tab"))));
 $("btnNewTpl").addEventListener("click",()=>{ const p=proj(); const t=blankTemplate("Novo template "+(p.templates.length+1)); p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
 $("btnDupTpl").addEventListener("click",()=>{ const p=proj(); const c=JSON.parse(JSON.stringify(cur())); c.id="tpl"+(_ctr++)+"_"+Math.floor(performance.now()); c.name=cur().name+" (cópia)"; p.templates.push(c); state.currentTemplateId=c.id; save(); renderAll(); });

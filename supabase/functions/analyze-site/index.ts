@@ -106,6 +106,45 @@ function extractJson(text: string): Record<string, unknown> {
   return {};
 }
 
+function writePrompt(hotel: string, purpose: string, lang: string, instruction: string): string {
+  const L = lang === "en" ? "Inglês" : "Português de Portugal";
+  return `Escreve o CORPO de um email de hotel, pronto a enviar a um hóspede.
+
+Hotel: ${hotel || "(hotel)"}
+Tipo de email: ${purpose || "email ao hóspede"}
+Idioma: ${L}
+${instruction ? "Indicação extra: " + instruction : ""}
+
+Usa as tags do PMS quando fizer sentido (escreve-as EXATAMENTE assim): @GUESTNAME@ (nome do hóspede), @COMMERCIALNAME@ (nome do hotel), @RESNO@ (nº de reserva), @CHECKIN@ (data de chegada), @CHECKOUT@ (data de saída), @CATEGORYDESCRIPTION@ (tipologia do quarto), @UNITCODE@ (nº do alojamento), @ONLINECHECKIN@ (link de check-in online), @KEYPASS@ (chave digital).
+
+Responde APENAS com JSON, sem texto à volta:
+{"blocks":[ {"type":"h","text":"saudação ou título"}, {"type":"p","text":"parágrafo"}, {"type":"cta","text":"texto do botão","url":"@ONLINECHECKIN@"}, {"type":"p","text":"despedida"} ]}
+
+- "h" = título/saudação; "p" = parágrafo; "cta" = botão (com "url", normalmente uma tag como @ONLINECHECKIN@ ou @KEYPASS@, ou "#").
+- Estrutura típica: saudação, 2 a 3 parágrafos, um botão se fizer sentido, despedida.
+- Tom profissional e caloroso, adequado ao tipo de email. Frases naturais. Sem markdown.`;
+}
+async function writeCopy(reqBody: Record<string, unknown>, model: string, key: string): Promise<Record<string, unknown>> {
+  const hotel = String(reqBody?.hotel || "").slice(0, 120);
+  const purpose = String(reqBody?.purpose || "").slice(0, 140);
+  const lang = reqBody?.lang === "en" ? "en" : "pt";
+  const instruction = String(reqBody?.instruction || "").slice(0, 400);
+  const gRes = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key),
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: writePrompt(hotel, purpose, lang, instruction) }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.7, maxOutputTokens: 2048, thinkingConfig: { thinkingBudget: 0 } },
+      }),
+    },
+  );
+  const g = await gRes.json();
+  if (!gRes.ok) return { error: "Gemini: " + (g?.error?.message || gRes.status) };
+  const text = g?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "";
+  return extractJson(text);
+}
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   const json = (body: unknown, status = 200) =>
@@ -116,8 +155,9 @@ Deno.serve(async (req: Request) => {
     if (!key) return json({ error: "GEMINI_API_KEY não configurada" }, 500);
 
     const reqBody = await req.json().catch(() => ({}));
-    const target = normUrl(reqBody?.url || "");
     const model = (typeof reqBody?.model === "string" && reqBody.model) ? reqBody.model : MODEL;
+    if (reqBody?.action === "write") return json(await writeCopy(reqBody, model, key));
+    const target = normUrl(reqBody?.url || "");
     if (!target) return json({ error: "URL em falta" }, 400);
 
     // 1) conteúdo da homepage
