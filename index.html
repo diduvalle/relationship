@@ -387,6 +387,10 @@
           <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
             <div id="prevLabel" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Pré-visualização (dados de exemplo)</div>
             <span style="flex:1"></span>
+            <button id="inspectBtn" type="button" title="Editar a partir da pré-visualização: clica num texto, imagem ou na reserva para abrir o campo certo" style="display:none;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;margin-right:8px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              <span id="inspectBtnTxt">Editar à vista</span>
+            </button>
             <div class="prevtog" id="prevTog">
               <button data-pv="desktop" class="active" title="Vista de computador">Desktop</button>
               <button data-pv="mobile" title="Vista de telemóvel">Telemóvel</button>
@@ -804,6 +808,13 @@ function contactsLine(o,P,dark,F){
 function splitBody(body,hasSummary){ body=body||[]; return hasSummary?{intro:body.slice(0,1),rest:body.slice(1)}:{intro:body,rest:[]}; }
 function imgHTML(it,F){ const u=(it.v||"").trim(); if(!u) return ""; const cap=(it.u||"").trim(); return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 18px"><tr><td align="center"><img src="${tokenizeAttr(u)}" alt="" width="100%" style="display:block;width:100%;max-width:100%;height:auto;border:0;border-radius:12px"></td></tr>${cap?`<tr><td style="padding-top:7px"><p style="margin:0;font-family:${F};font-size:12.5px;color:#8a93a6;text-align:center;font-style:italic">${tokenizeText(cap)}</p></td></tr>`:""}</table>`; }
 function realData(o){ return (o.data||[]).filter(d=>d && (d[0]!=null||d[1]!=null)); }
+/* ===== Modo inspeção: etiqueta elementos editáveis só na pré-visualização ===== */
+let inspectOn=false;
+function ed(o,key){ return (o&&o.editable) ? ` data-edit="${key}"` : ""; }
+function renderBodyEditable(items, off, renderB, o){
+  if(!o || !o.editable) return renderB(items);
+  return (items||[]).map((it,i)=>`<div data-edit="body:${off+i}">${renderB([it])}</div>`).join("");
+}
 
 /* ========== DESIGN 1 — MODERNO (claro, hero, cartão de reserva refinado) ========== */
 function designModerno(o){
@@ -811,7 +822,7 @@ function designModerno(o){
   const RES = o.lang==="en" ? "Your reservation" : "A sua reserva";
   const ds=realData(o);
   const rows=ds.map((d,i)=>{const bt=i>0?`border-top:1px solid ${P.border};`:"";return `<tr><td style="padding:0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="${bt}padding:12px 0;font-family:${F};font-size:12px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:.7px;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td align="right" style="${bt}padding:12px 0;font-family:${F};font-size:15.5px;font-weight:700;color:${P.text};vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr></table></td></tr>`;}).join("");
-  const summary=ds.length?`    <tr><td style="padding:6px 36px 28px">
+  const summary=ds.length?`    <tr><td style="padding:6px 36px 28px"${ed(o,'data')}>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border:1px solid ${P.border};border-radius:16px;overflow:hidden">
         <tr><td style="height:4px;background:${P.accent};font-size:0;line-height:0">&nbsp;</td></tr>
         <tr><td style="padding:18px 24px 2px"><p style="margin:0;font-family:${F};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${P.accent}">${RES}</p></td></tr>
@@ -821,10 +832,10 @@ function designModerno(o){
   const cta=(v,u)=>`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:16px auto 20px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:12px;box-shadow:0 8px 22px ${P.accent}40"><a href="${tokenizeAttr(u||'#')}" target="_blank" rel="noopener" style="display:inline-block;padding:16px 42px;font-family:${F};font-size:16px;font-weight:700;color:#fff;text-decoration:none;border-radius:12px;letter-spacing:.2px">${tokenizeText(v)}</a></td></tr></table>`;
   const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 14px;font-family:${F};font-size:27px;line-height:1.25;font-weight:800;color:${P.accentDark};letter-spacing:-.5px">${tokenizeText(it.v)}</p><div style="width:46px;height:3px;border-radius:3px;background:${P.accent};font-size:0;line-height:0">&nbsp;</div><div style="height:18px;font-size:0">&nbsp;</div>`:it.t==="cta"?cta(it.v,it.u):`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.75;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
-  const header=o.logo?`    <tr><td align="center" style="padding:30px 36px 6px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="42" style="display:block;border:0;height:42px"/></td></tr>\n`:`    <tr><td align="center" style="padding:30px 36px 6px"><p style="margin:0;font-family:${F};font-size:20px;font-weight:800;letter-spacing:.4px;color:${P.accentDark}">@COMMERCIALNAME@</p></td></tr>\n`;
-  const intro=o.body&&o.body.length?`    <tr><td style="padding:28px 36px ${summary?'4px':'6px'}">${renderB(sb.intro)}</td></tr>\n`:"";
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 8px">${renderB(sb.rest)}</td></tr>\n`:"";
+  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const header=o.logo?`    <tr><td align="center" style="padding:30px 36px 6px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="42" style="display:block;border:0;height:42px"/></td></tr>\n`:`    <tr><td align="center" style="padding:30px 36px 6px"><p style="margin:0;font-family:${F};font-size:20px;font-weight:800;letter-spacing:.4px;color:${P.accentDark}">@COMMERCIALNAME@</p></td></tr>\n`;
+  const intro=o.body&&o.body.length?`    <tr><td style="padding:28px 36px ${summary?'4px':'6px'}">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`:"";
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 8px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
   const footer=`    <tr><td style="padding:26px 36px 18px;border-top:1px solid ${P.border}"><p style="margin:0 0 6px;font-family:${F};font-size:15px;font-weight:700;color:${P.text};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted};text-align:center">Recebeu este email por ter uma reserva connosco. Para qualquer questão, basta responder.</p><div style="text-align:center">${contactsLine(o,P,false,F)}</div></td></tr>
     <tr><td style="padding:0 36px 26px;text-align:center">${hostAttribution(P,false)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:36px 16px">
@@ -840,15 +851,15 @@ function designLuxo(o){
   const ds=realData(o);
   const orn=`<div style="width:64px;height:1px;background:${P.accent};opacity:.85;margin:0 auto;line-height:1;font-size:0">&nbsp;</div>`;
   const rows=ds.map((d,i)=>`${i>0?`<tr><td colspan="2" style="border-top:1px solid #e2ddd3;font-size:0;line-height:1px;height:1px">&nbsp;</td></tr>`:""}<tr><td style="padding:10px 0;font-family:${SF};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${LBL};width:42%;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td style="padding:10px 0;font-family:${F};font-size:15px;color:#2c2820;vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:4px 48px 8px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f6f3ec" style="background:#f6f3ec;border:1px solid #e2ddd3"><tr><td style="padding:26px 30px"><div style="font-family:${SF};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:16px">Detalhes da reserva</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const summary=ds.length?`    <tr><td style="padding:4px 48px 8px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f6f3ec" style="background:#f6f3ec;border:1px solid #e2ddd3"><tr><td style="padding:26px 30px"><div style="font-family:${SF};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:16px">Detalhes da reserva</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
   const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<h1 style="margin:0 0 14px;font-family:${F};font-size:28px;font-weight:400;line-height:1.35;color:#2c2820;letter-spacing:.3px">${tokenizeText(it.v)}</h1><div style="width:48px;height:2px;background:${P.accent};margin:0 0 22px">&nbsp;</div>`:it.t==="cta"?`<div style="text-align:center;margin:26px 0 6px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;background:${DK};color:#faf8f3;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;padding:16px 42px;text-decoration:none">${tokenizeText(it.v)}</a></div>`:`<p style="margin:0 0 18px;font-family:${F};font-size:15px;line-height:1.85;color:#4a4238">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="40" style="display:block;border:0;height:40px;margin:0 auto 6px">`:`<div style="font-family:${SF};font-size:11px;letter-spacing:6px;text-transform:uppercase;color:${P.accent};margin-bottom:8px">Hotel</div><div style="font-family:${F};font-size:30px;color:#faf8f3;letter-spacing:2px;line-height:1.2">@COMMERCIALNAME@</div>`;
-  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
+  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="40" style="display:block;border:0;height:40px;margin:0 auto 6px">`:`<div style="font-family:${SF};font-size:11px;letter-spacing:6px;text-transform:uppercase;color:${P.accent};margin-bottom:8px">Hotel</div><div style="font-family:${F};font-size:30px;color:#faf8f3;letter-spacing:2px;line-height:1.2">@COMMERCIALNAME@</div>`;
+  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
   const header=`    <tr><td style="background:${DK};padding:44px 48px 34px;text-align:center">${orn}<div style="height:20px"></div>${headLogo}<div style="height:18px"></div>${orn}</td></tr>\n`;
   const greet=`    <tr><td style="padding:38px 48px 0;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;color:${P.accent}">@COMMERCIALNAME@</td></tr>\n`;
-  const intro=`    <tr><td style="padding:14px 48px 0">${renderB(sb.intro)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:4px 48px 8px">${renderB(sb.rest)}</td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:14px 48px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:4px 48px 8px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
   const footer=`    <tr><td style="background:${DK};padding:36px 48px;text-align:center">${orn}<div style="height:18px"></div><div style="font-family:${SF};font-size:13px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:14px">@COMMERCIALNAME@</div><div style="font-family:${SF};font-size:12px;line-height:1.8;color:#8f887b;margin-bottom:18px">Recebeu este email porque tem uma reserva ativa.</div>${contactsLine(o,P,true,SF)}<div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px;margin-top:16px">${hostAttribution(P,true)}</div></td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:40px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:100%;max-width:${W}px;background:${CARD};box-shadow:0 4px 32px rgba(44,40,32,.12)">
@@ -861,14 +872,14 @@ function designMinimal(o){
   const P=o.palette, W=o.width||560, F=fontFam(o.font);
   const ds=realData(o);
   const rows=ds.map((d,i)=>`<tr><td style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:14px;color:${P.muted};width:46%">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:14px;font-weight:600;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:6px 44px 18px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>\n`:"";
+  const summary=ds.length?`    <tr><td style="padding:6px 44px 18px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>\n`:"";
   const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 20px;font-family:${F};font-size:26px;line-height:1.3;font-weight:300;color:${P.text};letter-spacing:-.4px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<div style="margin:8px 0 22px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;font-family:${F};font-size:14px;font-weight:600;color:${P.accent};text-decoration:none;border-bottom:2px solid ${P.accent};padding-bottom:3px;letter-spacing:.3px">${tokenizeText(it.v)} →</a></div>`:`<p style="margin:0 0 18px;font-family:${F};font-size:16px;line-height:1.75;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const header=o.logo?`    <tr><td style="padding:44px 44px 0"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="32" style="border:0;height:32px"/></td></tr>\n`:`    <tr><td style="padding:44px 44px 0;font-family:${F};font-size:15px;font-weight:700;letter-spacing:.5px;color:${P.text}">@COMMERCIALNAME@</td></tr>\n`;
+  const header=o.logo?`    <tr><td style="padding:44px 44px 0"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="32" style="border:0;height:32px"/></td></tr>\n`:`    <tr><td style="padding:44px 44px 0;font-family:${F};font-size:15px;font-weight:700;letter-spacing:.5px;color:${P.text}">@COMMERCIALNAME@</td></tr>\n`;
   const rule=`    <tr><td style="padding:18px 44px 0"><div style="width:40px;height:3px;background:${P.accent}">&nbsp;</div></td></tr>\n`;
-  const hero=o.hero?`    <tr><td style="padding:20px 0 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:26px 44px 0">${renderB(sb.intro)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:6px 44px 0">${renderB(sb.rest)}</td></tr>\n`:"";
+  const hero=o.hero?`    <tr><td style="padding:20px 0 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:26px 44px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:6px 44px 0">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
   const footer=`    <tr><td style="padding:30px 44px 40px"><div style="border-top:1px solid ${P.border};padding-top:18px;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted}"><strong style="color:${P.text}">@COMMERCIALNAME@</strong><br>Recebeu este email por ter uma reserva connosco.${contactsLine(o,P,false,F)}<br><span style="display:inline-block;margin-top:12px">${hostAttribution(P,false)}</span></div></td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="background:#fff;margin:0;padding:0"><tr><td align="center" style="padding:24px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#fff">
@@ -881,14 +892,14 @@ function designBold(o){
   const P=o.palette, W=o.width||600, F=fontFam(o.font);
   const ds=realData(o);
   const rows=ds.map((d,i)=>`<tr><td style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:13px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:.5px">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:17px;font-weight:800;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:6px 32px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:4px solid ${P.accent};background:${P.tint}"><tr><td style="padding:14px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const summary=ds.length?`    <tr><td style="padding:6px 32px 24px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-left:4px solid ${P.accent};background:${P.tint}"><tr><td style="padding:14px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
   const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 16px;font-family:${F};font-size:30px;line-height:1.15;font-weight:800;color:${P.text};letter-spacing:-.6px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 18px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:10px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:block;padding:17px 24px;font-family:${F};font-size:17px;font-weight:800;color:#fff;text-decoration:none;border-radius:10px;letter-spacing:.3px">${tokenizeText(it.v)}  →</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.65;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="34" style="border:0;height:34px;display:block">`:`<div style="font-family:${F};font-size:22px;font-weight:800;color:#fff;letter-spacing:.3px">@COMMERCIALNAME@</div>`;
+  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="34" style="border:0;height:34px;display:block">`:`<div style="font-family:${F};font-size:22px;font-weight:800;color:#fff;letter-spacing:.3px">@COMMERCIALNAME@</div>`;
   const header=`    <tr><td style="background:${P.accent};padding:30px 32px">${headLogo}</td></tr>\n`;
-  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:30px 32px 0">${renderB(sb.intro)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 32px 0">${renderB(sb.rest)}</td></tr>\n`:"";
+  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:30px 32px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 32px 0">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
   const footer=`    <tr><td style="background:${P.text};padding:26px 32px;text-align:center"><div style="font-family:${F};font-size:15px;font-weight:800;color:#fff;margin-bottom:6px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:rgba(255,255,255,.6);margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${contactsLine(o,P,true,F)}<div style="height:12px;font-size:0">&nbsp;</div>${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:30px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.12)">
@@ -901,13 +912,13 @@ function designBoutique(o){
   const P=o.palette, W=o.width||580, F=fontFam(o.font);
   const ds=realData(o);
   const rows=ds.map(d=>`<tr><td style="padding:9px 18px;font-family:${F};font-size:13px;color:${P.muted}">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:9px 18px;font-family:${F};font-size:15px;font-weight:700;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join('<tr><td colspan="2" style="padding:0 10px"><div style="border-top:1px solid '+P.border+'"></div></td></tr>');
-  const summary=ds.length?`    <tr><td style="padding:6px 34px 24px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border-radius:20px"><tr><td style="padding:14px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const summary=ds.length?`    <tr><td style="padding:6px 34px 24px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border-radius:20px"><tr><td style="padding:14px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
   const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 16px;font-family:${F};font-size:25px;line-height:1.3;font-weight:700;color:${P.accentDark}">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<div style="text-align:center;margin:14px 0 18px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;background:${P.accent};color:#fff;font-family:${F};font-size:16px;font-weight:700;padding:15px 38px;border-radius:40px;text-decoration:none">${tokenizeText(it.v)}</a></div>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.7;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const header=o.logo?`    <tr><td align="center" style="padding:34px 34px 4px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="38" style="border:0;height:38px;display:block;margin:0 auto"/></td></tr>\n`:`    <tr><td align="center" style="padding:34px 34px 4px"><div style="display:inline-block;background:${P.tint};color:${P.accentDark};font-family:${F};font-size:17px;font-weight:800;letter-spacing:.3px;padding:8px 20px;border-radius:30px">@COMMERCIALNAME@</div></td></tr>\n`;
-  const hero=o.hero?`    <tr><td style="padding:14px 22px 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W-44}px;height:auto;border:0;border-radius:18px"/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:24px 34px 0;text-align:center">${renderB(sb.intro)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 34px 0;text-align:center">${renderB(sb.rest)}</td></tr>\n`:"";
+  const header=o.logo?`    <tr><td align="center" style="padding:34px 34px 4px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="38" style="border:0;height:38px;display:block;margin:0 auto"/></td></tr>\n`:`    <tr><td align="center" style="padding:34px 34px 4px"><div style="display:inline-block;background:${P.tint};color:${P.accentDark};font-family:${F};font-size:17px;font-weight:800;letter-spacing:.3px;padding:8px 20px;border-radius:30px">@COMMERCIALNAME@</div></td></tr>\n`;
+  const hero=o.hero?`    <tr><td style="padding:14px 22px 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W-44}px;height:auto;border:0;border-radius:18px"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:24px 34px 0;text-align:center">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 34px 0;text-align:center">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
   const footer=`    <tr><td style="padding:22px 34px 30px;text-align:center"><div style="font-family:${F};font-size:14px;font-weight:700;color:${P.text};margin-bottom:5px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:${P.muted};margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${contactsLine(o,P,false,F)}<div style="height:10px;font-size:0">&nbsp;</div>${hostAttribution(P,false)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};margin:0;padding:0"><tr><td align="center" style="padding:32px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.10)">
@@ -921,13 +932,13 @@ function designEscuro(o){
   const PG="#0b0f16", CARD="#141a24", BD="#232b38", BOX="#1b2330", TX="#e9eef6", MUT="#8a93a6";
   const ds=realData(o);
   const rows=ds.map((d,i)=>`<tr><td style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:12.5px;font-weight:600;color:${MUT};text-transform:uppercase;letter-spacing:.6px">${tokenizeText(d[0]||"")}</td><td align="right" style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:15px;font-weight:700;color:${TX}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:8px 36px 26px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${BOX}" style="background:${BOX};border:1px solid ${BD};border-radius:14px"><tr><td style="padding:6px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const summary=ds.length?`    <tr><td style="padding:8px 36px 26px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${BOX}" style="background:${BOX};border:1px solid ${BD};border-radius:14px"><tr><td style="padding:6px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
   const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<p style="margin:0 0 18px;font-family:${F};font-size:24px;line-height:1.3;font-weight:700;color:#ffffff;letter-spacing:-.3px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:14px auto 18px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:12px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;padding:15px 36px;font-family:${F};font-size:16px;font-weight:600;color:#fff;text-decoration:none;border-radius:12px">${tokenizeText(it.v)}</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.7;color:#c4ccda">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const header=o.logo?`    <tr><td align="center" style="padding:34px 36px 8px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@" height="40" style="display:block;border:0;height:40px"/></td></tr>\n`:(o.hero?"":`    <tr><td align="center" style="padding:34px 36px 8px"><p style="margin:0;font-family:${F};font-size:19px;font-weight:700;letter-spacing:.3px;color:${P.accent}">@COMMERCIALNAME@</p></td></tr>\n`);
-  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:22px 36px ${summary?'4px':'6px'}">${renderB(sb.intro)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 6px">${renderB(sb.rest)}</td></tr>\n`:"";
+  const header=o.logo?`    <tr><td align="center" style="padding:34px 36px 8px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="40" style="display:block;border:0;height:40px"/></td></tr>\n`:(o.hero?"":`    <tr><td align="center" style="padding:34px 36px 8px"><p style="margin:0;font-family:${F};font-size:19px;font-weight:700;letter-spacing:.3px;color:${P.accent}">@COMMERCIALNAME@</p></td></tr>\n`);
+  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:22px 36px ${summary?'4px':'6px'}">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 6px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
   const footer=`    <tr><td style="padding:24px 36px 14px;border-top:1px solid ${BD}"><p style="margin:0 0 4px;font-family:${F};font-size:14px;font-weight:600;color:${TX};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.6;color:${MUT};text-align:center">Recebeu este email por ter uma reserva connosco.</p><div style="text-align:center">${contactsLine(o,P,true,F)}</div></td></tr>
     <tr><td style="padding:0 36px 24px;text-align:center">${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:34px 16px">
@@ -1149,13 +1160,13 @@ function blockHTML(b){
   return "";
 }
 
-function buildEmail(lang){
+function buildEmail(lang, editable){
   const t=cur();
   if(t.mode==="html") return (t[lang] && t[lang].html) || "";
   if(t.mode==="house"){
     const L=t[lang]||{};
     return houseHTML({ design:t.design||"moderno", font:t.font||"sans", lang:lang, palette: shadedPalette(pal(t.palette), t.shade), width: (t.settings&&t.settings.width)||0,
-      logo:(t.brand&&t.brand.logo)||"", hero:(t.brand&&t.brand.hero)||DEFAULT_HERO, contacts:t.contacts||null, data:L.data||[], body:L.body||[] });
+      logo:(t.brand&&t.brand.logo)||"", hero:(t.brand&&t.brand.hero)||DEFAULT_HERO, contacts:t.contacts||null, data:L.data||[], body:L.body||[], editable: editable===true });
   }
   const s=t.settings; const L=t[lang];
   const rows=L.blocks.map(blockHTML).join("\n");
@@ -1196,13 +1207,18 @@ function fitPreview(){
 function refreshHtmlPrev(){
   const f=$("htmlPrev"); if(!f) return;
   const doc=f.contentDocument||f.contentWindow.document;
-  doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width='+previewW+'"></head><body style="margin:0;padding:0">'+applySample(buildEmail(state.lang))+'</body></html>'); doc.close();
+  const t=cur();
+  const canInspect = inspectOn && t && t.mode==="house";
+  const insCss = canInspect ? '<style>[data-edit]{cursor:pointer;transition:outline .08s}[data-edit]:hover{outline:2px solid #1f6bff;outline-offset:1px;background:rgba(31,107,255,.06)}[data-edit]::after{content:"";}</style>' : '';
+  const insJs = canInspect ? '<script>document.addEventListener("click",function(e){var el=e.target.closest&&e.target.closest("[data-edit]");if(!el)return;e.preventDefault();e.stopPropagation();parent.postMessage({__inspect:el.getAttribute("data-edit")},"*");},true);<\/script>' : '';
+  doc.open(); doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width='+previewW+'">'+insCss+'</head><body style="margin:0;padding:0">'+applySample(buildEmail(state.lang, canInspect))+insJs+'</body></html>'); doc.close();
   fitPreview();
   setTimeout(fitPreview,60);
 }
 function renderCanvas(){
   const t=cur();
   const sbar=document.querySelector(".subjectbar"); if(sbar) sbar.style.display = t.mode==="house" ? "none" : "";
+  const ib=$("inspectBtn"); if(ib){ if(t.mode==="house"){ ib.style.display="inline-flex"; } else { ib.style.display="none"; inspectOn=false; } if(typeof setInspectUI==="function") setInspectUI(); }
   if(t.mode==="house"){
     document.querySelector(".email").style.display="none";
     $("htmlEditor").style.display="block";
@@ -2220,6 +2236,30 @@ $("subjectInput").addEventListener("input",e=>{ curLang().subject=e.target.value
 $("subjectInput").addEventListener("focus",e=>{ state.activeField=e.target; });
 document.querySelectorAll("#langToggle button").forEach(b=>b.addEventListener("click",()=>{ state.lang=b.getAttribute("data-lang"); state.selectedBlock=null; setLangUI(); renderCanvas(); renderProps(); }));
 document.querySelectorAll("#prevTog button").forEach(b=>b.addEventListener("click",()=>{ document.querySelectorAll("#prevTog button").forEach(x=>x.classList.toggle("active",x===b)); previewW=b.getAttribute("data-pv")==="mobile"?PREV_MOBILE:PREV_DESKTOP; refreshHtmlPrev(); }));
+function setInspectUI(){ const btn=$("inspectBtn"); if(!btn) return; btn.style.background=inspectOn?"var(--accent)":"#fff"; btn.style.color=inspectOn?"#fff":"var(--muted)"; btn.style.borderColor=inspectOn?"var(--accent)":"var(--line)"; const tx=$("inspectBtnTxt"); if(tx) tx.textContent=inspectOn?"A apontar… clica no email":"Editar à vista"; }
+$("inspectBtn").addEventListener("click",()=>{ inspectOn=!inspectOn; setInspectUI(); refreshHtmlPrev(); });
+window.addEventListener("message",(e)=>{ if(e&&e.data&&typeof e.data.__inspect==="string") inspectEdit(e.data.__inspect); });
+function flashField(el){ if(!el) return; el.scrollIntoView({behavior:"smooth",block:"center"}); const prev=el.style.boxShadow; el.style.boxShadow="0 0 0 3px rgba(31,107,255,.55)"; setTimeout(()=>{ el.style.boxShadow=prev; },1400); }
+function inspectEdit(key){
+  if(!key) return;
+  if(key.indexOf("body:")===0){
+    const i=parseInt(key.split(":")[1],10);
+    if(cur()&&cur().mode==="house") renderBuilder();
+    const card=document.querySelector('#builder .bcard[data-bi="'+i+'"]');
+    if(card){ const inp=card.querySelector("textarea,input[type=text],input:not([type])")||card; flashField(card); try{ (card.querySelector("textarea,input")||{}).focus&&card.querySelector("textarea,input").focus(); }catch(e){} }
+    return;
+  }
+  if(key==="logo"||key==="hero"){
+    switchTab("style");
+    setTimeout(()=>{ const el=$(key==="logo"?"brandLogo":"brandHero"); if(el){ flashField(el); el.focus(); el.select&&el.select(); } },30);
+    return;
+  }
+  if(key==="data"){
+    switchTab("props"); panelOpen.data=true; renderProps();
+    setTimeout(()=>{ const acc=document.querySelector('.acc[data-acc="data"]'); if(acc){ acc.classList.add("open"); flashField(acc); } },30);
+    return;
+  }
+}
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.getAttribute("data-tab"))));
 $("btnNewTpl").addEventListener("click",()=>{ const p=proj(); const t=blankTemplate("Novo template "+(p.templates.length+1)); p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
 $("btnDupTpl").addEventListener("click",()=>{ const p=proj(); const c=JSON.parse(JSON.stringify(cur())); c.id="tpl"+(_ctr++)+"_"+Math.floor(performance.now()); c.name=cur().name+" (cópia)"; p.templates.push(c); state.currentTemplateId=c.id; save(); renderAll(); });
