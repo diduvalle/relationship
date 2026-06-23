@@ -1847,27 +1847,45 @@ function wizardGenerate(){
 }
 
 /* ============================ AUTO-ANÁLISE DO WEBSITE (captação de marca) ============================ */
-const CORS_PROXIES=[
-  u=>"https://api.allorigins.win/raw?url="+encodeURIComponent(u),
-  u=>"https://corsproxy.io/?url="+encodeURIComponent(u)
-];
+// Usa o Jina Reader (r.jina.ai): renderiza o JavaScript do site e devolve HTML/markdown, com CORS aberto.
+async function jinaFetch(url, asHtml){
+  const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),22000);
+  try{
+    const opt={ signal:ctrl.signal };
+    if(asHtml) opt.headers={ "x-return-format":"html" };
+    const r=await fetch("https://r.jina.ai/"+url, opt);
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const t=await r.text();
+    if(!t || t.length<40) throw new Error("vazio");
+    return t;
+  } finally { clearTimeout(to); }
+}
+function mergeContacts(c, text){
+  if(!c.email){ const m=text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/); if(m && !/\.(png|jpe?g|gif|svg|webp)$/i.test(m[0])) c.email=m[0]; }
+  if(!c.phone){ const m=text.match(/\(?\+\d[\d\s().\-]{6,}\d|\b[239]\d{2}[\s.\-]?\d{3}[\s.\-]?\d{3}\b/); if(m){ let p=m[0].replace(/\s+/g," ").trim(); if(p.charAt(0)===")") p=p.slice(1).trim(); const op=(p.match(/\(/g)||[]).length, cp=(p.match(/\)/g)||[]).length; if(cp>op) p=p.replace(/\)\s*$/,"").trim(); c.phone=p; } }
+  if(!c.address){ const m=text.match(/[^\n|>*#]*\b\d{4}-\d{3}\b[^\n|>*#]*/); if(m){ let a=m[0].replace(/[#*>|\[\]]/g,"").replace(/^\s*(morada|address|contactos?|telefone|tel|email|e-mail)\s*[:.\-]?\s*/i,"").trim(); if(a.length>4 && a.length<90) c.address=a; } }
+}
+async function analyzeSite(url){
+  let origin=url; try{ origin=new URL(url).origin; }catch(_){}
+  const html=await jinaFetch(url,true);
+  const r=analyzeHtml(html,url);
+  r.contacts=r.contacts||{};
+  // contactos podem estar numa subpágina (ex.: /contactos)
+  if(!r.contacts.email || !r.contacts.phone){
+    const base=origin.replace(/\/+$/,"");
+    const paths=["contactos","contacto","contact","contacts","pt/contactos","contactos.html"];
+    for(const p of paths){
+      if(r.contacts.email && r.contacts.phone) break;
+      let md; try{ md=await jinaFetch(base+"/"+p,false); }catch(_){ continue; }
+      mergeContacts(r.contacts, md);
+    }
+  }
+  if(!r.contacts.website) r.contacts.website=origin;
+  return r;
+}
 function normUrl(u){ u=(u||"").trim(); if(!u) return ""; if(!/^https?:\/\//i.test(u)) u="https://"+u; return u; }
 function normHex(c){ c=(c||"").trim(); const m=c.match(/^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/); if(!m) return ""; let h=m[1]; if(h.length===3) h=h.split("").map(x=>x+x).join(""); return "#"+h.toLowerCase(); }
 function fontLabel(key){ const f=FONT_LIST.find(x=>x[0]===key); return f?f[1]:key; }
-async function fetchViaProxy(url){
-  let lastErr;
-  for(const mk of CORS_PROXIES){
-    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),15000);
-    try{
-      const r=await fetch(mk(url),{redirect:"follow",signal:ctrl.signal});
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      const t=await r.text();
-      if(t && t.length>200) return t;
-    }catch(e){ lastErr=e; }
-    finally{ clearTimeout(to); }
-  }
-  throw lastErr||new Error("sem resposta");
-}
 function detectFontKey(doc){
   let fam="";
   const gf=doc.querySelector('link[href*="fonts.googleapis.com"]');
@@ -1910,6 +1928,7 @@ function analyzeHtml(html, baseUrl){
   const meta=(sel)=>{ const el=doc.querySelector(sel); return el?(el.getAttribute("content")||el.getAttribute("href")||""):""; };
   const name = meta('meta[property="og:site_name"]') || meta('meta[property="og:title"]') || (doc.title||"").split(/[|\-–—•]/)[0].trim();
   let logo = meta('meta[property="og:image"]') || meta('link[rel~="apple-touch-icon"]') || meta('link[rel="icon"]') || meta('link[rel~="icon"]');
+  if(!logo){ const im=doc.querySelector('header img, nav img, a[href="/"] img, a[href="'+origin+'"] img, a[href="'+origin+'/"] img, img'); if(im) logo=im.getAttribute("src")||im.getAttribute("data-src")||""; }
   logo = abs(logo);
   if(!logo) logo = "https://www.google.com/s2/favicons?domain="+encodeURIComponent(origin)+"&sz=128";
   let color = normHex(meta('meta[name="theme-color"]'));
@@ -2014,10 +2033,9 @@ async function doAnalyze(){
   if(!url){ if(msg) msg.innerHTML='<span style="color:var(--danger)">Escreve o endereço do website primeiro.</span>'; return; }
   nf.website=url;
   if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> A analisar…'; }
-  if(msg) msg.innerHTML='<span style="display:inline-flex;align-items:center;gap:7px"><span class="spin"></span> A ler '+escText(url)+'…</span>';
+  if(msg) msg.innerHTML='<span style="display:inline-flex;align-items:center;gap:7px"><span class="spin"></span> A ler '+escText(url)+'… (pode demorar uns segundos)</span>';
   try{
-    const html=await fetchViaProxy(url);
-    const a=analyzeHtml(html,url);
+    const a=await analyzeSite(url);
     if(a.color){ nf.palette=nearestPaletteKey(a.color); nf.shade=shadeForColor(a.color,nf.palette); nf.detectedColor=a.color; }
     if(a.font) nf.font=a.font;
     if(a.logo) nf.logo=a.logo;
