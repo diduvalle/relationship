@@ -2072,7 +2072,24 @@ function analysisSummaryHtml(){
   if(c.email) chips.push('<span class="achip">Email</span>');
   if(c.address) chips.push('<span class="achip">Morada</span>');
   const colorNote = nf.detectedColor ? '' : '<div style="margin-top:6px;color:var(--muted)">Cor da marca não detetada (logótipo sem cor ou site sem cor definida) — escolhe a paleta abaixo.</div>';
-  return '<div style="color:var(--accent);margin-bottom:6px">Detetado do website (ajusta tudo abaixo se quiseres):</div><div class="achips">'+(chips.length?chips.join(""):'<span class="achip">Sem dados claros — preenche à mão</span>')+'</div>'+colorNote;
+  const src = nf.analyzed.viaAI ? ' <span style="color:var(--muted);font-weight:400">· por IA</span>' : '';
+  return '<div style="color:var(--accent);margin-bottom:6px">Detetado do website'+src+' (ajusta tudo abaixo se quiseres):</div><div class="achips">'+(chips.length?chips.join(""):'<span class="achip">Sem dados claros — preenche à mão</span>')+'</div>'+colorNote;
+}
+async function analyzeViaCloud(url){
+  if(!CLOUD || !sb) return null;
+  try{
+    const { data, error } = await sb.functions.invoke("analyze-site", { body:{ url } });
+    if(error || !data || data.error) return null;
+    return {
+      name: data.hotelName||"",
+      color: data.brandColorHex||"",
+      palette: (data.palette && PALETTES[data.palette]) ? data.palette : "",
+      font: (data.font && FONTS[data.font]) ? data.font : "",
+      logo: data.logoUrl||"",
+      contacts: data.contacts||{},
+      viaAI: true
+    };
+  }catch(_){ return null; }
 }
 async function doAnalyze(){
   const site=document.getElementById("nfSite"), msg=document.getElementById("nfSiteMsg"), btn=document.getElementById("nfAnalyze");
@@ -2082,9 +2099,11 @@ async function doAnalyze(){
   if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> A analisar…'; }
   if(msg) msg.innerHTML='<span style="display:inline-flex;align-items:center;gap:7px"><span class="spin"></span> A ler '+escText(url)+'… (pode demorar uns segundos)</span>';
   try{
-    const a=await analyzeSite(url);
-    if(a.color){ nf.palette=nearestPaletteKey(a.color); nf.shade=50; nf.detectedColor=a.color; }
-    if(a.font) nf.font=a.font;
+    let a=await analyzeViaCloud(url);   // IA (Edge Function), se estiver no ar
+    if(!a) a=await analyzeSite(url);     // senão, modo local
+    if(a.palette && PALETTES[a.palette]){ nf.palette=a.palette; nf.shade=50; nf.detectedColor=a.color||null; }
+    else if(a.color){ nf.palette=nearestPaletteKey(a.color); nf.shade=50; nf.detectedColor=a.color; }
+    if(a.font && FONTS[a.font]) nf.font=a.font;
     if(a.logo) nf.logo=a.logo;
     if(a.name && !(nf.hotel||"").trim()) nf.hotel=a.name;
     nf.contacts=a.contacts||{};
