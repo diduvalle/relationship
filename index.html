@@ -828,7 +828,7 @@ function designModerno(o){
   const footer=`    <tr><td style="padding:26px 36px 18px;border-top:1px solid ${P.border}"><p style="margin:0 0 6px;font-family:${F};font-size:15px;font-weight:700;color:${P.text};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted};text-align:center">Recebeu este email por ter uma reserva connosco. Para qualquer questão, basta responder.</p><div style="text-align:center">${contactsLine(o,P,false,F)}</div></td></tr>
     <tr><td style="padding:0 36px 26px;text-align:center">${hostAttribution(P,false)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:36px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;border:1px solid ${P.border};box-shadow:0 18px 50px rgba(20,28,46,.13)">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#fff;border-radius:20px;overflow:hidden;border:1px solid ${P.border};box-shadow:0 18px 50px rgba(20,28,46,.13)">
 ${header}${hero}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -851,7 +851,7 @@ function designLuxo(o){
   const rest=sb.rest.length?`    <tr><td style="padding:4px 48px 8px">${renderB(sb.rest)}</td></tr>\n`:"";
   const footer=`    <tr><td style="background:${DK};padding:36px 48px;text-align:center">${orn}<div style="height:18px"></div><div style="font-family:${SF};font-size:13px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:14px">@COMMERCIALNAME@</div><div style="font-family:${SF};font-size:12px;line-height:1.8;color:#8f887b;margin-bottom:18px">Recebeu este email porque tem uma reserva ativa.</div>${contactsLine(o,P,true,SF)}<div style="border-top:1px solid rgba(255,255,255,.12);padding-top:16px;margin-top:16px">${hostAttribution(P,true)}</div></td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:40px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:${W}px;max-width:100%;background:${CARD};box-shadow:0 4px 32px rgba(44,40,32,.12)">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:100%;max-width:${W}px;background:${CARD};box-shadow:0 4px 32px rgba(44,40,32,.12)">
 ${header}${hero}${greet}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -871,7 +871,7 @@ function designMinimal(o){
   const rest=sb.rest.length?`    <tr><td style="padding:6px 44px 0">${renderB(sb.rest)}</td></tr>\n`:"";
   const footer=`    <tr><td style="padding:30px 44px 40px"><div style="border-top:1px solid ${P.border};padding-top:18px;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted}"><strong style="color:${P.text}">@COMMERCIALNAME@</strong><br>Recebeu este email por ter uma reserva connosco.${contactsLine(o,P,false,F)}<br><span style="display:inline-block;margin-top:12px">${hostAttribution(P,false)}</span></div></td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="background:#fff;margin:0;padding:0"><tr><td align="center" style="padding:24px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#fff">
 ${header}${rule}${hero}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -891,7 +891,7 @@ function designBold(o){
   const rest=sb.rest.length?`    <tr><td style="padding:2px 32px 0">${renderB(sb.rest)}</td></tr>\n`:"";
   const footer=`    <tr><td style="background:${P.text};padding:26px 32px;text-align:center"><div style="font-family:${F};font-size:15px;font-weight:800;color:#fff;margin-bottom:6px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:rgba(255,255,255,.6);margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${contactsLine(o,P,true,F)}<div style="height:12px;font-size:0">&nbsp;</div>${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:30px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.12)">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.12)">
 ${header}${hero}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -910,7 +910,7 @@ function designBoutique(o){
   const rest=sb.rest.length?`    <tr><td style="padding:2px 34px 0;text-align:center">${renderB(sb.rest)}</td></tr>\n`:"";
   const footer=`    <tr><td style="padding:22px 34px 30px;text-align:center"><div style="font-family:${F};font-size:14px;font-weight:700;color:${P.text};margin-bottom:5px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:${P.muted};margin-bottom:14px">Recebeu este email por ter uma reserva connosco.</div>${contactsLine(o,P,false,F)}<div style="height:10px;font-size:0">&nbsp;</div>${hostAttribution(P,false)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};margin:0;padding:0"><tr><td align="center" style="padding:32px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:${W}px;max-width:100%;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.10)">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.10)">
 ${header}${hero}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -931,7 +931,7 @@ function designEscuro(o){
   const footer=`    <tr><td style="padding:24px 36px 14px;border-top:1px solid ${BD}"><p style="margin:0 0 4px;font-family:${F};font-size:14px;font-weight:600;color:${TX};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.6;color:${MUT};text-align:center">Recebeu este email por ter uma reserva connosco.</p><div style="text-align:center">${contactsLine(o,P,true,F)}</div></td></tr>
     <tr><td style="padding:0 36px 24px;text-align:center">${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:34px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:${W}px;max-width:100%;background:${CARD};border-radius:18px;overflow:hidden;border:1px solid ${BD}">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:100%;max-width:${W}px;background:${CARD};border-radius:18px;overflow:hidden;border:1px solid ${BD}">
 ${hero}${header}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
