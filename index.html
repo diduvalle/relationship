@@ -1027,10 +1027,94 @@ const STARTERS = [
       body:[H("Dear @GUESTNAME@,"),P("Thank you for choosing @COMMERCIALNAME@. We hope you enjoyed your stay and look forward to welcoming you back soon."),P("Your feedback is very important to us and helps us improve. Would you take a minute to share your experience?"),C("Review my stay","#"),P("As a thank you, next time you book directly with us you'll enjoy a special rate. See you soon!"),P("Kind regards,\nThe Management of @COMMERCIALNAME@")] } }
 ];
 
+/* ===== Traduções dos modelos-base (ES/IT/DE/FR). As tags @…@ mantêm-se sempre iguais. ===== */
+const STARTER_I18N = {
+  "NEW": {
+    es:{ subject:"Reserva confirmada — @COMMERCIALNAME@",
+      data:[["Huésped:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Tipo de habitación:","@CATEGORYDESCRIPTION@"],["Llegada:","@CHECKIN@"],["Salida:","@CHECKOUT@"]],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Nos complace confirmar su reserva en @COMMERCIALNAME@. Arriba encontrará el resumen de su estancia — ¡estamos deseando darle la bienvenida!"),P("Para una llegada más sencilla y rápida, puede adelantar su check-in online."),C("Hacer el check-in online","@ONLINECHECKIN@"),P("Si necesita cualquier cosa antes de su llegada, basta con responder a este correo — será un placer ayudarle."),P("Un cordial saludo,\nLa Dirección de @COMMERCIALNAME@")] },
+    it:{ subject:"Prenotazione confermata — @COMMERCIALNAME@",
+      data:[["Ospite:","@GUESTNAME@"],["Numero di prenotazione:","@RESNO@"],["Tipologia camera:","@CATEGORYDESCRIPTION@"],["Arrivo:","@CHECKIN@"],["Partenza:","@CHECKOUT@"]],
+      body:[H("Gentile @GUESTNAME@,"),P("Siamo lieti di confermare la sua prenotazione presso @COMMERCIALNAME@. Qui sopra trova il riepilogo del suo soggiorno — non vediamo l'ora di accoglierla!"),P("Per un arrivo più semplice e veloce, può anticipare il suo check-in online."),C("Effettua il check-in online","@ONLINECHECKIN@"),P("Se ha bisogno di qualcosa prima del suo arrivo, basta rispondere a questa email — saremo lieti di aiutarla."),P("Cordiali saluti,\nLa Direzione di @COMMERCIALNAME@")] },
+    de:{ subject:"Buchung bestätigt — @COMMERCIALNAME@",
+      data:[["Gast:","@GUESTNAME@"],["Reservierungsnummer:","@RESNO@"],["Zimmerkategorie:","@CATEGORYDESCRIPTION@"],["Anreise:","@CHECKIN@"],["Abreise:","@CHECKOUT@"]],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Wir freuen uns, Ihre Buchung im @COMMERCIALNAME@ zu bestätigen. Oben finden Sie die Übersicht Ihres Aufenthalts — wir freuen uns darauf, Sie begrüßen zu dürfen!"),P("Für eine einfachere und schnellere Ankunft können Sie Ihren Online-Check-in bereits im Voraus vornehmen."),C("Online einchecken","@ONLINECHECKIN@"),P("Sollten Sie vor Ihrer Ankunft etwas benötigen, antworten Sie einfach auf diese E-Mail — wir helfen Ihnen gerne."),P("Mit freundlichen Grüßen,\nDie Direktion des @COMMERCIALNAME@")] },
+    fr:{ subject:"Réservation confirmée — @COMMERCIALNAME@",
+      data:[["Client :","@GUESTNAME@"],["Numéro de réservation :","@RESNO@"],["Type de chambre :","@CATEGORYDESCRIPTION@"],["Arrivée :","@CHECKIN@"],["Départ :","@CHECKOUT@"]],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Nous avons le plaisir de confirmer votre réservation à @COMMERCIALNAME@. Vous trouverez ci-dessus le récapitulatif de votre séjour — nous avons hâte de vous accueillir !"),P("Pour une arrivée plus simple et plus rapide, vous pouvez effectuer votre check-in en ligne à l'avance."),C("Faire le check-in en ligne","@ONLINECHECKIN@"),P("Si vous avez besoin de quoi que ce soit avant votre arrivée, il vous suffit de répondre à cet e-mail — nous serons ravis de vous aider."),P("Meilleures salutations,\nLa Direction de @COMMERCIALNAME@")] } },
+  "BEFORE-CHECKIN": {
+    es:{ subject:"Su llegada a @COMMERCIALNAME@ se acerca",
+      data:[["Huésped:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Tipo de habitación:","@CATEGORYDESCRIPTION@"],["Llegada:","@CHECKIN@"],["Salida:","@CHECKOUT@"]],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Solo un breve correo de cortesía para decirle que estamos deseando darle la bienvenida."),P("Si necesita indicaciones para llegar al hotel, no dude en contactarnos. Del mismo modo, si tiene una hora prevista de llegada, será un placer recibirle personalmente."),P("Para evitar retrasos en el check-in, le agradecemos que realice su pre-check-in online mediante el botón de abajo."),C("Pre-check-in online","@ONLINECHECKIN@"),P("Si necesita cualquier información, no dude en pedírnosla — nuestros servicios están siempre a su disposición."),P("Esperamos su llegada.\nUn cordial saludo,\nLa Dirección de @COMMERCIALNAME@")] },
+    it:{ subject:"Il suo arrivo a @COMMERCIALNAME@ si avvicina",
+      data:[["Ospite:","@GUESTNAME@"],["Numero di prenotazione:","@RESNO@"],["Tipologia camera:","@CATEGORYDESCRIPTION@"],["Arrivo:","@CHECKIN@"],["Partenza:","@CHECKOUT@"]],
+      body:[H("Gentile @GUESTNAME@,"),P("Solo una breve email di cortesia per dirle che non vediamo l'ora di accoglierla."),P("Se ha bisogno di indicazioni per raggiungere l'hotel, non esiti a contattarci. Allo stesso modo, se ha un orario di arrivo previsto, saremo lieti di accoglierla di persona."),P("Per evitare ritardi al check-in, le chiediamo gentilmente di effettuare il suo pre-check-in online tramite il pulsante qui sotto."),C("Pre-check-in online","@ONLINECHECKIN@"),P("Se necessita di qualsiasi informazione, non esiti — i nostri servizi sono sempre a disposizione."),P("Attendiamo il suo arrivo.\nCordiali saluti,\nLa Direzione di @COMMERCIALNAME@")] },
+    de:{ subject:"Ihre Ankunft im @COMMERCIALNAME@ steht bevor",
+      data:[["Gast:","@GUESTNAME@"],["Reservierungsnummer:","@RESNO@"],["Zimmerkategorie:","@CATEGORYDESCRIPTION@"],["Anreise:","@CHECKIN@"],["Abreise:","@CHECKOUT@"]],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Nur eine kurze Nachricht, um Ihnen mitzuteilen, dass wir uns sehr darauf freuen, Sie begrüßen zu dürfen."),P("Falls Sie eine Wegbeschreibung zum Hotel benötigen, kontaktieren Sie uns bitte. Ebenso empfangen wir Sie gerne persönlich, wenn Sie uns Ihre voraussichtliche Ankunftszeit mitteilen."),P("Um Verzögerungen beim Check-in zu vermeiden, bitten wir Sie, Ihren Online-Vor-Check-in über die Schaltfläche unten vorzunehmen."),C("Online-Vor-Check-in","@ONLINECHECKIN@"),P("Sollten Sie Informationen benötigen, zögern Sie nicht — unser Team steht Ihnen jederzeit zur Verfügung."),P("Wir freuen uns auf Ihre Ankunft.\nMit freundlichen Grüßen,\nDie Direktion des @COMMERCIALNAME@")] },
+    fr:{ subject:"Votre arrivée à @COMMERCIALNAME@ approche",
+      data:[["Client :","@GUESTNAME@"],["Numéro de réservation :","@RESNO@"],["Type de chambre :","@CATEGORYDESCRIPTION@"],["Arrivée :","@CHECKIN@"],["Départ :","@CHECKOUT@"]],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Juste un petit message de courtoisie pour vous dire que nous avons hâte de vous accueillir."),P("Si vous avez besoin d'indications pour rejoindre l'hôtel, n'hésitez pas à nous contacter. De même, si vous avez une heure d'arrivée prévue, nous serons ravis de vous accueillir en personne."),P("Afin d'éviter tout retard lors du check-in, nous vous remercions d'effectuer votre pré-check-in en ligne à l'aide du bouton ci-dessous."),C("Pré-check-in en ligne","@ONLINECHECKIN@"),P("Si vous avez besoin d'une quelconque information, n'hésitez pas — nos services sont toujours à votre disposition."),P("Nous attendons votre arrivée.\nMeilleures salutations,\nLa Direction de @COMMERCIALNAME@")] } },
+  "AFTER-CHECKIN": {
+    es:{ subject:"Bienvenido/a a @COMMERCIALNAME@",
+      data:[["Huésped titular:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Tipo de habitación:","@CATEGORYDESCRIPTION@"],["Nº de alojamiento:","@UNITCODE@"],["Llegada:","@CHECKIN@"],["Salida:","@CHECKOUT@"]],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Solo un breve correo de cortesía para darle la bienvenida a @COMMERCIALNAME@."),P("Aprovechamos para informarle de que puede utilizar el botón de abajo, en su smartphone, tablet u ordenador portátil, para acceder directamente a algunos servicios del hotel, así como a información sobre la región, los servicios disponibles y los puntos de interés."),C("Virtual KeyPass","@KEYPASS@"),P("Si necesita cualquier información o ayuda adicional, no dude en contactarnos pulsando el 9 en el teléfono de su alojamiento, o directamente con la recepción."),P("Un cordial saludo,\nLa Dirección de @COMMERCIALNAME@")] },
+    it:{ subject:"Benvenuto/a presso @COMMERCIALNAME@",
+      data:[["Ospite titolare:","@GUESTNAME@"],["Numero di prenotazione:","@RESNO@"],["Tipologia camera:","@CATEGORYDESCRIPTION@"],["Numero alloggio:","@UNITCODE@"],["Arrivo:","@CHECKIN@"],["Partenza:","@CHECKOUT@"]],
+      body:[H("Gentile @GUESTNAME@,"),P("Solo una breve email di cortesia per darle il benvenuto presso @COMMERCIALNAME@."),P("Colgo l'occasione per informarla che può utilizzare il pulsante qui sotto, dal suo smartphone, tablet o portatile, per accedere direttamente ad alcuni servizi dell'hotel, nonché a informazioni sulla regione, sui servizi disponibili e sui punti di interesse."),C("Virtual KeyPass","@KEYPASS@"),P("Se necessita di qualsiasi informazione o assistenza aggiuntiva, non esiti a contattarci premendo il 9 dal telefono del suo alloggio, o direttamente alla reception."),P("Cordiali saluti,\nLa Direzione di @COMMERCIALNAME@")] },
+    de:{ subject:"Willkommen im @COMMERCIALNAME@",
+      data:[["Hauptgast:","@GUESTNAME@"],["Reservierungsnummer:","@RESNO@"],["Zimmerkategorie:","@CATEGORYDESCRIPTION@"],["Unterkunftsnummer:","@UNITCODE@"],["Anreise:","@CHECKIN@"],["Abreise:","@CHECKOUT@"]],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Nur eine kurze Nachricht, um Sie im @COMMERCIALNAME@ willkommen zu heißen."),P("Gerne weisen wir Sie darauf hin, dass Sie über die Schaltfläche unten – auf Ihrem Smartphone, Tablet oder Laptop – direkten Zugang zu einigen Hotelservices sowie zu Informationen über die Region, verfügbare Dienstleistungen und Sehenswürdigkeiten erhalten."),C("Virtual KeyPass","@KEYPASS@"),P("Sollten Sie weitere Informationen oder Unterstützung benötigen, kontaktieren Sie uns bitte, indem Sie die 9 auf dem Telefon Ihrer Unterkunft wählen, oder wenden Sie sich direkt an die Rezeption."),P("Mit freundlichen Grüßen,\nDie Direktion des @COMMERCIALNAME@")] },
+    fr:{ subject:"Bienvenue à @COMMERCIALNAME@",
+      data:[["Client principal :","@GUESTNAME@"],["Numéro de réservation :","@RESNO@"],["Type de chambre :","@CATEGORYDESCRIPTION@"],["Numéro de logement :","@UNITCODE@"],["Arrivée :","@CHECKIN@"],["Départ :","@CHECKOUT@"]],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Juste un petit message de courtoisie pour vous accueillir à @COMMERCIALNAME@."),P("Nous en profitons pour vous informer que vous pouvez utiliser le bouton ci-dessous, sur votre smartphone, tablette ou ordinateur portable, pour accéder directement à certains services de l'hôtel, ainsi qu'à des informations sur la région, les services disponibles et les points d'intérêt."),C("Virtual KeyPass","@KEYPASS@"),P("Si vous avez besoin d'une information ou d'une aide supplémentaire, n'hésitez pas à nous contacter en composant le 9 depuis le téléphone de votre logement, ou directement à la réception."),P("Meilleures salutations,\nLa Direction de @COMMERCIALNAME@")] } },
+  "BEFORE-CHECKOUT": {
+    es:{ subject:"Su salida se acerca",
+      data:[["Huésped:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"],["Nº de alojamiento:","@UNITCODE@"],["Salida:","@CHECKOUT@"]],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Su check-out está previsto para @CHECKOUT@, hasta las 11:00 h. Si desea un late check-out, hable con nosotros — sujeto a disponibilidad."),P("Si desea adelantar la liquidación de su cuenta o solicitar la factura, nuestra recepción está a su disposición (marque el 9 desde su alojamiento)."),P("Esperamos que su estancia haya sido de su agrado.\nUn cordial saludo,\nLa Dirección de @COMMERCIALNAME@")] },
+    it:{ subject:"La sua partenza si avvicina",
+      data:[["Ospite:","@GUESTNAME@"],["Numero di prenotazione:","@RESNO@"],["Numero alloggio:","@UNITCODE@"],["Partenza:","@CHECKOUT@"]],
+      body:[H("Gentile @GUESTNAME@,"),P("Il suo check-out è previsto per @CHECKOUT@, entro le ore 11:00. Se desidera un late check-out, ci contatti — soggetto a disponibilità."),P("Se desidera anticipare il saldo del conto o richiedere la fattura, la nostra reception è a sua disposizione (componga il 9 dal suo alloggio)."),P("Ci auguriamo che il suo soggiorno sia stato di suo gradimento.\nCordiali saluti,\nLa Direzione di @COMMERCIALNAME@")] },
+    de:{ subject:"Ihre Abreise steht bevor",
+      data:[["Gast:","@GUESTNAME@"],["Reservierungsnummer:","@RESNO@"],["Unterkunftsnummer:","@UNITCODE@"],["Abreise:","@CHECKOUT@"]],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Ihr Check-out ist für @CHECKOUT@ bis 11:00 Uhr vorgesehen. Wenn Sie einen späten Check-out wünschen, sprechen Sie uns bitte an — je nach Verfügbarkeit."),P("Wenn Sie Ihre Rechnung vorab begleichen oder anfordern möchten, steht Ihnen unsere Rezeption gerne zur Verfügung (wählen Sie die 9 von Ihrer Unterkunft aus)."),P("Wir hoffen, dass Ihnen Ihr Aufenthalt gefallen hat.\nMit freundlichen Grüßen,\nDie Direktion des @COMMERCIALNAME@")] },
+    fr:{ subject:"Votre départ approche",
+      data:[["Client :","@GUESTNAME@"],["Numéro de réservation :","@RESNO@"],["Numéro de logement :","@UNITCODE@"],["Départ :","@CHECKOUT@"]],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Votre check-out est prévu pour le @CHECKOUT@, jusqu'à 11h00. Si vous souhaitez un late check-out, parlez-en avec nous — sous réserve de disponibilité."),P("Si vous souhaitez régler votre note à l'avance ou demander votre facture, notre réception est à votre disposition (composez le 9 depuis votre logement)."),P("Nous espérons que votre séjour vous a été agréable.\nMeilleures salutations,\nLa Direction de @COMMERCIALNAME@")] } },
+  "CHECKOUT": {
+    es:{ subject:"Gracias por su visita — ¡buen viaje!",
+      data:[["Huésped:","@GUESTNAME@"],["Nº de reserva:","@RESNO@"]],
+      body:[H("¡Buen viaje, @GUESTNAME@!"),P("Ha sido un verdadero placer recibirle en @COMMERCIALNAME@. Esperamos volver a verle muy pronto."),P("Si necesita su factura o cualquier ayuda tras su salida, basta con responder a este correo."),P("¡Hasta la próxima!\nLa Dirección de @COMMERCIALNAME@")] },
+    it:{ subject:"Grazie per la sua visita — buon viaggio!",
+      data:[["Ospite:","@GUESTNAME@"],["Numero di prenotazione:","@RESNO@"]],
+      body:[H("Buon viaggio, @GUESTNAME@!"),P("È stato un vero piacere ospitarla presso @COMMERCIALNAME@. Speriamo di rivederla molto presto."),P("Se ha bisogno della sua fattura o di qualsiasi assistenza dopo la partenza, basta rispondere a questa email."),P("Alla prossima!\nLa Direzione di @COMMERCIALNAME@")] },
+    de:{ subject:"Danke für Ihren Besuch — gute Reise!",
+      data:[["Gast:","@GUESTNAME@"],["Reservierungsnummer:","@RESNO@"]],
+      body:[H("Gute Reise, @GUESTNAME@!"),P("Es war uns eine große Freude, Sie im @COMMERCIALNAME@ zu Gast zu haben. Wir hoffen, Sie schon bald wiederzusehen."),P("Falls Sie Ihre Rechnung oder nach der Abreise Unterstützung benötigen, antworten Sie einfach auf diese E-Mail."),P("Bis zum nächsten Mal!\nDie Direktion des @COMMERCIALNAME@")] },
+    fr:{ subject:"Merci pour votre visite — bon voyage !",
+      data:[["Client :","@GUESTNAME@"],["Numéro de réservation :","@RESNO@"]],
+      body:[H("Bon voyage, @GUESTNAME@ !"),P("Ce fut un véritable plaisir de vous accueillir à @COMMERCIALNAME@. Nous espérons vous revoir très bientôt."),P("Si vous avez besoin de votre facture ou d'une assistance après votre départ, il vous suffit de répondre à cet e-mail."),P("À bientôt !\nLa Direction de @COMMERCIALNAME@")] } },
+  "AFTER-CHECKOUT": {
+    es:{ subject:"¿Qué tal fue su estancia, @GUESTNAME@?",
+      data:[],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Gracias por elegir @COMMERCIALNAME@. Esperamos que haya disfrutado de su estancia y que regrese pronto."),P("Su opinión es muy importante para nosotros y nos ayuda a mejorar. ¿Nos dedicaría solo un minuto para compartir su experiencia?"),C("Valorar mi estancia","#"),P("Como agradecimiento, la próxima vez que reserve directamente con nosotros disfrutará de una condición especial. ¡Hasta pronto!"),P("Un cordial saludo,\nLa Dirección de @COMMERCIALNAME@")] },
+    it:{ subject:"Com'è stato il suo soggiorno, @GUESTNAME@?",
+      data:[],
+      body:[H("Gentile @GUESTNAME@,"),P("Grazie per aver scelto @COMMERCIALNAME@. Ci auguriamo che abbia apprezzato il suo soggiorno e speriamo di riaccoglierla presto."),P("La sua opinione è molto importante per noi e ci aiuta a migliorare. Dedicherebbe solo un minuto per condividere la sua esperienza?"),C("Valuta il mio soggiorno","#"),P("Come ringraziamento, la prossima volta che prenoterà direttamente con noi avrà una condizione speciale. A presto!"),P("Cordiali saluti,\nLa Direzione di @COMMERCIALNAME@")] },
+    de:{ subject:"Wie war Ihr Aufenthalt, @GUESTNAME@?",
+      data:[],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Vielen Dank, dass Sie sich für @COMMERCIALNAME@ entschieden haben. Wir hoffen, dass Sie Ihren Aufenthalt genossen haben, und freuen uns auf ein baldiges Wiedersehen."),P("Ihre Meinung ist uns sehr wichtig und hilft uns, besser zu werden. Würden Sie sich eine Minute Zeit nehmen, um Ihre Erfahrung mit uns zu teilen?"),C("Meinen Aufenthalt bewerten","#"),P("Als Dankeschön erhalten Sie bei Ihrer nächsten Direktbuchung eine besondere Kondition. Bis bald!"),P("Mit freundlichen Grüßen,\nDie Direktion des @COMMERCIALNAME@")] },
+    fr:{ subject:"Comment s'est passé votre séjour, @GUESTNAME@ ?",
+      data:[],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Merci d'avoir choisi @COMMERCIALNAME@. Nous espérons que vous avez apprécié votre séjour et que vous reviendrez bientôt."),P("Votre avis compte beaucoup pour nous et nous aide à nous améliorer. Accepteriez-vous de prendre une minute pour partager votre expérience ?"),C("Évaluer mon séjour","#"),P("En guise de remerciement, lors de votre prochaine réservation directe chez nous, vous bénéficierez d'une condition spéciale. À bientôt !"),P("Meilleures salutations,\nLa Direction de @COMMERCIALNAME@")] } }
+};
+/* Idiomas extra a semear nos modelos-base novos, além de pt/en. */
+const EXTRA_LANGS = ["es","it","de","fr"];
+
 function instStarter(st){
   if(st.mode==="house"){
     const clone=o=>JSON.parse(JSON.stringify(o));
-    return {
+    const t={
       id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()),
       name: st.name, mode:"house", design: st.design||"moderno", font: st.font||"sans", palette: st.palette||"azul",
       brand: clone(st.brand||{logo:"",hero:""}),
@@ -1038,6 +1122,9 @@ function instStarter(st){
       pt:{ subject:st.pt.subject, data:clone(st.pt.data||[]), body:clone(st.pt.body||[]) },
       en:{ subject:st.en.subject, data:clone(st.en.data||[]), body:clone(st.en.body||[]) }
     };
+    const tr=STARTER_I18N[st.code]||{};
+    EXTRA_LANGS.forEach(function(lc){ if(tr[lc]) t[lc]={ subject:tr[lc].subject, data:clone(tr[lc].data||[]), body:clone(tr[lc].body||[]) }; });
+    return t;
   }
   if(st.mode==="html"){
     return {
@@ -1102,14 +1189,29 @@ const LANGS=[
 const LANG_CODES=LANGS.map(l=>l.code);
 function langInfo(code){ return LANGS.find(l=>l.code===code)||LANGS[0]; }
 /* Garante que o template t tem o slot do idioma code; se não, cria-o clonando pt (fallback en). */
+function starterFor(t){ return (t&&t.name)?STARTERS.find(s=>s.name===t.name):null; }
+function sameHouse(a,b){ return !!a && !!b && JSON.stringify([a.subject,a.data,a.body])===JSON.stringify([b.subject,b.data,b.body]); }
+const clLang = o=>JSON.parse(JSON.stringify(o||[]));
+function starterTr(t, code){ const st=starterFor(t); const m=st&&STARTER_I18N[st.code]; return (m&&m[code])?{st:st,tr:m[code]}:null; }
 function ensureLang(t, code){
   if(!t) return null;
   if(!t[code]){
     const src = t.pt || t.en || {};
-    const cl = o=>JSON.parse(JSON.stringify(o||[]));
     if(t.mode==="html")        t[code]={ subject: src.subject||"", html: src.html||"" };
-    else if(t.mode==="blocks") t[code]={ subject: src.subject||"", blocks: cl(src.blocks) };
-    else                       t[code]={ subject: src.subject||"", data: cl(src.data), body: cl(src.body) };
+    else if(t.mode==="blocks") t[code]={ subject: src.subject||"", blocks: clLang(src.blocks) };
+    else {
+      // Modelo-base conhecido (pelo nome) → usa a tradução pronta; senão clona o PT.
+      const s = (code!=="pt"&&code!=="en") ? starterTr(t, code) : null;
+      if(s) t[code]={ subject:s.tr.subject, data:clLang(s.tr.data), body:clLang(s.tr.body) };
+      else t[code]={ subject: src.subject||"", data: clLang(src.data), body: clLang(src.body) };
+    }
+    return t[code];
+  }
+  // Atualiza um idioma que ainda seja apenas uma cópia por traduzir do PT, num modelo-base conhecido.
+  if(t.mode==="house" && code!=="pt" && code!=="en"){
+    const s = starterTr(t, code);
+    if(s && sameHouse(t[code], t.pt))
+      t[code]={ subject:s.tr.subject, data:clLang(s.tr.data), body:clLang(s.tr.body) };
   }
   return t[code];
 }
