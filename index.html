@@ -1333,13 +1333,14 @@ function renderHouseProps(box){
     <button class="btn sm" data-embp="logo" title="Embeber no HTML (base64)">⧉</button>
   </div><div class="hint" id="logoStatusP">${lg?'✓ Logótipo definido. Aparece no topo do email.':'Sem logótipo, o topo mostra o nome do hotel em texto.'}</div>`;
   // 2 — Assunto & idioma
-  let subjI=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+  let subjI=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
     <span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--accent)">A EDITAR · ${langInfo(state.lang).label}</span><span style="flex:1"></span>
+    ${state.lang!=="pt"?`<button class="btn sm" id="transAI" title="Traduzir o conteúdo PT (assunto, etiquetas e corpo) para ${langInfo(state.lang).name} com IA, mantendo as tags @…@">${ic("wand",13)} Traduzir com IA</button>`:""}
     <select id="copyFrom" title="Copiar o conteúdo (assunto, dados e corpo) de outro idioma para ${langInfo(state.lang).label}" style="font-size:11px;padding:5px 7px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--txt)">
       <option value="">⇄ Copiar de…</option>
       ${LANGS.filter(l=>l.code!==state.lang).map(l=>`<option value="${l.code}">${l.label} → ${langInfo(state.lang).label}</option>`).join("")}
     </select>
-  </div><div class="field" style="margin:0"><label>Assunto do email</label><input type="text" id="houseSubject" data-tagtarget="1" value="${escAttr(L.subject||"")}" placeholder="Ex.: Reserva confirmada — @COMMERCIALNAME@" style="width:100%;${HIN}"></div>`;
+  </div>${state.lang!=="pt"?`<div class="hint" style="margin:-2px 0 8px">Novos idiomas começam como cópia do PT. Usa <b>Traduzir com IA</b> para os passar a ${langInfo(state.lang).name}.</div>`:""}<div class="field" style="margin:0"><label>Assunto do email</label><input type="text" id="houseSubject" data-tagtarget="1" value="${escAttr(L.subject||"")}" placeholder="Ex.: Reserva confirmada — @COMMERCIALNAME@" style="width:100%;${HIN}"></div>`;
   // 3 — Tags rápidas
   let quickI='<div class="hint" style="margin-bottom:6px">Clica para inserir no campo ativo. Mais no separador «Tags».</div><div style="display:flex;flex-wrap:wrap;gap:5px">'+QT.map(c=>`<button class="qtag" data-qtag="${escAttr(c)}">${escText(c)}</button>`).join("")+'</div>';
   // 4 — Caixa de dados
@@ -1391,6 +1392,8 @@ function renderHouseProps(box){
     dirty(); renderHouseProps(box); renderCanvas();
     toast("Conteúdo copiado de "+langInfo(from).label+" para "+langInfo(to).label);
   });
+  const trBtn=box.querySelector("#transAI");
+  if(trBtn) trBtn.addEventListener("click",()=>translateWithAI(trBtn,box));
   box.querySelectorAll("[data-drow]").forEach(el=>{
     el.addEventListener("input",()=>{ L.data[+el.dataset.drow][+el.dataset.dcol]=el.value; upd(); });
     el.addEventListener("focus",()=>{ state.activeField=el; });
@@ -1431,6 +1434,28 @@ async function builderAIWrite(btn){
   }catch(e){
     if(btn){ btn.disabled=false; btn.innerHTML=old; }
     toast("Não consegui gerar o texto. Tenta de novo.");
+  }
+}
+async function translateWithAI(btn, box){
+  if(!CLOUD || !sb){ toast("A tradução por IA precisa da cloud configurada."); return; }
+  const t=cur(); if(!t) return;
+  const to=state.lang; if(to==="pt"){ toast("O PT é o idioma de origem."); return; }
+  const src = ensureLang(t,"pt");
+  if(!confirm("Traduzir o conteúdo PT para "+langInfo(to).name+" com IA? Substitui o assunto, as etiquetas da caixa de dados e o corpo em "+langInfo(to).label+". As tags @…@ são mantidas.")) return;
+  const old=btn?btn.innerHTML:"";
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> A traduzir…'; }
+  try{
+    const { data, error } = await sb.functions.invoke("analyze-site", { body:{ action:"translate", lang:to, subject:src.subject||"", data:src.data||[], body:src.body||[] } });
+    if(error || !data || data.error) throw new Error((data&&data.error)||"sem resposta");
+    const dst = ensureLang(t,to);
+    if(typeof data.subject==="string") dst.subject=data.subject;
+    if(Array.isArray(data.data)) dst.data=data.data.map(r=>[String((r&&r[0])||""), String((r&&r[1])!=null?r[1]:"")]);
+    if(Array.isArray(data.body)) dst.body=data.body.map(bk=>{ const ty=bk&&bk.t==="cta"?"cta":(bk&&bk.t==="h"?"h":(bk&&bk.t==="img"?"img":"p")); const o={t:ty,v:String((bk&&bk.v)||"")}; if(ty==="cta"||ty==="img") o.u=String((bk&&bk.u)||(ty==="cta"?"#":"")); return o; });
+    dirty(); renderHouseProps(box); renderCanvas();
+    toast("Traduzido para "+langInfo(to).name+" — revê e ajusta.");
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.innerHTML=old; }
+    toast("Não consegui traduzir. Tenta de novo.");
   }
 }
 function renderBuilder(){

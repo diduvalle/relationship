@@ -154,6 +154,43 @@ async function writeCopy(reqBody: Record<string, unknown>, model: string, key: s
   const text = g?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "";
   return extractJson(text);
 }
+
+function translatePrompt(lang: string, payload: unknown): string {
+  const L = LANG_NAMES[lang] || LANG_NAMES.pt;
+  return `Traduz para ${L} o texto legível do seguinte email de hotel (em JSON).
+
+REGRAS ESTRITAS:
+- Mantém EXATAMENTE intactas as tags no formato @ALGO@ (ex.: @GUESTNAME@, @COMMERCIALNAME@, @RESNO@, @CHECKIN@) — não as traduzas nem alteres.
+- Devolve a MESMA estrutura JSON, com as MESMAS chaves e o MESMO número de itens. Não acrescentes nem removas nada.
+- "subject": traduz o texto (exceto as tags).
+- "data": lista de pares [etiqueta, valor]. Traduz APENAS a etiqueta (posição 0). Mantém o valor (posição 1) EXATAMENTE igual.
+- "body": lista de blocos {t, v, u}. Traduz apenas o texto "v". Mantém "t" e "u" exatamente iguais.
+- Traduz de forma natural e profissional, adequada a hotelaria. Sem markdown.
+
+Responde APENAS com o JSON traduzido, sem texto à volta.
+
+JSON:
+${JSON.stringify(payload)}`;
+}
+async function translateCopy(reqBody: Record<string, unknown>, model: string, key: string): Promise<Record<string, unknown>> {
+  const lang = LANG_NAMES[String(reqBody?.lang || "")] ? String(reqBody?.lang) : "pt";
+  const payload = { subject: reqBody?.subject ?? "", data: reqBody?.data ?? [], body: reqBody?.body ?? [] };
+  const gRes = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key),
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: translatePrompt(lang, payload) }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.2, maxOutputTokens: 4096, thinkingConfig: { thinkingBudget: 0 } },
+      }),
+    },
+  );
+  const g = await gRes.json();
+  if (!gRes.ok) return { error: "Gemini: " + (g?.error?.message || gRes.status) };
+  const text = g?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text || "").join("") || "";
+  return extractJson(text);
+}
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   const json = (body: unknown, status = 200) =>
@@ -166,6 +203,7 @@ Deno.serve(async (req: Request) => {
     const reqBody = await req.json().catch(() => ({}));
     const model = (typeof reqBody?.model === "string" && reqBody.model) ? reqBody.model : MODEL;
     if (reqBody?.action === "write") return json(await writeCopy(reqBody, model, key));
+    if (reqBody?.action === "translate") return json(await translateCopy(reqBody, model, key));
     const target = normUrl(reqBody?.url || "");
     if (!target) return json({ error: "URL em falta" }, 400);
 
