@@ -107,8 +107,16 @@ function extractJson(text: string): Record<string, unknown> {
   return {};
 }
 
+const LANG_NAMES: Record<string, string> = {
+  pt: "Português de Portugal",
+  en: "Inglês",
+  es: "Espanhol (Espanha)",
+  it: "Italiano",
+  de: "Alemão",
+  fr: "Francês",
+};
 function writePrompt(hotel: string, purpose: string, lang: string, instruction: string): string {
-  const L = lang === "en" ? "Inglês" : "Português de Portugal";
+  const L = LANG_NAMES[lang] || LANG_NAMES.pt;
   return `Escreve o CORPO de um email de hotel, pronto a enviar a um hóspede.
 
 Hotel: ${hotel || "(hotel)"}
@@ -128,7 +136,7 @@ Responde APENAS com JSON, sem texto à volta:
 async function writeCopy(reqBody: Record<string, unknown>, model: string, key: string): Promise<Record<string, unknown>> {
   const hotel = String(reqBody?.hotel || "").slice(0, 120);
   const purpose = String(reqBody?.purpose || "").slice(0, 140);
-  const lang = reqBody?.lang === "en" ? "en" : "pt";
+  const lang = LANG_NAMES[String(reqBody?.lang || "")] ? String(reqBody?.lang) : "pt";
   const instruction = String(reqBody?.instruction || "").slice(0, 400);
   const gRes = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key),

@@ -51,7 +51,7 @@
   .tname{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:6px 10px;border-radius:8px;min-width:220px}
   .spacer{flex:1}
   .langtoggle{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
-  .langtoggle button{background:transparent;border:0;color:var(--muted);padding:6px 14px;font-weight:600}
+  .langtoggle button{background:transparent;border:0;color:var(--muted);padding:6px 11px;font-weight:600}
   .langtoggle button.active{background:var(--accent);color:#fff}
   .prevtog{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:7px;overflow:hidden}
   .prevtog button{background:transparent;border:0;color:var(--muted);padding:4px 11px;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
@@ -334,11 +334,15 @@
     <div class="langtoggle" id="langToggle">
       <button data-lang="pt" class="active">PT</button>
       <button data-lang="en">EN</button>
+      <button data-lang="es">ES</button>
+      <button data-lang="it">IT</button>
+      <button data-lang="de">DE</button>
+      <button data-lang="fr">FR</button>
     </div>
     <div class="spacer"></div>
     <span class="cloud-badge" id="cloudBadge" style="display:none"></span>
     <span class="savestate" id="saveState">guardado</span>
-    <button class="btn" id="btnPreview" title="Ver o email em grande, com PT/EN lado a lado">👁 Pré-visualizar</button>
+    <button class="btn" id="btnPreview" title="Ver o email em grande, com todos os idiomas">👁 Pré-visualizar</button>
     <button class="btn primary" id="btnExport" title="Obter o Assunto + HTML para colar no PMS">⤓ Copiar p/ PMS</button>
   </div>
 
@@ -819,7 +823,7 @@ function renderBodyEditable(items, off, renderB, o){
 /* ========== DESIGN 1 — MODERNO (claro, hero, cartão de reserva refinado) ========== */
 function designModerno(o){
   const P=o.palette, W=o.width||600, F=fontFam(o.font);
-  const RES = o.lang==="en" ? "Your reservation" : "A sua reserva";
+  const RES = langInfo(o.lang).res;
   const ds=realData(o);
   const rows=ds.map((d,i)=>{const bt=i>0?`border-top:1px solid ${P.border};`:"";return `<tr><td style="padding:0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="${bt}padding:12px 0;font-family:${F};font-size:12px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:.7px;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td align="right" style="${bt}padding:12px 0;font-family:${F};font-size:15.5px;font-weight:700;color:${P.text};vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr></table></td></tr>`;}).join("");
   const summary=ds.length?`    <tr><td style="padding:6px 36px 28px"${ed(o,'data')}>
@@ -851,7 +855,7 @@ function designLuxo(o){
   const ds=realData(o);
   const orn=`<div style="width:64px;height:1px;background:${P.accent};opacity:.85;margin:0 auto;line-height:1;font-size:0">&nbsp;</div>`;
   const rows=ds.map((d,i)=>`${i>0?`<tr><td colspan="2" style="border-top:1px solid #e2ddd3;font-size:0;line-height:1px;height:1px">&nbsp;</td></tr>`:""}<tr><td style="padding:10px 0;font-family:${SF};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${LBL};width:42%;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td style="padding:10px 0;font-family:${F};font-size:15px;color:#2c2820;vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:4px 48px 8px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f6f3ec" style="background:#f6f3ec;border:1px solid #e2ddd3"><tr><td style="padding:26px 30px"><div style="font-family:${SF};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:16px">Detalhes da reserva</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const summary=ds.length?`    <tr><td style="padding:4px 48px 8px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f6f3ec" style="background:#f6f3ec;border:1px solid #e2ddd3"><tr><td style="padding:26px 30px"><div style="font-family:${SF};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:16px">${langInfo(o.lang).res}</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
   const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F):it.t==="h"?`<h1 style="margin:0 0 14px;font-family:${F};font-size:28px;font-weight:400;line-height:1.35;color:#2c2820;letter-spacing:.3px">${tokenizeText(it.v)}</h1><div style="width:48px;height:2px;background:${P.accent};margin:0 0 22px">&nbsp;</div>`:it.t==="cta"?`<div style="text-align:center;margin:26px 0 6px"><a href="${tokenizeAttr(it.u||'#')}" target="_blank" rel="noopener" style="display:inline-block;background:${DK};color:#faf8f3;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;padding:16px 42px;text-decoration:none">${tokenizeText(it.v)}</a></div>`:`<p style="margin:0 0 18px;font-family:${F};font-size:15px;line-height:1.85;color:#4a4238">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
   const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="40" style="display:block;border:0;height:40px;margin:0 auto 6px">`:`<div style="font-family:${SF};font-size:11px;letter-spacing:6px;text-transform:uppercase;color:${P.accent};margin-bottom:8px">Hotel</div><div style="font-family:${F};font-size:30px;color:#faf8f3;letter-spacing:2px;line-height:1.2">@COMMERCIALNAME@</div>`;
@@ -1086,7 +1090,30 @@ function load(){
 /* ============================ HELPERS ============================ */
 const $=id=>document.getElementById(id);
 function cur(){ const p=proj(); return p ? p.templates.find(t=>t.id===state.currentTemplateId) : null; }
-function curLang(){ return cur()[state.lang]; }
+/* Idiomas suportados. pt/en são semeados nos templates; es/it/de/fr são criados on-demand (clone de pt) e traduzidos à mão ou com «Texto com IA». */
+const LANGS=[
+  {code:"pt", label:"PT", name:"Português de Portugal", subject:"O seu email",  res:"A sua reserva"},
+  {code:"en", label:"EN", name:"Inglês",                 subject:"Your email",    res:"Your reservation"},
+  {code:"es", label:"ES", name:"Espanhol",               subject:"Su correo",     res:"Su reserva"},
+  {code:"it", label:"IT", name:"Italiano",               subject:"La tua email",  res:"La tua prenotazione"},
+  {code:"de", label:"DE", name:"Alemão",                 subject:"Ihre E-Mail",   res:"Ihre Reservierung"},
+  {code:"fr", label:"FR", name:"Français",               subject:"Votre e-mail",  res:"Votre réservation"}
+];
+const LANG_CODES=LANGS.map(l=>l.code);
+function langInfo(code){ return LANGS.find(l=>l.code===code)||LANGS[0]; }
+/* Garante que o template t tem o slot do idioma code; se não, cria-o clonando pt (fallback en). */
+function ensureLang(t, code){
+  if(!t) return null;
+  if(!t[code]){
+    const src = t.pt || t.en || {};
+    const cl = o=>JSON.parse(JSON.stringify(o||[]));
+    if(t.mode==="html")        t[code]={ subject: src.subject||"", html: src.html||"" };
+    else if(t.mode==="blocks") t[code]={ subject: src.subject||"", blocks: cl(src.blocks) };
+    else                       t[code]={ subject: src.subject||"", data: cl(src.data), body: cl(src.body) };
+  }
+  return t[code];
+}
+function curLang(){ return ensureLang(cur(), state.lang); }
 function escText(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function escAttr(s){ return escText(s).replace(/"/g,"&quot;"); }
 const esc=escText; // alias for text contexts
@@ -1297,7 +1324,6 @@ function acc(key,title,inner){
 }
 function renderHouseProps(box){
   const L=curLang();
-  const other=state.lang==="pt"?"EN":"PT";
   const QT=DEFAULT_TAGS.map(t=>t[2]);
   const lg=cur().brand.logo||"";
   // 1 — Logótipo
@@ -1308,8 +1334,11 @@ function renderHouseProps(box){
   </div><div class="hint" id="logoStatusP">${lg?'✓ Logótipo definido. Aparece no topo do email.':'Sem logótipo, o topo mostra o nome do hotel em texto.'}</div>`;
   // 2 — Assunto & idioma
   let subjI=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-    <span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--accent)">A EDITAR · ${state.lang.toUpperCase()}</span><span style="flex:1"></span>
-    <button class="btn sm" id="copyLang" title="Copiar conteúdo de ${state.lang.toUpperCase()} para ${other}">⇄ Copiar p/ ${other}</button>
+    <span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--accent)">A EDITAR · ${langInfo(state.lang).label}</span><span style="flex:1"></span>
+    <select id="copyFrom" title="Copiar o conteúdo (assunto, dados e corpo) de outro idioma para ${langInfo(state.lang).label}" style="font-size:11px;padding:5px 7px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--txt)">
+      <option value="">⇄ Copiar de…</option>
+      ${LANGS.filter(l=>l.code!==state.lang).map(l=>`<option value="${l.code}">${l.label} → ${langInfo(state.lang).label}</option>`).join("")}
+    </select>
   </div><div class="field" style="margin:0"><label>Assunto do email</label><input type="text" id="houseSubject" data-tagtarget="1" value="${escAttr(L.subject||"")}" placeholder="Ex.: Reserva confirmada — @COMMERCIALNAME@" style="width:100%;${HIN}"></div>`;
   // 3 — Tags rápidas
   let quickI='<div class="hint" style="margin-bottom:6px">Clica para inserir no campo ativo. Mais no separador «Tags».</div><div style="display:flex;flex-wrap:wrap;gap:5px">'+QT.map(c=>`<button class="qtag" data-qtag="${escAttr(c)}">${escText(c)}</button>`).join("")+'</div>';
@@ -1350,13 +1379,17 @@ function renderHouseProps(box){
   subj.addEventListener("input",()=>{ L.subject=subj.value; const sb=$("subjectInput"); if(sb) sb.value=subj.value; dirty(); });
   subj.addEventListener("focus",()=>{ state.activeField=subj; });
   box.querySelectorAll("[data-qtag]").forEach(el=>el.addEventListener("mousedown",e=>{ e.preventDefault(); insertTag(el.dataset.qtag); }));
-  box.querySelector("#copyLang").addEventListener("click",()=>{
-    const from=state.lang, to=from==="pt"?"en":"pt";
-    if(!confirm("Substituir o conteúdo "+to.toUpperCase()+" por uma cópia de "+from.toUpperCase()+"? (assunto, dados e corpo)")) return;
-    const t=cur(); t[to].subject=t[from].subject;
-    t[to].data=JSON.parse(JSON.stringify(t[from].data));
-    t[to].body=JSON.parse(JSON.stringify(t[from].body));
-    dirty(); toast("Conteúdo copiado para "+to.toUpperCase());
+  const cpFrom=box.querySelector("#copyFrom");
+  if(cpFrom) cpFrom.addEventListener("change",()=>{
+    const from=cpFrom.value, to=state.lang; cpFrom.value="";
+    if(!from||from===to) return;
+    const t=cur(), src=ensureLang(t,from), dst=ensureLang(t,to);
+    if(!confirm("Substituir o conteúdo "+langInfo(to).label+" por uma cópia de "+langInfo(from).label+"? (assunto, dados e corpo)")) return;
+    dst.subject=src.subject;
+    if(t.mode==="html") dst.html=src.html;
+    else { dst.data=JSON.parse(JSON.stringify(src.data||[])); dst.body=JSON.parse(JSON.stringify(src.body||[])); }
+    dirty(); renderHouseProps(box); renderCanvas();
+    toast("Conteúdo copiado de "+langInfo(from).label+" para "+langInfo(to).label);
   });
   box.querySelectorAll("[data-drow]").forEach(el=>{
     el.addEventListener("input",()=>{ L.data[+el.dataset.drow][+el.dataset.dcol]=el.value; upd(); });
@@ -1765,8 +1798,7 @@ function openExport(){
   showModal(`Copiar para o PMS — ${lang.toUpperCase()}`,
     `<div class="tag-hint" style="margin-bottom:10px">No PMS (Modelos de E-mail): cola o <b>Assunto</b> no campo «Assunto» e o <b>HTML</b> no campo «Texto», no idioma certo (${lang.toUpperCase()}).</div>
      <div class="switchmode">
-       <button class="btn sm ${lang==='pt'?'primary':''}" onclick="window.__expLang('pt')">PT</button>
-       <button class="btn sm ${lang==='en'?'primary':''}" onclick="window.__expLang('en')">EN</button>
+       ${LANGS.map(l=>`<button class="btn sm ${lang===l.code?'primary':''}" onclick="window.__expLang('${l.code}')">${l.label}</button>`).join("")}
      </div>
      <div class="field"><label>1 · Assunto (campo "Assunto" do PMS)</label>
        <input type="text" id="expSubject" value="${escAttr(subject)}" style="width:100%;background:#0b0d11;border:1px solid var(--line);color:var(--txt);padding:8px;border-radius:7px"></div>
@@ -1791,8 +1823,7 @@ function openPreview(){
   const html=applySample(buildEmail(lang));
   showModal(`Pré-visualização — ${lang.toUpperCase()} (com dados de exemplo)`,
     `<div class="switchmode">
-       <button class="btn sm ${lang==='pt'?'primary':''}" onclick="window.__prevLang('pt')">PT</button>
-       <button class="btn sm ${lang==='en'?'primary':''}" onclick="window.__prevLang('en')">EN</button>
+       ${LANGS.map(l=>`<button class="btn sm ${lang===l.code?'primary':''}" onclick="window.__prevLang('${l.code}')">${l.label}</button>`).join("")}
        <span style="flex:1"></span>
        <span style="font-size:11px;color:var(--muted);align-self:center">Os valores a amarelo são exemplos das tags</span>
      </div>
