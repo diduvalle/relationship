@@ -329,8 +329,12 @@
   .ready.off{color:var(--muted);background:var(--panel2);border-color:var(--line)}
 
   /* ===================== Estrutura repensada (topbar/menu/toolbar) ===================== */
-  /* topbar por zonas: marca | documento+idioma | estado | ações */
-  .tb-sep{width:1px;height:26px;background:var(--line);flex:0 0 auto}
+  /* topbar em grelha: as 3 zonas têm as larguras das 3 colunas — as linhas verticais continuam pelo header */
+  .topbar{display:grid;grid-template-columns:250px minmax(0,1fr) 340px;padding:0;gap:0}
+  .tb-zone{display:flex;align-items:center;height:100%;min-width:0}
+  .tb-l{padding:0 16px;border-right:1px solid var(--line)}
+  .tb-c{padding:0 18px;gap:12px}
+  .tb-r{padding:0 16px;gap:10px;border-left:1px solid var(--line);justify-content:flex-end}
   .tb-doc{display:flex;align-items:center;gap:10px;min-width:0}
   .tname{background:transparent;border:1px solid transparent;box-shadow:none;font-weight:600;font-size:14px;color:var(--navy);min-width:230px}
   .tname:hover{background:var(--panel2);border-color:transparent}
@@ -352,43 +356,68 @@
   .canvas-toolbar{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 16px;box-shadow:var(--sh-sm)}
   .ct-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .canvas-toolbar .prevtog{border:0;background:var(--panel2)}
-  /* separadores do painel direito em pílulas */
+  /* separadores do painel direito em pílulas (sem quebra de linha) */
   .tabs{gap:6px;padding:12px 14px;border-bottom:1px solid var(--line)}
-  .tabs button{height:32px;padding:0 6px;border-radius:999px;background:var(--panel2);color:var(--muted);font-size:12px;border:1px solid transparent}
+  .tabs button{height:32px;padding:0 6px;border-radius:999px;background:var(--panel2);color:var(--muted);font-size:12px;border:1px solid transparent;white-space:nowrap}
   .tabs button::after{display:none}
   .tabs button.active{background:var(--chip);color:var(--accent);border-color:#cfe0ff}
+  /* painel direito mais largo, igual à zona direita do header */
+  .right{width:340px;flex:0 0 340px}
+  /* botões nunca quebram texto */
+  .btn{white-space:nowrap}
+  #inspectBtn{white-space:nowrap}
+  /* sidebar: grupo de criação ancorado ao fundo; títulos com ellipsis */
+  .left .scroll{display:flex;flex-direction:column}
+  .left .scroll>*{flex:0 0 auto}
+  .side-bottom{margin-top:auto;padding-top:18px}
+  .sechead .sectitle{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:8px}
+  /* centro = mesa de trabalho (pontilhado subtil, deixa de parecer espaço morto) */
+  .center{background-color:#eef2f8;background-image:radial-gradient(rgba(24,38,51,.06) 1px,transparent 1px);background-size:22px 22px}
+  .canvas-wrap{width:100%;padding:24px 28px}
+  /* modo construtor em ecrã largo: pré-visualização e construtor lado a lado */
+  #htmlEditor:not(.split){max-width:760px;margin:0 auto}
+  #htmlEditor.split{display:grid !important;grid-template-columns:minmax(480px,664px) minmax(380px,600px);grid-template-areas:"tb builder" "prev builder";gap:0 26px;justify-content:center;align-items:start;max-width:1380px;margin:0 auto}
+  #htmlEditor.split .canvas-toolbar{grid-area:tb;margin-top:0;margin-bottom:12px}
+  #htmlEditor.split #prevWrap{grid-area:prev;margin-top:0;position:sticky;top:14px}
+  #htmlEditor.split #builder{grid-area:builder;margin-top:0 !important}
+  @media (max-width:1460px){ #htmlEditor.split{display:block !important;max-width:760px} #htmlEditor.split #prevWrap{position:static} }
 </style>
 </head>
 <body>
 <div class="app">
   <!-- TOP BAR -->
   <div class="topbar">
-    <div class="brand" title="Relationship by Host Hotel Systems">
-      <img src="favicon.png" width="24" height="24" alt="Host" style="display:block;flex:0 0 auto">
-      <span class="stack">
-        <span class="bname">Relation<i>ship</i></span>
-        <span class="byhost">by Host Hotel Systems</span>
-      </span>
-    </div>
-    <div class="tb-sep"></div>
-    <div class="tb-doc">
-      <input class="tname" id="tplName" placeholder="Nome do template" title="Nome do template atual — escreve para renomear">
-      <div class="langtoggle" id="langToggle" title="Idioma do conteúdo que estás a editar (a ordem é a do PMS)">
-        <button data-lang="en">EN</button>
-        <button data-lang="es">ES</button>
-        <button data-lang="fr">FR</button>
-        <button data-lang="pt" class="active">PT</button>
-        <button data-lang="de">DE</button>
-        <button data-lang="it">IT</button>
+    <div class="tb-zone tb-l">
+      <div class="brand" title="Relationship by Host Hotel Systems">
+        <img src="favicon.png" width="24" height="24" alt="Host" style="display:block;flex:0 0 auto">
+        <span class="stack">
+          <span class="bname">Relation<i>ship</i></span>
+          <span class="byhost">by Host Hotel Systems</span>
+        </span>
       </div>
     </div>
-    <div class="spacer"></div>
-    <div class="tb-status">
-      <span class="cloud-badge" id="cloudBadge" style="display:none"></span>
-      <span class="savestate" id="saveState">guardado</span>
+    <div class="tb-zone tb-c">
+      <div class="tb-doc">
+        <input class="tname" id="tplName" placeholder="Nome do template" title="Nome do template atual — escreve para renomear">
+        <div class="langtoggle" id="langToggle" title="Idioma do conteúdo que estás a editar (a ordem é a do PMS)">
+          <button data-lang="en">EN</button>
+          <button data-lang="es">ES</button>
+          <button data-lang="fr">FR</button>
+          <button data-lang="pt" class="active">PT</button>
+          <button data-lang="de">DE</button>
+          <button data-lang="it">IT</button>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="tb-status">
+        <span class="cloud-badge" id="cloudBadge" style="display:none"></span>
+        <span class="savestate" id="saveState">guardado</span>
+      </div>
     </div>
-    <button class="btn ghost" id="btnPreview" title="Ver o email em grande, com todos os idiomas">👁 Pré-visualizar</button>
-    <button class="btn primary" id="btnExport" title="Obter o Assunto + HTML para colar no PMS">⤓ Copiar p/ PMS</button>
+    <div class="tb-zone tb-r">
+      <button class="btn ghost" id="btnPreview" title="Ver o email em grande, com todos os idiomas">👁 Pré-visualizar</button>
+      <button class="btn primary" id="btnExport" title="Obter o Assunto + HTML para colar no PMS">⤓ Copiar p/ PMS</button>
+    </div>
   </div>
 
   <div class="main">
@@ -407,12 +436,15 @@
         </div>
         <div id="tplList"></div>
 
-        <div class="sectitle" style="margin-top:20px">Criar com ajuda</div>
-        <button class="btn sm primary" id="btnWizard" style="width:100%">Gerar template</button>
-        <button class="btn sm" id="btnGallery" style="width:100%;margin-top:6px">Galeria de modelos</button>
-
         <div class="sectitle" id="addBlockTitle" style="margin-top:20px">Adicionar bloco</div>
         <div class="addgrid" id="addGrid"></div>
+
+        <!-- Grupo de criação assistida, ancorado ao fundo da sidebar -->
+        <div class="side-bottom">
+          <div class="sectitle">Criar com ajuda</div>
+          <button class="btn sm primary" id="btnWizard" style="width:100%">Gerar template</button>
+          <button class="btn sm" id="btnGallery" style="width:100%;margin-top:6px">Galeria de modelos</button>
+        </div>
 
         <!-- Ações contextuais das listas (disparadas pelos ícones de cada item) -->
         <span style="display:none">
@@ -432,7 +464,7 @@
         <div class="email">
           <div class="blocks" id="blocks"></div>
         </div>
-        <div id="htmlEditor" style="display:none;width:700px;max-width:100%">
+        <div id="htmlEditor" style="display:none;width:100%">
           <div id="htmlSrcWrap">
             <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Código HTML — edita aqui (insere tags pelo separador «Tags»)</label>
             <textarea id="htmlSrc" spellcheck="false" style="width:100%;height:220px;margin-top:4px;background:var(--ink);border:1px solid var(--ink);color:#d5deeb;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;padding:12px;border-radius:12px;resize:vertical"></textarea>
@@ -463,9 +495,9 @@
     <!-- RIGHT -->
     <div class="col right">
       <div class="tabs">
-        <button data-tab="props" class="active">Configurações</button>
+        <button data-tab="props" class="active">Conteúdo</button>
         <button data-tab="tags">Tags</button>
-        <button data-tab="style">Estilo geral</button>
+        <button data-tab="style">Estilo</button>
       </div>
       <div class="scroll" id="tabProps"></div>
       <div class="scroll" id="tabTags" style="display:none"></div>
@@ -1413,9 +1445,10 @@ function renderCanvas(){
   if(t.mode==="house"){
     document.querySelector(".email").style.display="none";
     $("htmlEditor").style.display="block";
+    $("htmlEditor").classList.add("split");
     $("htmlSrcWrap").style.display="none";
     if($("prevLabel")) $("prevLabel").textContent="Pré-visualização ao vivo (dados de exemplo)";
-    if($("centerHint")) $("centerHint").textContent="Monta o corpo no construtor abaixo (arrasta as peças). A paleta e os dados ficam à direita.";
+    if($("centerHint")) $("centerHint").textContent="Monta o corpo no construtor ao lado da pré-visualização (arrasta as peças). Conteúdo e estilo no painel à direita.";
     refreshHtmlPrev();
     renderBuilder();
     return;
@@ -1423,6 +1456,7 @@ function renderCanvas(){
   if(t.mode==="html"){
     document.querySelector(".email").style.display="none";
     $("htmlEditor").style.display="block";
+    $("htmlEditor").classList.remove("split");
     if($("builder")) $("builder").style.display="none";
     $("htmlSrcWrap").style.display="block";
     if($("prevLabel")) $("prevLabel").textContent="Pré-visualização (dados de exemplo)";
@@ -1438,6 +1472,7 @@ function renderCanvas(){
   }
   document.querySelector(".email").style.display="";
   $("htmlEditor").style.display="none";
+  $("htmlEditor").classList.remove("split");
   if($("centerHint")) $("centerHint").textContent="Clica num bloco para o editar à direita. As tags inserem-se no campo de texto ativo.";
   const L=curLang();
   const wrap=$("blocks"); wrap.innerHTML="";
