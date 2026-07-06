@@ -327,6 +327,36 @@
   .ready{display:flex;align-items:center;gap:6px;font-size:11px;border-radius:10px;padding:7px 10px;margin-bottom:8px;border:1px dashed}
   .ready.on{color:#15803d;background:#f0fdf4;border-color:#bbf7d0}
   .ready.off{color:var(--muted);background:var(--panel2);border-color:var(--line)}
+
+  /* ===================== Estrutura repensada (topbar/menu/toolbar) ===================== */
+  /* topbar por zonas: marca | documento+idioma | estado | ações */
+  .tb-sep{width:1px;height:26px;background:var(--line);flex:0 0 auto}
+  .tb-doc{display:flex;align-items:center;gap:10px;min-width:0}
+  .tname{background:transparent;border:1px solid transparent;box-shadow:none;font-weight:600;font-size:14px;color:var(--navy);min-width:230px}
+  .tname:hover{background:var(--panel2);border-color:transparent}
+  .tname:focus{background:#fff;border-color:var(--accent)}
+  .tb-status{display:flex;align-items:center;gap:10px;margin-right:2px}
+  /* cabeçalhos de secção da sidebar com ação integrada */
+  .sechead{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 8px}
+  .sechead .sectitle{margin:0}
+  .btn.icon{width:26px;height:26px;padding:0;border-radius:8px;color:var(--muted)}
+  .btn.icon:hover{color:var(--accent)}
+  /* ações contextuais nas listas (aparecem ao pairar) */
+  .tpl-item .rowact{display:none;align-items:center;gap:2px;flex:0 0 auto}
+  .tpl-item:hover .rowact{display:inline-flex}
+  .tpl-item:hover .badge{display:none}
+  .rowact button{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:0;background:transparent;color:var(--muted);border-radius:6px;padding:0}
+  .rowact button:hover{background:#fff;color:var(--accent);box-shadow:var(--sh-sm)}
+  .rowact button[data-ract="del"]:hover,.rowact button[data-tact="del"]:hover{color:var(--danger)}
+  /* toolbar da pré-visualização */
+  .canvas-toolbar{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 16px;box-shadow:var(--sh-sm)}
+  .ct-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .canvas-toolbar .prevtog{border:0;background:var(--panel2)}
+  /* separadores do painel direito em pílulas */
+  .tabs{gap:6px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tabs button{height:32px;padding:0 6px;border-radius:999px;background:var(--panel2);color:var(--muted);font-size:12px;border:1px solid transparent}
+  .tabs button::after{display:none}
+  .tabs button.active{background:var(--chip);color:var(--accent);border-color:#cfe0ff}
 </style>
 </head>
 <body>
@@ -340,19 +370,24 @@
         <span class="byhost">by Host Hotel Systems</span>
       </span>
     </div>
-    <input class="tname" id="tplName" placeholder="Nome do template">
-    <div class="langtoggle" id="langToggle">
-      <button data-lang="en">EN</button>
-      <button data-lang="es">ES</button>
-      <button data-lang="fr">FR</button>
-      <button data-lang="pt" class="active">PT</button>
-      <button data-lang="de">DE</button>
-      <button data-lang="it">IT</button>
+    <div class="tb-sep"></div>
+    <div class="tb-doc">
+      <input class="tname" id="tplName" placeholder="Nome do template" title="Nome do template atual — escreve para renomear">
+      <div class="langtoggle" id="langToggle" title="Idioma do conteúdo que estás a editar (a ordem é a do PMS)">
+        <button data-lang="en">EN</button>
+        <button data-lang="es">ES</button>
+        <button data-lang="fr">FR</button>
+        <button data-lang="pt" class="active">PT</button>
+        <button data-lang="de">DE</button>
+        <button data-lang="it">IT</button>
+      </div>
     </div>
     <div class="spacer"></div>
-    <span class="cloud-badge" id="cloudBadge" style="display:none"></span>
-    <span class="savestate" id="saveState">guardado</span>
-    <button class="btn" id="btnPreview" title="Ver o email em grande, com todos os idiomas">👁 Pré-visualizar</button>
+    <div class="tb-status">
+      <span class="cloud-badge" id="cloudBadge" style="display:none"></span>
+      <span class="savestate" id="saveState">guardado</span>
+    </div>
+    <button class="btn ghost" id="btnPreview" title="Ver o email em grande, com todos os idiomas">👁 Pré-visualizar</button>
     <button class="btn primary" id="btnExport" title="Obter o Assunto + HTML para colar no PMS">⤓ Copiar p/ PMS</button>
   </div>
 
@@ -360,26 +395,30 @@
     <!-- LEFT -->
     <div class="col left">
       <div class="scroll">
-        <div class="sectitle">Projetos <span class="muted-count" id="prjCount"></span></div>
+        <div class="sechead">
+          <span class="sectitle">Projetos <span class="muted-count" id="prjCount"></span></span>
+          <button class="btn sm icon" id="btnNewPrj" title="Criar um projeto para um hotel"></button>
+        </div>
         <div id="prjList"></div>
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <button class="btn sm" id="btnNewPrj" style="flex:1" title="Criar um projeto para um hotel">+ Novo projeto</button>
-          <button class="btn sm" id="btnRenPrj" title="Renomear o hotel/projeto">✎</button>
-          <button class="btn sm" id="btnDelPrj" title="Apagar o projeto">🗑</button>
-        </div>
 
-        <div class="sectitle" id="tplTitle" style="margin-top:18px">Templates</div>
+        <div class="sechead" style="margin-top:20px">
+          <span class="sectitle" id="tplTitle">Templates</span>
+          <button class="btn sm icon" id="btnNewTpl" title="Criar um novo template em branco"></button>
+        </div>
         <div id="tplList"></div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <button class="btn sm" id="btnNewTpl" style="flex:1" title="Criar um novo template em branco">+ Novo</button>
-          <button class="btn sm" id="btnDupTpl" title="Duplicar o template atual">⧉</button>
-          <button class="btn sm" id="btnDelTpl" title="Apagar o template atual">🗑</button>
-        </div>
-        <button class="btn sm primary" id="btnWizard" style="width:100%;margin-top:6px">✨ Gerar template (wizard)</button>
-        <button class="btn sm" id="btnGallery" style="width:100%;margin-top:6px">🎨 Galeria de modelos</button>
 
-        <div class="sectitle" id="addBlockTitle" style="margin-top:18px">Adicionar bloco</div>
+        <div class="sectitle" style="margin-top:20px">Criar com ajuda</div>
+        <button class="btn sm primary" id="btnWizard" style="width:100%">Gerar template</button>
+        <button class="btn sm" id="btnGallery" style="width:100%;margin-top:6px">Galeria de modelos</button>
+
+        <div class="sectitle" id="addBlockTitle" style="margin-top:20px">Adicionar bloco</div>
         <div class="addgrid" id="addGrid"></div>
+
+        <!-- Ações contextuais das listas (disparadas pelos ícones de cada item) -->
+        <span style="display:none">
+          <button id="btnRenPrj"></button><button id="btnDelPrj"></button>
+          <button id="btnDupTpl"></button><button id="btnDelTpl"></button>
+        </span>
       </div>
     </div>
 
@@ -398,10 +437,10 @@
             <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Código HTML — edita aqui (insere tags pelo separador «Tags»)</label>
             <textarea id="htmlSrc" spellcheck="false" style="width:100%;height:220px;margin-top:4px;background:var(--ink);border:1px solid var(--ink);color:#d5deeb;font-family:Consolas,monospace;font-size:12.5px;line-height:1.5;padding:12px;border-radius:12px;resize:vertical"></textarea>
           </div>
-          <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
-            <div id="prevLabel" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Pré-visualização (dados de exemplo)</div>
+          <div class="canvas-toolbar">
+            <div id="prevLabel" class="ct-label">Pré-visualização (dados de exemplo)</div>
             <span style="flex:1"></span>
-            <button id="inspectBtn" type="button" title="Editar a partir da pré-visualização: clica num texto, imagem ou na reserva para abrir o campo certo" style="display:none;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer;margin-right:8px">
+            <button id="inspectBtn" type="button" title="Editar a partir da pré-visualização: clica num texto, imagem ou na reserva para abrir o campo certo" style="display:none;align-items:center;gap:6px;height:32px;font-size:11.5px;font-weight:600;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:0 13px;cursor:pointer">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
               <span id="inspectBtnTxt">Editar à vista</span>
             </button>
@@ -1899,8 +1938,14 @@ function renderPrjList(){
   sorted.forEach(p=>{
     const d=document.createElement("div");
     d.className="tpl-item prj-item"+(p.id===state.currentProjectId?" active":"");
-    d.innerHTML=`<span class="ico">${ic("building",14)}</span><span class="nm">${esc(p.hotel)}</span><span class="badge">${p.templates.length}</span>`;
+    d.innerHTML=`<span class="ico">${ic("building",14)}</span><span class="nm">${esc(p.hotel)}</span><span class="badge">${p.templates.length}</span>`
+      +`<span class="rowact"><button data-ract="ren" title="Renomear o projeto">${ic("pencil",12)}</button><button data-ract="del" title="Apagar o projeto">${ic("trash",12)}</button></span>`;
     d.addEventListener("click",()=>{ if(p.id===state.currentProjectId) return; state.currentProjectId=p.id; state.currentTemplateId=(p.templates[0]||{}).id; state.selectedBlock=null; save(); renderAll(); });
+    d.querySelectorAll("[data-ract]").forEach(b=>b.addEventListener("click",e=>{
+      e.stopPropagation();
+      if(p.id!==state.currentProjectId){ state.currentProjectId=p.id; state.currentTemplateId=(p.templates[0]||{}).id; state.selectedBlock=null; save(); renderAll(); }
+      $(b.dataset.ract==="ren"?"btnRenPrj":"btnDelPrj").click();
+    }));
     box.appendChild(d);
   });
 }
@@ -1911,8 +1956,14 @@ function renderTplList(){
   p.templates.forEach(t=>{
     const d=document.createElement("div");
     d.className="tpl-item"+(t.id===state.currentTemplateId?" active":"");
-    d.innerHTML=`<span class="nm">${esc(t.name)}</span>`;
+    d.innerHTML=`<span class="nm">${esc(t.name)}</span>`
+      +`<span class="rowact"><button data-tact="dup" title="Duplicar o template">${ic("doc",12)}</button><button data-tact="del" title="Apagar o template">${ic("trash",12)}</button></span>`;
     d.addEventListener("click",()=>{ state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
+    d.querySelectorAll("[data-tact]").forEach(b=>b.addEventListener("click",e=>{
+      e.stopPropagation();
+      if(t.id!==state.currentTemplateId){ state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); }
+      $(b.dataset.tact==="dup"?"btnDupTpl":"btnDelTpl").click();
+    }));
     box.appendChild(d);
   });
 }
@@ -2458,12 +2509,8 @@ document.querySelector(".brand").addEventListener("click",()=>showHome("home"));
 // ícones monocromáticos nos botões
 $("btnWizard").innerHTML=ic("wand",15)+" Gerar template";
 $("btnGallery").innerHTML=ic("grid",15)+" Galeria de modelos";
-$("btnNewPrj").innerHTML=ic("plus",15)+" Novo projeto";
-$("btnRenPrj").innerHTML=ic("pencil",14);
-$("btnDelPrj").innerHTML=ic("trash",14);
-$("btnNewTpl").innerHTML=ic("plus",14)+" Novo";
-$("btnDupTpl").innerHTML=ic("doc",14);
-$("btnDelTpl").innerHTML=ic("trash",14);
+$("btnNewPrj").innerHTML=ic("plus",15);
+$("btnNewTpl").innerHTML=ic("plus",15);
 $("btnPreview").innerHTML=ic("eye",15)+" Pré-visualizar";
 $("btnExport").innerHTML=ic("copy",15)+" Copiar p/ PMS";
 $("btnExport").addEventListener("click",openExport);
