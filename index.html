@@ -332,12 +332,12 @@
     </div>
     <input class="tname" id="tplName" placeholder="Nome do template">
     <div class="langtoggle" id="langToggle">
-      <button data-lang="pt" class="active">PT</button>
       <button data-lang="en">EN</button>
       <button data-lang="es">ES</button>
-      <button data-lang="it">IT</button>
-      <button data-lang="de">DE</button>
       <button data-lang="fr">FR</button>
+      <button data-lang="pt" class="active">PT</button>
+      <button data-lang="de">DE</button>
+      <button data-lang="it">IT</button>
     </div>
     <div class="spacer"></div>
     <span class="cloud-badge" id="cloudBadge" style="display:none"></span>
@@ -1185,16 +1185,17 @@ function load(){
 const $=id=>document.getElementById(id);
 function cur(){ const p=proj(); return p ? p.templates.find(t=>t.id===state.currentTemplateId) : null; }
 /* Idiomas suportados. pt/en são semeados nos templates; es/it/de/fr são criados on-demand (clone de pt) e traduzidos à mão ou com «Texto com IA». */
+/* Ordem igual à do PMS (en-US · es-ES · fr-FR · pt-PT · de-DE · it-IT); o PT continua a ser o idioma de origem. */
 const LANGS=[
-  {code:"pt", label:"PT", name:"Português de Portugal", subject:"O seu email",  res:"A sua reserva",         foot:"Recebeu este email por ter uma reserva connosco. Para qualquer questão, basta responder."},
   {code:"en", label:"EN", name:"Inglês",                 subject:"Your email",    res:"Your reservation",     foot:"You received this email because you have a booking with us. For any questions, simply reply."},
   {code:"es", label:"ES", name:"Espanhol",               subject:"Su correo",     res:"Su reserva",           foot:"Ha recibido este correo por tener una reserva con nosotros. Para cualquier duda, basta con responder."},
-  {code:"it", label:"IT", name:"Italiano",               subject:"La sua email",  res:"La sua prenotazione",  foot:"Ha ricevuto questa email perché ha una prenotazione con noi. Per qualsiasi domanda, basta rispondere."},
+  {code:"fr", label:"FR", name:"Francês",                subject:"Votre e-mail",  res:"Votre réservation",    foot:"Vous recevez cet e-mail car vous avez une réservation chez nous. Pour toute question, il vous suffit de répondre."},
+  {code:"pt", label:"PT", name:"Português de Portugal", subject:"O seu email",  res:"A sua reserva",         foot:"Recebeu este email por ter uma reserva connosco. Para qualquer questão, basta responder."},
   {code:"de", label:"DE", name:"Alemão",                 subject:"Ihre E-Mail",   res:"Ihre Reservierung",    foot:"Sie haben diese E-Mail erhalten, weil Sie eine Buchung bei uns haben. Bei Fragen antworten Sie einfach."},
-  {code:"fr", label:"FR", name:"Francês",                subject:"Votre e-mail",  res:"Votre réservation",    foot:"Vous recevez cet e-mail car vous avez une réservation chez nous. Pour toute question, il vous suffit de répondre."}
+  {code:"it", label:"IT", name:"Italiano",               subject:"La sua email",  res:"La sua prenotazione",  foot:"Ha ricevuto questa email perché ha una prenotazione con noi. Per qualsiasi domanda, basta rispondere."}
 ];
 const LANG_CODES=LANGS.map(l=>l.code);
-function langInfo(code){ return LANGS.find(l=>l.code===code)||LANGS[0]; }
+function langInfo(code){ return LANGS.find(l=>l.code===code)||LANGS.find(l=>l.code==="pt"); }
 /* Garante que o template t tem o slot do idioma code; se não, cria-o clonando pt (fallback en). */
 function starterFor(t){ return (t&&t.name)?STARTERS.find(s=>s.name===t.name):null; }
 function sameHouse(a,b){ return !!a && !!b && JSON.stringify([a.subject,a.data,a.body])===JSON.stringify([b.subject,b.data,b.body]); }
