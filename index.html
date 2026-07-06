@@ -908,93 +908,103 @@ function renderBodyEditable(items, off, renderB, o){
   return (items||[]).map((it,i)=>`<div data-edit="body:${off+i}">${renderB([it])}</div>`).join("");
 }
 
-/* ========== DESIGN 1 — MODERNO (claro, hero, cartão de reserva refinado) ========== */
+/* ========== DESIGN 1 — MODERNO (limpo estilo Postmark/Airbnb: neutro dominante, marca só nos detalhes) ========== */
 function designModerno(o){
   const P=o.palette, W=o.width||600, F=fontFam(o.font);
   const RES = langInfo(o.lang).res;
+  const BODY="#4a5568", DIV="#eaedf2";
   const ds=realData(o);
-  const rows=ds.map((d,i)=>{const bt=i>0?`border-top:1px solid ${P.border};`:"";return `<tr><td style="padding:0"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="${bt}padding:12px 0;font-family:${F};font-size:12px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:.7px;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td align="right" style="${bt}padding:12px 0;font-family:${F};font-size:15.5px;font-weight:700;color:${P.text};vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr></table></td></tr>`;}).join("");
-  const summary=ds.length?`    <tr><td style="padding:6px 36px 28px"${ed(o,'data')}>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border:1px solid ${P.border};border-radius:16px;overflow:hidden">
-        <tr><td style="height:4px;background:${P.accent};font-size:0;line-height:0">&nbsp;</td></tr>
-        <tr><td style="padding:18px 24px 2px"><p style="margin:0;font-family:${F};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${P.accent}">${RES}</p></td></tr>
-        <tr><td style="padding:2px 24px 14px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>
+  const rows=ds.map((d,i)=>{const bt=i>0?`border-top:1px solid ${DIV};`:"";return `<tr><td style="${bt}padding:11px 0;font-family:${F};font-size:11.5px;font-weight:600;color:${P.muted};text-transform:uppercase;letter-spacing:1px;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td align="right" style="${bt}padding:11px 0;font-family:${F};font-size:15.5px;font-weight:700;color:${P.text};vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr>`;}).join("");
+  const summary=ds.length?`    <tr><td style="padding:4px 40px 26px"${ed(o,'data')}>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f7f9fc" style="background:#f7f9fc;border:1px solid ${DIV};border-radius:12px">
+        <tr><td style="padding:18px 24px 4px"><p style="margin:0;font-family:${F};font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:${P.accent}">${RES}</p></td></tr>
+        <tr><td style="padding:0 24px 14px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>
       </table>
     </td></tr>\n`:"";
-  const cta=(v,u)=>`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:16px auto 20px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:12px;box-shadow:0 8px 22px ${P.accent}40"><a href="${tokenizeAttr(ctaUrl(u))}" target="_blank" rel="noopener" style="display:inline-block;padding:16px 42px;font-family:${F};font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;letter-spacing:.2px">${fcol(tokenizeText(v),"#ffffff",true)}</a></td></tr></table>`;
-  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-72):it.t==="h"?`<p style="margin:0 0 14px;font-family:${F};font-size:27px;line-height:1.25;font-weight:800;color:${P.accentDark};letter-spacing:-.5px">${tokenizeText(it.v)}</p><div style="width:46px;height:3px;border-radius:3px;background:${P.accent};font-size:0;line-height:0">&nbsp;</div><div style="height:18px;font-size:0">&nbsp;</div>`:it.t==="cta"?cta(it.v,it.u):`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.75;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const cta=(v,u)=>`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:24px auto"><tr><td align="center" bgcolor="${P.accent}" style="background:${P.accent};border-radius:10px"><a href="${tokenizeAttr(ctaUrl(u))}" target="_blank" rel="noopener" style="display:inline-block;padding:15px 40px;font-family:${F};font-size:15.5px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:.2px">${fcol(tokenizeText(v),"#ffffff",true)}</a></td></tr></table>`;
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-80):it.t==="h"?`<p style="margin:0 0 12px;font-family:${F};font-size:25px;line-height:1.3;font-weight:700;color:${P.text};letter-spacing:-.3px">${tokenizeText(it.v)}</p><div style="width:40px;height:3px;border-radius:3px;background:${P.accent};font-size:0;line-height:0">&nbsp;</div><div style="height:16px;font-size:0;line-height:0">&nbsp;</div>`:it.t==="cta"?cta(it.v,it.u):`<p style="margin:0 0 15px;font-family:${F};font-size:15.5px;line-height:1.65;color:${BODY}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
   const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
-  const header=o.logo?`    <tr><td align="center" style="padding:30px 36px 6px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="42" style="display:block;border:0;height:42px"/></td></tr>\n`:`    <tr><td align="center" style="padding:30px 36px 6px"><p style="margin:0;font-family:${F};font-size:20px;font-weight:800;letter-spacing:.4px;color:${P.accentDark}">@COMMERCIALNAME@</p></td></tr>\n`;
-  const intro=o.body&&o.body.length?`    <tr><td style="padding:28px 36px ${summary?'4px':'6px'}">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`:"";
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 8px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:26px 36px 18px;border-top:1px solid ${P.border}"><p style="margin:0 0 6px;font-family:${F};font-size:15px;font-weight:700;color:${P.text};text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted};text-align:center">${langInfo(o.lang).foot}</p><div style="text-align:center">${contactsLine(o,P,false,F)}</div></td></tr>
-    <tr><td style="padding:0 36px 26px;text-align:center">${hostAttribution(P,false)}</td></tr>\n`;
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:36px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid ${P.border};box-shadow:0 18px 50px rgba(20,28,46,.13)">
-${header}${hero}${intro}${summary}${rest}${footer}  </table>
-</td></tr></table>`;
+  const header=o.logo?`    <tr><td align="center" style="padding:28px 40px 22px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="40" style="display:block;border:0;height:40px"/></td></tr>\n`:`    <tr><td align="center" style="padding:28px 40px 22px"><p style="margin:0;font-family:${F};font-size:19px;font-weight:700;letter-spacing:.3px;color:${P.text}">@COMMERCIALNAME@</p></td></tr>\n`;
+  const intro=o.body&&o.body.length?`    <tr><td style="padding:32px 40px ${summary?'6px':'8px'}">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`:"";
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 40px 30px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
+  /* rodapé "fantasma" fora do cartão, sobre o fundo da página (padrão Postmark) */
+  const footer=`  <tr><td align="center" style="padding:24px 28px 10px"><table role="presentation" width="${W}" cellpadding="0" cellspacing="0" style="width:100%;max-width:${W}px"><tr><td align="center" style="padding:0 24px"><p style="margin:0 0 5px;font-family:${F};font-size:13.5px;font-weight:600;color:#57616e;text-align:center">@COMMERCIALNAME@</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:#8b95a3;text-align:center">${langInfo(o.lang).foot}</p><div style="text-align:center">${contactsLine(o,P,false,F)}</div><div style="height:14px;font-size:0;line-height:0">&nbsp;</div>${hostAttribution(P,false)}</td></tr></table></td></tr>\n`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:36px 16px 8px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid ${DIV};box-shadow:0 12px 34px rgba(24,38,51,.08)">
+${header}${hero}${intro}${summary}${rest}  </table>
+</td></tr>
+${footer}<tr><td style="height:26px;font-size:0;line-height:0">&nbsp;</td></tr></table>`;
 }
 
-/* ========== DESIGN 2 — LUXO (editorial, cabeçalho escuro, serifa, ornamentos) ========== */
+/* ========== DESIGN 2 — LUXO (convite impresso: moldura dupla, serifa editorial, ouro discreto) ========== */
 function designLuxo(o){
   const P=o.palette, W=o.width||600, F=o.font&&o.font!=="sans"?fontFam(o.font):FONTS.elegant, SF=FONTS.serif;
-  const DK="#201d28", CARD="#ffffff", PG="#ece9e3", LBL="#9a9385";
+  const DK="#1f1b26", CARD="#ffffff", PG="#f2eee6", LBL="#98917f", HAIR="#ddd3bf", INK="#2c2820", BODY="#4a4238";
   const ds=realData(o);
-  const orn=`<div style="width:64px;height:1px;background:${P.accent};margin:0 auto;line-height:1;font-size:0">&nbsp;</div>`;
-  const rows=ds.map((d,i)=>`${i>0?`<tr><td colspan="2" style="border-top:1px solid #e2ddd3;font-size:0;line-height:1px;height:1px">&nbsp;</td></tr>`:""}<tr><td style="padding:10px 0;font-family:${SF};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${LBL};width:42%;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td style="padding:10px 0;font-family:${F};font-size:15px;color:#2c2820;vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:4px 48px 8px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f6f3ec" style="background:#f6f3ec;border:1px solid #e2ddd3"><tr><td style="padding:26px 30px"><div style="font-family:${SF};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:16px">${langInfo(o.lang).res}</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
-  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-96):it.t==="h"?`<p style="margin:0 0 14px;font-family:${F};font-size:28px;font-weight:400;line-height:1.35;color:#2c2820;letter-spacing:.3px">${tokenizeText(it.v)}</p><div style="width:48px;height:2px;background:${P.accent};font-size:0;line-height:0;margin:0 0 22px">&nbsp;</div>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:26px auto 6px"><tr><td align="center" bgcolor="${DK}" style="background:${DK}"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;padding:16px 42px;color:#faf8f3;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;text-decoration:none">${fcol(tokenizeText(it.v),"#faf8f3",true)}</a></td></tr></table>`:`<p style="margin:0 0 18px;font-family:${F};font-size:15px;line-height:1.85;color:#4a4238">${tokenizeText(it.v)}</p>`).join("\n");
+  const orn=`<div style="width:56px;height:1px;background:${P.accent};margin:0 auto;line-height:1;font-size:0">&nbsp;</div>`;
+  const glyph=`<table role="presentation" cellpadding="0" cellspacing="0" align="center"><tr><td style="width:44px;border-top:1px solid ${HAIR};font-size:0;line-height:0">&nbsp;</td><td style="padding:0 10px;font-family:${SF};font-size:11px;color:${P.accent};line-height:1">&#10022;</td><td style="width:44px;border-top:1px solid ${HAIR};font-size:0;line-height:0">&nbsp;</td></tr></table>`;
+  const rows=ds.map((d,i)=>`${i>0?`<tr><td colspan="2" style="border-top:1px solid ${HAIR};font-size:0;line-height:1px;height:1px">&nbsp;</td></tr>`:""}<tr><td style="padding:11px 0;font-family:${SF};font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:${LBL};width:44%;vertical-align:middle">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:11px 0;font-family:${F};font-size:15px;font-weight:600;color:${INK};vertical-align:middle">${tokenizeText(d[1]||"")}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:8px 52px 10px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f8f4eb" style="background:#f8f4eb;border:1px solid ${HAIR}"><tr><td style="padding:24px 28px"><div align="center" style="font-family:${SF};font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};text-align:center;margin-bottom:14px">${langInfo(o.lang).res}</div><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-122):it.t==="h"?`<p style="margin:0 0 14px;font-family:${F};font-size:30px;font-weight:400;line-height:1.3;color:${INK};letter-spacing:.3px">${tokenizeText(it.v)}</p><div style="width:44px;height:2px;background:${P.accent};font-size:0;line-height:0;margin:0 0 24px">&nbsp;</div>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:28px auto 10px"><tr><td align="center" bgcolor="${DK}" style="background:${DK};border:1px solid ${P.accent}"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;padding:16px 44px;color:#f6f1e6;font-family:${SF};font-size:11px;letter-spacing:3px;text-transform:uppercase;text-decoration:none">${fcol(tokenizeText(it.v),"#f6f1e6",true)}</a></td></tr></table>`:`<p style="margin:0 0 17px;font-family:${F};font-size:15px;line-height:1.8;color:${BODY}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="40" style="display:block;border:0;height:40px;margin:0 auto 6px">`:`<div style="font-family:${SF};font-size:11px;letter-spacing:6px;text-transform:uppercase;color:${P.accent};margin-bottom:8px">${fcol("Hotel",P.accent,true)}</div><div style="font-family:${F};font-size:30px;color:#faf8f3;letter-spacing:2px;line-height:1.2">${fcol("@COMMERCIALNAME@","#faf8f3",true)}</div>`;
-  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
-  const header=`    <tr><td bgcolor="${DK}" style="background:${DK};padding:44px 48px 34px;text-align:center">${orn}<div style="height:20px;font-size:0;line-height:0">&nbsp;</div>${headLogo}<div style="height:18px;font-size:0;line-height:0">&nbsp;</div>${orn}</td></tr>\n`;
-  const greet=`    <tr><td style="padding:38px 48px 0;font-family:${SF};font-size:11px;letter-spacing:4px;text-transform:uppercase;color:${P.accent}">@COMMERCIALNAME@</td></tr>\n`;
-  const intro=`    <tr><td style="padding:14px 48px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:4px 48px 8px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
-  const footer=`    <tr><td bgcolor="${DK}" style="background:${DK};padding:36px 48px;text-align:center">${orn}<div style="height:18px;font-size:0;line-height:0">&nbsp;</div><div style="font-family:${SF};font-size:13px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:14px">${fcol("@COMMERCIALNAME@",P.accent,true)}</div><div style="font-family:${SF};font-size:12px;line-height:1.8;color:#8f887b;margin-bottom:18px">${fcol(langInfo(o.lang).foot,"#8f887b",true)}</div>${contactsLine(o,P,true,SF)}<div style="border-top:1px solid #3a3745;padding-top:16px;margin-top:16px">${hostAttribution(P,true)}</div></td></tr>\n`;
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:40px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:100%;max-width:${W}px;background:${CARD};box-shadow:0 4px 32px rgba(44,40,32,.12)">
-${header}${hero}${greet}${intro}${summary}${rest}${footer}  </table>
+  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="42" style="display:block;border:0;height:42px;margin:0 auto">`:`<div style="font-family:${F};font-size:28px;color:#f6f1e6;letter-spacing:3px;line-height:1.25">${fcol("@COMMERCIALNAME@","#f6f1e6",true)}</div>`;
+  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W-18}" style="display:block;width:100%;max-width:${W-18}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const header=`    <tr><td bgcolor="${DK}" style="background:${DK};padding:40px 48px 32px;text-align:center">${orn}<div style="height:22px;font-size:0;line-height:0">&nbsp;</div>${headLogo}<div style="height:22px;font-size:0;line-height:0">&nbsp;</div>${orn}</td></tr>\n`;
+  const greet=`    <tr><td align="center" style="padding:40px 52px 0;font-family:${SF};font-size:10.5px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};text-align:center">@COMMERCIALNAME@</td></tr>\n`;
+  const intro=`    <tr><td style="padding:16px 52px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:6px 52px 12px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
+  const glyphRow=`    <tr><td align="center" style="padding:6px 52px 30px">${glyph}</td></tr>\n`;
+  const footer=`    <tr><td bgcolor="${DK}" style="background:${DK};padding:34px 48px;text-align:center">${orn}<div style="height:18px;font-size:0;line-height:0">&nbsp;</div><div style="font-family:${SF};font-size:13px;letter-spacing:4px;text-transform:uppercase;color:${P.accent};margin-bottom:12px">${fcol("@COMMERCIALNAME@",P.accent,true)}</div><div style="font-family:${SF};font-size:12px;line-height:1.8;color:#a39b89;margin-bottom:16px">${fcol(langInfo(o.lang).foot,"#a39b89",true)}</div>${contactsLine(o,P,true,SF)}<div style="border-top:1px solid #39343f;padding-top:16px;margin-top:18px">${hostAttribution(P,true)}</div></td></tr>\n`;
+  /* moldura dupla: fundo creme → respiro → filete dourado → cartão */
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:36px 16px">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" style="width:100%;max-width:${W}px"><tr><td style="border:1px solid ${HAIR};padding:7px" bgcolor="${PG}">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="background:${CARD};border:1px solid ${HAIR}">
+${header}${hero}${greet}${intro}${summary}${rest}${glyphRow}${footer}  </table>
+  </td></tr></table>
 </td></tr></table>`;
 }
 
-/* ========== DESIGN 3 — MINIMALISTA (clean, sem caixas, muito espaço) ========== */
+/* ========== DESIGN 3 — MINIMALISTA (nórdico: só tipografia, hairlines e espaço) ========== */
 function designMinimal(o){
   const P=o.palette, W=o.width||560, F=fontFam(o.font);
+  const BODY="#4a5568", DIV="#edf0f4";
   const ds=realData(o);
-  const rows=ds.map((d,i)=>`<tr><td style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:14px;color:${P.muted};width:46%">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:14px;font-weight:600;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:6px 44px 18px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>\n`:"";
-  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-88):it.t==="h"?`<p style="margin:0 0 20px;font-family:${F};font-size:26px;line-height:1.3;font-weight:300;color:${P.text};letter-spacing:-.4px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<div style="margin:8px 0 22px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;font-family:${F};font-size:14px;font-weight:600;color:${P.accent};text-decoration:none;border-bottom:2px solid ${P.accent};padding-bottom:3px;letter-spacing:.3px">${tokenizeText(it.v)} →</a></div>`:`<p style="margin:0 0 18px;font-family:${F};font-size:16px;line-height:1.75;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const rows=ds.map((d,i)=>`<tr><td style="padding:13px 0;${i>0?`border-top:1px solid ${DIV};`:""}font-family:${F};font-size:12px;color:${P.muted};text-transform:uppercase;letter-spacing:1px;width:46%">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:13px 0;${i>0?`border-top:1px solid ${DIV};`:""}font-family:${F};font-size:14.5px;font-weight:600;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:10px 46px 20px"${ed(o,'data')}><p style="margin:0 0 2px;font-family:${F};font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:${P.muted}">${langInfo(o.lang).res}</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-92):it.t==="h"?`<p style="margin:0 0 22px;font-family:${F};font-size:27px;line-height:1.3;font-weight:300;color:${P.text};letter-spacing:-.4px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<div style="margin:10px 0 26px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;font-family:${F};font-size:14.5px;font-weight:600;color:${P.accent};text-decoration:none;border-bottom:2px solid ${P.accent};padding-bottom:4px;letter-spacing:.3px">${tokenizeText(it.v)} &#8594;</a></div>`:`<p style="margin:0 0 17px;font-family:${F};font-size:15.5px;line-height:1.7;color:${BODY}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const header=o.logo?`    <tr><td style="padding:44px 44px 0"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="32" style="display:block;border:0;height:32px"/></td></tr>\n`:`    <tr><td style="padding:44px 44px 0;font-family:${F};font-size:15px;font-weight:700;letter-spacing:.5px;color:${P.text}">@COMMERCIALNAME@</td></tr>\n`;
-  const rule=`    <tr><td style="padding:18px 44px 0"><div style="width:40px;height:3px;background:${P.accent};font-size:0;line-height:0">&nbsp;</div></td></tr>\n`;
-  const hero=o.hero?`    <tr><td style="padding:20px 0 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:26px 44px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:6px 44px 0">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:30px 44px 40px"><div style="border-top:1px solid ${P.border};padding-top:18px;font-family:${F};font-size:12px;line-height:1.7;color:${P.muted}"><strong style="color:${P.text}">@COMMERCIALNAME@</strong><br>${langInfo(o.lang).foot}${contactsLine(o,P,false,F)}<br><span style="display:inline-block;margin-top:12px">${hostAttribution(P,false)}</span></div></td></tr>\n`;
+  const header=o.logo?`    <tr><td style="padding:48px 46px 0"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="30" style="display:block;border:0;height:30px"/></td></tr>\n`:`    <tr><td style="padding:48px 46px 0;font-family:${F};font-size:15px;font-weight:700;letter-spacing:.5px;color:${P.text}">@COMMERCIALNAME@</td></tr>\n`;
+  const rule=`    <tr><td style="padding:16px 46px 0"><div style="width:34px;height:3px;background:${P.accent};font-size:0;line-height:0">&nbsp;</div></td></tr>\n`;
+  const hero=o.hero?`    <tr><td style="padding:24px 0 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:32px 46px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:6px 46px 4px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="padding:34px 46px 44px"><div style="border-top:1px solid ${DIV};padding-top:20px;font-family:${F};font-size:12px;line-height:1.75;color:#8c96a4"><strong style="color:${P.text};font-size:13px">@COMMERCIALNAME@</strong><br>${langInfo(o.lang).foot}${contactsLine(o,P,false,F)}<br><span style="display:inline-block;margin-top:14px">${hostAttribution(P,false)}</span></div></td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="background:#ffffff;margin:0;padding:0"><tr><td align="center" style="padding:24px 16px">
   <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#ffffff">
 ${header}${rule}${hero}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
 
-/* ========== DESIGN 4 — VIBRANTE (faixa de cor, títulos grandes, CTA forte) ========== */
+/* ========== DESIGN 4 — VIBRANTE (faixa de cor com aresta, títulos fortes, CTA em bloco) ========== */
 function designBold(o){
   const P=o.palette, W=o.width||600, F=fontFam(o.font);
+  const BODY="#4a5568", DIV="#e9edf2";
   const ds=realData(o);
-  const rows=ds.map((d,i)=>`<tr><td style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:13px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:.5px">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:13px 0;${i>0?`border-top:1px solid ${P.border};`:""}font-family:${F};font-size:17px;font-weight:800;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:6px 32px 24px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="border-left:4px solid ${P.accent};background:${P.tint}"><tr><td style="padding:14px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
-  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-64):it.t==="h"?`<p style="margin:0 0 16px;font-family:${F};font-size:30px;line-height:1.15;font-weight:800;color:${P.text};letter-spacing:-.6px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 18px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:10px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:block;padding:17px 24px;font-family:${F};font-size:17px;font-weight:800;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:.3px">${fcol(tokenizeText(it.v)+"  →","#ffffff",true)}</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.65;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const rows=ds.map((d,i)=>`<tr><td style="padding:12px 0;${i>0?`border-top:1px solid ${DIV};`:""}font-family:${F};font-size:11px;font-weight:700;color:${P.muted};text-transform:uppercase;letter-spacing:1px">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:12px 0;${i>0?`border-top:1px solid ${DIV};`:""}font-family:${F};font-size:16px;font-weight:800;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:6px 36px 26px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border-radius:14px"><tr><td style="padding:20px 24px 4px"><p style="margin:0;font-family:${F};font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:${P.accent}">${langInfo(o.lang).res}</p></td></tr><tr><td style="padding:0 24px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-72):it.t==="h"?`<p style="margin:0 0 18px;font-family:${F};font-size:28px;line-height:1.2;font-weight:800;color:${P.text};letter-spacing:-.5px">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0 24px"><tr><td align="center" bgcolor="${P.accent}" style="background:${P.accent};border-radius:12px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:block;padding:17px 24px;font-family:${F};font-size:16.5px;font-weight:800;color:#ffffff;text-decoration:none;border-radius:12px;letter-spacing:.3px">${fcol(tokenizeText(it.v)+" &#8594;","#ffffff",true)}</a></td></tr></table>`:`<p style="margin:0 0 15px;font-family:${F};font-size:15.5px;line-height:1.65;color:${BODY}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="34" style="border:0;height:34px;display:block">`:`<div style="font-family:${F};font-size:22px;font-weight:800;color:#ffffff;letter-spacing:.3px">${fcol("@COMMERCIALNAME@","#ffffff",true)}</div>`;
-  const header=`    <tr><td bgcolor="${P.accent}" style="background:${P.accent};padding:30px 32px">${headLogo}</td></tr>\n`;
-  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:30px 32px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 32px 0">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
-  const footer=`    <tr><td bgcolor="${P.text}" style="background:${P.text};padding:26px 32px;text-align:center"><div style="font-family:${F};font-size:15px;font-weight:800;color:#ffffff;margin-bottom:6px">${fcol("@COMMERCIALNAME@","#ffffff",true)}</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:#a3abb8;margin-bottom:14px">${fcol(langInfo(o.lang).foot,"#a3abb8",true)}</div>${contactsLine(o,P,true,F)}<div style="height:12px;font-size:0">&nbsp;</div>${hostAttribution(P,true)}</td></tr>\n`;
+  const headLogo=o.logo?`<img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="34" style="border:0;height:34px;display:block">`:`<div style="font-family:${F};font-size:21px;font-weight:800;color:#ffffff;letter-spacing:.3px">${fcol("@COMMERCIALNAME@","#ffffff",true)}</div>`;
+  const header=`    <tr><td bgcolor="${P.accent}" style="background:${P.accent};padding:26px 36px">${headLogo}</td></tr>
+    <tr><td bgcolor="${P.accentDark}" style="background:${P.accentDark};height:4px;font-size:0;line-height:0">&nbsp;</td></tr>\n`;
+  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:32px 36px 0">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 8px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
+  const footer=`    <tr><td bgcolor="${P.accent}" style="background:${P.accent};height:4px;font-size:0;line-height:0">&nbsp;</td></tr>
+    <tr><td bgcolor="${P.text}" style="background:${P.text};padding:30px 36px;text-align:center"><div style="font-family:${F};font-size:15px;font-weight:800;color:#ffffff;margin-bottom:6px">${fcol("@COMMERCIALNAME@","#ffffff",true)}</div><div style="font-family:${F};font-size:12px;line-height:1.7;color:#a3abb8;margin-bottom:14px">${fcol(langInfo(o.lang).foot,"#a3abb8",true)}</div>${contactsLine(o,P,true,F)}<div style="height:14px;font-size:0;line-height:0">&nbsp;</div>${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.page}" style="background:${P.page};margin:0;padding:0"><tr><td align="center" style="padding:30px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.12)">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 12px 34px rgba(24,38,51,.1)">
 ${header}${hero}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -1003,17 +1013,19 @@ ${header}${hero}${intro}${summary}${rest}${footer}  </table>
 function designBoutique(o){
   const P=o.palette, W=o.width||580, F=fontFam(o.font);
   const ds=realData(o);
-  const rows=ds.map(d=>`<tr><td style="padding:9px 18px;font-family:${F};font-size:13px;color:${P.muted}">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:9px 18px;font-family:${F};font-size:15px;font-weight:700;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join('<tr><td colspan="2" style="padding:0 10px"><div style="border-top:1px solid '+P.border+';font-size:0;line-height:0">&nbsp;</div></td></tr>');
-  const summary=ds.length?`    <tr><td style="padding:6px 34px 24px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border-radius:20px"><tr><td style="padding:14px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
-  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-68):it.t==="h"?`<p style="margin:0 0 16px;font-family:${F};font-size:25px;line-height:1.3;font-weight:700;color:${P.accentDark}">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:14px auto 18px"><tr><td align="center" bgcolor="${P.accent}" style="background:${P.accent};border-radius:40px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;color:#ffffff;font-family:${F};font-size:16px;font-weight:700;padding:15px 38px;border-radius:40px;text-decoration:none">${fcol(tokenizeText(it.v),"#ffffff",true)}</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.7;color:${P.text}">${tokenizeText(it.v)}</p>`).join("\n");
+  const BODY="#4a5568";
+  const rows=ds.map(d=>`<tr><td style="padding:10px 20px;font-family:${F};font-size:12.5px;color:${P.muted}">${tokenizeText(d[0]||"")}</td><td align="right" style="padding:10px 20px;font-family:${F};font-size:15px;font-weight:700;color:${P.text}">${tokenizeText(d[1]||"")}</td></tr>`).join('<tr><td colspan="2" style="padding:0 12px"><div style="border-top:1px solid '+P.border+';font-size:0;line-height:0">&nbsp;</div></td></tr>');
+  const summary=ds.length?`    <tr><td style="padding:8px 34px 26px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};border-radius:18px"><tr><td align="center" style="padding:18px 16px 6px"><div style="font-family:${F};font-size:10.5px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:${P.accent};text-align:center">${langInfo(o.lang).res}</div></td></tr><tr><td style="padding:0 16px 16px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-68):it.t==="h"?`<p style="margin:0 0 16px;font-family:${F};font-size:24px;line-height:1.35;font-weight:700;color:${P.accentDark}">${tokenizeText(it.v)}</p>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:20px auto 24px"><tr><td align="center" bgcolor="${P.accent}" style="background:${P.accent};border-radius:40px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;color:#ffffff;font-family:${F};font-size:15.5px;font-weight:700;padding:15px 42px;border-radius:40px;text-decoration:none">${fcol(tokenizeText(it.v),"#ffffff",true)}</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:15.5px;line-height:1.7;color:${BODY}">${tokenizeText(it.v)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const header=o.logo?`    <tr><td align="center" style="padding:34px 34px 4px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="38" style="border:0;height:38px;display:block;margin:0 auto"/></td></tr>\n`:`    <tr><td align="center" style="padding:34px 34px 4px"><div style="display:inline-block;background:${P.tint};color:${P.accentDark};font-family:${F};font-size:17px;font-weight:800;letter-spacing:.3px;padding:8px 20px;border-radius:30px">@COMMERCIALNAME@</div></td></tr>\n`;
-  const hero=o.hero?`    <tr><td style="padding:14px 22px 0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W-44}" style="display:block;width:100%;max-width:${W-44}px;height:auto;border:0;border-radius:18px"${ed(o,'hero')}/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:24px 34px 0;text-align:center">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 34px 0;text-align:center">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:22px 34px 30px;text-align:center"><div style="font-family:${F};font-size:14px;font-weight:700;color:${P.text};margin-bottom:5px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.6;color:${P.muted};margin-bottom:14px">${langInfo(o.lang).foot}</div>${contactsLine(o,P,false,F)}<div style="height:10px;font-size:0">&nbsp;</div>${hostAttribution(P,false)}</td></tr>\n`;
+  const header=o.logo?`    <tr><td align="center" style="padding:34px 34px 6px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="38" style="border:0;height:38px;display:block;margin:0 auto"/></td></tr>\n`:`    <tr><td align="center" style="padding:34px 34px 6px"><div style="display:inline-block;background:${P.tint};color:${P.accentDark};font-family:${F};font-size:16px;font-weight:700;letter-spacing:.3px;padding:9px 22px;border-radius:30px">@COMMERCIALNAME@</div></td></tr>\n`;
+  const hero=o.hero?`    <tr><td style="padding:16px 22px 0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W-44}" style="display:block;width:100%;max-width:${W-44}px;height:auto;border:0;border-radius:16px"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:28px 34px 0;text-align:center">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 34px 4px;text-align:center">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
+  const footer=`    <tr><td align="center" style="padding:8px 34px 0"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:150px;border-top:1px solid ${P.border};font-size:0;line-height:0">&nbsp;</td></tr></table></td></tr>
+    <tr><td style="padding:20px 34px 32px;text-align:center"><div style="font-family:${F};font-size:14px;font-weight:700;color:${P.text};margin-bottom:5px">@COMMERCIALNAME@</div><div style="font-family:${F};font-size:12px;line-height:1.7;color:${P.muted};margin-bottom:12px">${langInfo(o.lang).foot}</div>${contactsLine(o,P,false,F)}<div style="height:12px;font-size:0;line-height:0">&nbsp;</div>${hostAttribution(P,false)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${P.tint}" style="background:${P.tint};margin:0;padding:0"><tr><td align="center" style="padding:32px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#ffffff;border-radius:26px;overflow:hidden;box-shadow:0 12px 34px rgba(20,28,46,.10)">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="width:100%;max-width:${W}px;background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 12px 34px rgba(24,38,51,.08)">
 ${header}${hero}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -1023,18 +1035,19 @@ function designEscuro(o){
   const P=o.palette, W=o.width||600, F=fontFam(o.font);
   const PG="#0b0f16", CARD="#141a24", BD="#232b38", BOX="#1b2330", TX="#e9eef6", MUT="#8a93a6";
   const ds=realData(o);
-  const rows=ds.map((d,i)=>`<tr><td style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:12.5px;font-weight:600;color:${MUT};text-transform:uppercase;letter-spacing:.6px">${fcol(tokenizeText(d[0]||""),MUT,true)}</td><td align="right" style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:15px;font-weight:700;color:${TX}">${fcol(tokenizeText(d[1]||""),TX,true)}</td></tr>`).join("");
-  const summary=ds.length?`    <tr><td style="padding:8px 36px 26px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${BOX}" style="background:${BOX};border:1px solid ${BD};border-radius:14px"><tr><td style="padding:6px 22px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
-  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-72):it.t==="h"?`<p style="margin:0 0 18px;font-family:${F};font-size:24px;line-height:1.3;font-weight:700;color:#ffffff;letter-spacing:-.3px">${fcol(tokenizeText(it.v),"#ffffff",true)}</p>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:14px auto 18px"><tr><td align="center" bgcolor="${P.accent}" style="border-radius:12px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;padding:15px 36px;font-family:${F};font-size:16px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:12px">${fcol(tokenizeText(it.v),"#ffffff",true)}</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:16px;line-height:1.7;color:#c4ccda">${fcol(tokenizeText(it.v),"#c4ccda",true)}</p>`).join("\n");
+  const rows=ds.map((d,i)=>`<tr><td style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:11px;font-weight:600;color:${MUT};text-transform:uppercase;letter-spacing:1px">${fcol(tokenizeText(d[0]||""),MUT,true)}</td><td align="right" style="${i>0?`border-top:1px solid ${BD};`:""}padding:11px 0;font-family:${F};font-size:15px;font-weight:700;color:${TX}">${fcol(tokenizeText(d[1]||""),TX,true)}</td></tr>`).join("");
+  const summary=ds.length?`    <tr><td style="padding:8px 38px 28px"${ed(o,'data')}><table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${BOX}" style="background:${BOX};border:1px solid ${BD};border-radius:14px"><tr><td style="padding:18px 22px 2px"><p style="margin:0;font-family:${F};font-size:10.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${P.accent}">${fcol(langInfo(o.lang).res,P.accent,true)}</p></td></tr><tr><td style="padding:0 22px 12px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table></td></tr></table></td></tr>\n`:"";
+  const renderB=(items)=>(items||[]).map(it=>!it?"":it.t==="img"?imgHTML(it,F,W-76):it.t==="h"?`<p style="margin:0 0 18px;font-family:${F};font-size:25px;line-height:1.3;font-weight:700;color:#ffffff;letter-spacing:-.3px">${fcol(tokenizeText(it.v),"#ffffff",true)}</p>`:it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:22px auto 24px"><tr><td align="center" bgcolor="${P.accent}" style="background:${P.accent};border-radius:10px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;padding:15px 40px;font-family:${F};font-size:15.5px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px">${fcol(tokenizeText(it.v),"#ffffff",true)}</a></td></tr></table>`:`<p style="margin:0 0 16px;font-family:${F};font-size:15.5px;line-height:1.7;color:#c4ccda">${fcol(tokenizeText(it.v),"#c4ccda",true)}</p>`).join("\n");
   const sb=splitBody(o.body,!!summary);
-  const header=o.logo?`    <tr><td align="center" style="padding:34px 36px 8px"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="40" style="display:block;border:0;height:40px"/></td></tr>\n`:(o.hero?"":`    <tr><td align="center" style="padding:34px 36px 8px"><p style="margin:0;font-family:${F};font-size:19px;font-weight:700;letter-spacing:.3px;color:${P.accent}">${fcol("@COMMERCIALNAME@",P.accent,true)}</p></td></tr>\n`);
-  const hero=o.hero?`    <tr><td style="padding:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
-  const intro=`    <tr><td style="padding:22px 36px ${summary?'4px':'6px'}">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
-  const rest=sb.rest.length?`    <tr><td style="padding:2px 36px 6px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
-  const footer=`    <tr><td style="padding:24px 36px 14px;border-top:1px solid ${BD}"><p style="margin:0 0 4px;font-family:${F};font-size:14px;font-weight:600;color:${TX};text-align:center">${fcol("@COMMERCIALNAME@",TX,true)}</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.6;color:${MUT};text-align:center">${fcol(langInfo(o.lang).foot,MUT,true)}</p><div style="text-align:center">${contactsLine(o,P,true,F)}</div></td></tr>
-    <tr><td style="padding:0 36px 24px;text-align:center">${hostAttribution(P,true)}</td></tr>\n`;
+  const header=o.logo?`    <tr><td align="center" style="padding:34px 38px 0"><img src="${tokenizeAttr(o.logo)}" alt="@COMMERCIALNAME@"${ed(o,'logo')} height="40" style="display:block;border:0;height:40px"/></td></tr>
+    <tr><td align="center" style="padding:16px 38px 6px"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:40px;height:2px;background:${P.accent};font-size:0;line-height:0" bgcolor="${P.accent}">&nbsp;</td></tr></table></td></tr>\n`:(o.hero?"":`    <tr><td align="center" style="padding:34px 38px 8px"><p style="margin:0;font-family:${F};font-size:19px;font-weight:700;letter-spacing:.3px;color:${P.accent}">${fcol("@COMMERCIALNAME@",P.accent,true)}</p></td></tr>\n`);
+  const hero=o.hero?`    <tr><td style="padding:0;font-size:0;line-height:0"><img src="${tokenizeAttr(o.hero)}" alt="" width="${W}" style="display:block;width:100%;max-width:${W}px;height:auto;border:0"${ed(o,'hero')}/></td></tr>\n`:"";
+  const intro=`    <tr><td style="padding:24px 38px ${summary?'4px':'6px'}">${renderBodyEditable(sb.intro,0,renderB,o)}</td></tr>\n`;
+  const rest=sb.rest.length?`    <tr><td style="padding:2px 38px 10px">${renderBodyEditable(sb.rest,sb.intro.length,renderB,o)}</td></tr>\n`:"";
+  const footer=`    <tr><td style="padding:26px 38px 14px;border-top:1px solid ${BD}"><p style="margin:0 0 5px;font-family:${F};font-size:14px;font-weight:600;color:${TX};text-align:center">${fcol("@COMMERCIALNAME@",TX,true)}</p><p style="margin:0;font-family:${F};font-size:12px;line-height:1.7;color:${MUT};text-align:center">${fcol(langInfo(o.lang).foot,MUT,true)}</p><div style="text-align:center">${contactsLine(o,P,true,F)}</div></td></tr>
+    <tr><td style="padding:2px 38px 26px;text-align:center">${hostAttribution(P,true)}</td></tr>\n`;
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${PG}" style="background:${PG};margin:0;padding:0"><tr><td align="center" style="padding:34px 16px">
-  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:100%;max-width:${W}px;background:${CARD};border-radius:18px;overflow:hidden;border:1px solid ${BD}">
+  <table role="presentation" width="${W}" cellpadding="0" cellspacing="0" bgcolor="${CARD}" style="width:100%;max-width:${W}px;background:${CARD};border-radius:16px;overflow:hidden;border:1px solid ${BD}">
 ${hero}${header}${intro}${summary}${rest}${footer}  </table>
 </td></tr></table>`;
 }
@@ -2082,21 +2095,27 @@ const GAL_VARIANTS=[
   {design:"vibrante", palette:"vermelho", font:"sans",    shade:50, label:"Vibrante"},
   {design:"boutique", palette:"dourado",  font:"elegant", shade:46, label:"Boutique"}
 ];
+/* Combinações curadas por arquétipo de hotel — servem de fonte de inspiração pronta a usar. */
 const GAL_POOL=[
-  {design:"escuro",   palette:"azul",     font:"sans",    shade:50, label:"Escuro"},
-  {design:"moderno",  palette:"verde",    font:"century", shade:44, label:"Moderno verde"},
-  {design:"vibrante", palette:"grafite",  font:"modern",  shade:52, label:"Vibrante grafite"},
-  {design:"luxo",     palette:"dourado",  font:"garamond",shade:40, label:"Luxo âmbar"},
-  {design:"minimal",  palette:"vermelho", font:"serif",   shade:58, label:"Minimal carmim"},
-  {design:"boutique", palette:"azul",     font:"elegant", shade:48, label:"Boutique azul"},
-  {design:"escuro",   palette:"vermelho", font:"sans",    shade:50, label:"Escuro carmim"}
+  {design:"escuro",   palette:"azul",     font:"sans",    shade:50, label:"Urbano noturno"},
+  {design:"moderno",  palette:"verde",    font:"century", shade:44, label:"Eco resort"},
+  {design:"vibrante", palette:"azul",     font:"modern",  shade:46, label:"Resort de praia"},
+  {design:"luxo",     palette:"dourado",  font:"garamond",shade:40, label:"Palácio clássico"},
+  {design:"minimal",  palette:"grafite",  font:"sans",    shade:55, label:"Design nórdico"},
+  {design:"boutique", palette:"verde",    font:"elegant", shade:48, label:"Quinta de charme"},
+  {design:"luxo",     palette:"vermelho", font:"serif",   shade:42, label:"Vinho & vinha"},
+  {design:"vibrante", palette:"dourado",  font:"sans",    shade:48, label:"Sol & família"},
+  {design:"moderno",  palette:"grafite",  font:"calibri", shade:50, label:"City business"},
+  {design:"boutique", palette:"vermelho", font:"elegant", shade:46, label:"Romântico"},
+  {design:"escuro",   palette:"dourado",  font:"elegant", shade:44, label:"Rooftop bar"},
+  {design:"minimal",  palette:"azul",     font:"lucida",  shade:52, label:"Costa atlântica"}
 ];
 let galSel=0; let galExtra={};
 function galVars(ei){ return GAL_VARIANTS.concat(galExtra[ei]||[]); }
 function openGallery(){
   galSel=0; galExtra={};
-  showModal("Galeria de modelos",
-    `<div class="tag-hint">Escolhe o <b>evento</b> (em cima) e depois um dos <b>modelos prontos</b>. Cria um template novo já preenchido em PT e EN, pronto a personalizar.</div><div id="galWrap"></div>`,
+  showModal("Galeria de modelos — inspiração pronta a usar",
+    `<div class="tag-hint">Modelos <b>já feitos</b> para te inspirares: escolhe o <b>evento</b> (em cima) e explora estilos de hotel — de resort de praia a palácio clássico. Clicar cria um template novo <b>preenchido nos 6 idiomas</b>, pronto a personalizar. Usa «Gerar mais» para veres mais combinações.</div><div id="galWrap"></div>`,
     `<button class="btn ghost" onclick="window.__closeModal()">Fechar</button>`);
   renderGal();
 }
@@ -2139,7 +2158,7 @@ let wz=null;
 function wzPtLabel(code){ const t=DEFAULT_TAGS.find(x=>x[2]===code); return t?t[1]:code; }
 function wzDefaultTags(idx){ return (STARTERS[idx].pt.data||[]).map(d=>d[1]); }
 function openWizard(){
-  wz={ typeIdx:0, design:"moderno", palette:"azul", font:"sans", shade:50, tags:wzDefaultTags(0) };
+  wz={ typeIdx:0, design:"moderno", palette:"azul", font:"sans", shade:50, tags:wzDefaultTags(0), brief:"" };
   renderWizard();
 }
 function renderWizard(){
@@ -2155,10 +2174,14 @@ function renderWizard(){
     <div class="wsec"><div class="wlbl">3 · Paleta de cores</div><div class="wgrid5" id="wzPal">${palSwatch}</div>
       <div class="shade-row" style="margin-top:8px"><span class="shade-lbl">Claro</span><input type="range" id="wzShade" min="0" max="100" value="${wz.shade==null?50:wz.shade}" class="shade-slider" style="background:${shadeGradient(pal(wz.palette))}"><span class="shade-lbl">Escuro</span></div></div>
     <div class="wsec"><div class="wlbl">4 · Tipo de letra</div>${fontPickerHTML(wz.font)}</div>
-    <div class="wsec"><div class="wlbl">5 · Tags no resumo da reserva</div><div class="wtags">${tagChecks}</div></div>`;
+    <div class="wsec"><div class="wlbl">5 · Tags no resumo da reserva</div><div class="wtags">${tagChecks}</div></div>
+    <div class="wsec"><div class="wlbl">6 · Descreve o email — a IA escreve o texto <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></div>
+      <textarea id="wzBrief" placeholder="Ex.: tom caloroso e familiar; mencionar o pequeno-almoço incluído e o spa; convidar ao check-in online." style="width:100%;min-height:64px;resize:vertical;${HIN};line-height:1.5">${escText(wz.brief||"")}</textarea>
+      <div class="hint">Se deixares vazio, o template leva o texto base do tipo de email. Com brief, a IA escreve o corpo em PT — depois usa «Traduzir com IA» nos outros idiomas.</div></div>`;
   showModal("Gerar template",
-    `<div class="tag-hint" style="margin-bottom:12px">Escolhe as opções e o wizard cria um template novo, já com o conteúdo do tipo de email, no design, paleta e letra que escolheres.</div>${body}`,
+    `<div class="tag-hint" style="margin-bottom:12px">Escolhe as opções e o wizard cria um template novo — se descreveres o email no passo 6, a IA escreve o texto por ti.</div>${body}`,
     `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button><button class="btn primary" id="wzGo">Gerar template</button>`);
+  const wzb=document.getElementById("wzBrief"); if(wzb) wzb.addEventListener("input",()=>{ wz.brief=wzb.value; });
   const wsh=document.getElementById("wzShade"); if(wsh) wsh.addEventListener("input",()=>{ wz.shade=parseInt(wsh.value); });
   $("wzType").addEventListener("change",e=>{ wz.typeIdx=+e.target.value; wz.tags=wzDefaultTags(wz.typeIdx); renderWizard(); });
   document.querySelectorAll("#modalBody [data-font]").forEach(el=>el.addEventListener("click",()=>{ wz.font=el.dataset.font; renderWizard(); }));
@@ -2176,7 +2199,22 @@ function wizardGenerate(){
   t.pt.data=order.map(c=>[wzPtLabel(c)+":", c]);
   t.en.data=order.map(c=>[(WZ_ENLBL[c]||wzPtLabel(c))+":", c]);
   proj().templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
-  save(); closeModal(); renderAll(); toast("Template gerado: "+st.name);
+  const brief=(wz.brief||"").trim();
+  save(); closeModal(); renderAll();
+  if(brief && CLOUD && sb){
+    toast("Template criado — a IA está a escrever o texto…");
+    sb.functions.invoke("analyze-site",{ body:{ action:"write", hotel:proj().hotel, purpose:st.name, lang:"pt", instruction:brief.slice(0,400) } })
+      .then(({data,error})=>{
+        if(error||!data||data.error||!Array.isArray(data.blocks)||!data.blocks.length) throw new Error((data&&data.error)||"sem resposta");
+        const tpl=proj().templates.find(x=>x.id===t.id); if(!tpl) return;
+        tpl.pt.body=data.blocks.map(bk=>{ const ty=bk.type==="cta"?"cta":(bk.type==="h"?"h":"p"); return ty==="cta"?{t:"cta",v:String(bk.text||""),u:String(bk.url||"#")}:{t:ty,v:String(bk.text||"")}; }).filter(x=>x.v);
+        dirty(); if(state.currentTemplateId===t.id){ renderBuilder(); refreshHtmlPrev(); }
+        toast("Texto escrito pela IA — revê e ajusta.");
+      })
+      .catch(()=>toast("Template criado, mas a IA não conseguiu escrever o texto. Usa «Texto com IA» no construtor."));
+  } else {
+    toast("Template gerado: "+st.name);
+  }
 }
 
 /* ============================ AUTO-ANÁLISE DO WEBSITE (captação de marca) ============================ */
