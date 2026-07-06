@@ -356,6 +356,11 @@
   .canvas-toolbar{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 16px;box-shadow:var(--sh-sm)}
   .ct-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .canvas-toolbar .prevtog{border:0;background:var(--panel2)}
+  /* chips de tom do texto (à imagem do Hey!Travel AI) */
+  .tonechips{display:flex;flex-wrap:wrap;gap:6px}
+  .tonechip{height:30px;padding:0 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:background .14s,border-color .14s,color .14s;box-shadow:var(--sh-sm)}
+  .tonechip:hover{border-color:var(--accent);color:var(--accent)}
+  .tonechip.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:var(--sh-glow)}
   /* separadores do painel direito em pílulas (sem quebra de linha) */
   .tabs{gap:6px;padding:12px 14px;border-bottom:1px solid var(--line)}
   .tabs button{height:32px;padding:0 6px;border-radius:999px;background:var(--panel2);color:var(--muted);font-size:12px;border:1px solid transparent;white-space:nowrap}
@@ -1631,22 +1636,43 @@ function builderCard(it,i){
   }
   return `<div class="bcard" data-bi="${i}"><div class="bcard-h"><span class="bdrag" draggable="true" title="Arrastar para reordenar">⠿</span><span class="bcard-t">${ic(ICON[it.t]||"list",13)}<span>${NAME[it.t]||"Texto"}</span></span><span style="flex:1"></span><button class="bx" data-bbrem="${i}" title="Remover peça">✕</button></div><div class="bcard-b">${inner}</div></div>`;
 }
-async function builderAIWrite(btn){
+/* ===== Tom do texto (à imagem do Hey!Travel AI): divertido · casual · neutro · profissional ===== */
+const TONES=[
+  ["divertido","Divertido","Tom divertido e bem-disposto, com leveza e um toque de humor elegante — sem perder o profissionalismo de hotelaria."],
+  ["casual","Casual","Tom casual e próximo, simples e descontraído, como uma conversa amigável."],
+  ["neutro","Neutro",""],
+  ["profissional","Profissional","Tom formal, cortês e polido, com tratamento cerimonioso."]
+];
+function toneChipsHTML(sel){ return '<div class="tonechips">'+TONES.map(t=>`<button type="button" class="tonechip${sel===t[0]?' on':''}" data-tone="${t[0]}">${t[1]}</button>`).join("")+'</div>'; }
+function toneInstruction(tone,brief){ const t=TONES.find(x=>x[0]===tone); const parts=[]; if(t&&t[2]) parts.push(t[2]); if(brief) parts.push(brief); return parts.join(" ").slice(0,400); }
+function bindToneChips(boxSel,onPick){ document.querySelectorAll(boxSel+" .tonechip").forEach(el=>el.addEventListener("click",()=>{ document.querySelectorAll(boxSel+" .tonechip").forEach(x=>x.classList.toggle("on",x===el)); onPick(el.dataset.tone); })); }
+let aiTone="neutro";
+function openAIWrite(){
   if(!CLOUD || !sb){ toast("A IA precisa da cloud configurada."); return; }
-  const t=cur(), L=curLang();
-  if(L.body && L.body.length && !confirm("Gerar o texto deste email com IA? Substitui o texto atual do corpo ("+state.lang.toUpperCase()+").")) return;
-  const old=btn?btn.innerHTML:"";
-  if(btn){ btn.disabled=true; btn.innerHTML='<span class="spin"></span> A escrever…'; }
-  try{
-    const { data, error } = await sb.functions.invoke("analyze-site", { body:{ action:"write", hotel: proj().hotel, purpose: t.name, lang: state.lang } });
-    if(error || !data || data.error || !Array.isArray(data.blocks) || !data.blocks.length) throw new Error((data&&data.error)||"sem resposta");
-    L.body = data.blocks.map(function(bk){ const ty=bk.type==="cta"?"cta":(bk.type==="h"?"h":"p"); return ty==="cta"?{t:"cta",v:String(bk.text||""),u:String(bk.url||"#")}:{t:ty,v:String(bk.text||"")}; }).filter(function(x){return x.v;});
-    dirty(); renderBuilder(); refreshHtmlPrev();
-    toast("Texto gerado pela IA — revê e ajusta.");
-  }catch(e){
-    if(btn){ btn.disabled=false; btn.innerHTML=old; }
-    toast("Não consegui gerar o texto. Tenta de novo.");
-  }
+  aiTone="neutro";
+  const hasBody=curLang().body&&curLang().body.length;
+  showModal("Texto com IA — "+langInfo(state.lang).label,
+    `<div class="tag-hint" style="margin-bottom:12px">A IA escreve o corpo deste email («${escText(cur().name)}») em ${escText(langInfo(state.lang).name)}, com as tags @…@ do PMS.${hasBody?' <b>Substitui o texto atual do corpo.</b>':''}</div>
+     <div class="wlbl">O que deve dizer <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></div>
+     <textarea id="aiBrief" placeholder="Ex.: mencionar o pequeno-almoço incluído e o spa; convidar ao check-in online." style="width:100%;min-height:70px;resize:vertical;${HIN};line-height:1.5"></textarea>
+     <div class="wlbl" style="margin-top:14px">Tom do texto</div>
+     <div id="aiTones">${toneChipsHTML(aiTone)}</div>`,
+    `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button><button class="btn primary" id="aiGo">${ic("wand",14)} Gerar texto</button>`);
+  bindToneChips("#aiTones",t=>{ aiTone=t; });
+  $("aiGo").addEventListener("click",async ()=>{
+    const btn=$("aiGo"); const brief=($("aiBrief").value||"").trim();
+    btn.disabled=true; btn.innerHTML='<span class="spin"></span> A escrever…';
+    try{
+      const { data, error } = await sb.functions.invoke("analyze-site", { body:{ action:"write", hotel: proj().hotel, purpose: cur().name, lang: state.lang, instruction: toneInstruction(aiTone,brief) } });
+      if(error || !data || data.error || !Array.isArray(data.blocks) || !data.blocks.length) throw new Error((data&&data.error)||"sem resposta");
+      curLang().body = data.blocks.map(function(bk){ const ty=bk.type==="cta"?"cta":(bk.type==="h"?"h":"p"); return ty==="cta"?{t:"cta",v:String(bk.text||""),u:String(bk.url||"#")}:{t:ty,v:String(bk.text||"")}; }).filter(function(x){return x.v;});
+      dirty(); renderBuilder(); refreshHtmlPrev(); closeModal();
+      toast("Texto gerado pela IA — revê e ajusta.");
+    }catch(e){
+      btn.disabled=false; btn.innerHTML=ic("wand",14)+" Gerar texto";
+      toast("Não consegui gerar o texto. Tenta de novo.");
+    }
+  });
 }
 async function translateWithAI(btn, box){
   if(!CLOUD || !sb){ toast("A tradução por IA precisa da cloud configurada."); return; }
@@ -1688,7 +1714,7 @@ function renderBuilder(){
 function bindBuilder(b,L){
   const rebuild=()=>{ dirty(); renderBuilder(); refreshHtmlPrev(); };
   const live=()=>{ dirty(); refreshHtmlPrev(); };
-  const aiBtn=b.querySelector("#bldAI"); if(aiBtn) aiBtn.addEventListener("click",()=>builderAIWrite(aiBtn));
+  const aiBtn=b.querySelector("#bldAI"); if(aiBtn) aiBtn.addEventListener("click",openAIWrite);
   let drag=null;
   const clearDz=()=>b.querySelectorAll(".bdz").forEach(d=>d.classList.remove("over"));
   b.querySelectorAll(".bpiece").forEach(p=>{
@@ -2158,7 +2184,7 @@ let wz=null;
 function wzPtLabel(code){ const t=DEFAULT_TAGS.find(x=>x[2]===code); return t?t[1]:code; }
 function wzDefaultTags(idx){ return (STARTERS[idx].pt.data||[]).map(d=>d[1]); }
 function openWizard(){
-  wz={ typeIdx:0, design:"moderno", palette:"azul", font:"sans", shade:50, tags:wzDefaultTags(0), brief:"" };
+  wz={ typeIdx:0, design:"moderno", palette:"azul", font:"sans", shade:50, tags:wzDefaultTags(0), brief:"", tone:"neutro" };
   renderWizard();
 }
 function renderWizard(){
@@ -2176,12 +2202,15 @@ function renderWizard(){
     <div class="wsec"><div class="wlbl">4 · Tipo de letra</div>${fontPickerHTML(wz.font)}</div>
     <div class="wsec"><div class="wlbl">5 · Tags no resumo da reserva</div><div class="wtags">${tagChecks}</div></div>
     <div class="wsec"><div class="wlbl">6 · Descreve o email — a IA escreve o texto <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></div>
-      <textarea id="wzBrief" placeholder="Ex.: tom caloroso e familiar; mencionar o pequeno-almoço incluído e o spa; convidar ao check-in online." style="width:100%;min-height:64px;resize:vertical;${HIN};line-height:1.5">${escText(wz.brief||"")}</textarea>
-      <div class="hint">Se deixares vazio, o template leva o texto base do tipo de email. Com brief, a IA escreve o corpo em PT — depois usa «Traduzir com IA» nos outros idiomas.</div></div>`;
+      <textarea id="wzBrief" placeholder="Ex.: mencionar o pequeno-almoço incluído e o spa; convidar ao check-in online." style="width:100%;min-height:64px;resize:vertical;${HIN};line-height:1.5">${escText(wz.brief||"")}</textarea>
+      <div class="wsub" style="margin-top:10px">Tom do texto</div>
+      <div id="wzTones">${toneChipsHTML(wz.tone||"neutro")}</div>
+      <div class="hint" style="margin-top:8px">Sem brief e com tom «Neutro», o template leva o texto base do tipo de email. Caso contrário, a IA escreve o corpo em PT — depois usa «Traduzir com IA» nos outros idiomas.</div></div>`;
   showModal("Gerar template",
     `<div class="tag-hint" style="margin-bottom:12px">Escolhe as opções e o wizard cria um template novo — se descreveres o email no passo 6, a IA escreve o texto por ti.</div>${body}`,
     `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button><button class="btn primary" id="wzGo">Gerar template</button>`);
   const wzb=document.getElementById("wzBrief"); if(wzb) wzb.addEventListener("input",()=>{ wz.brief=wzb.value; });
+  bindToneChips("#wzTones",t=>{ wz.tone=t; });
   const wsh=document.getElementById("wzShade"); if(wsh) wsh.addEventListener("input",()=>{ wz.shade=parseInt(wsh.value); });
   $("wzType").addEventListener("change",e=>{ wz.typeIdx=+e.target.value; wz.tags=wzDefaultTags(wz.typeIdx); renderWizard(); });
   document.querySelectorAll("#modalBody [data-font]").forEach(el=>el.addEventListener("click",()=>{ wz.font=el.dataset.font; renderWizard(); }));
@@ -2199,11 +2228,11 @@ function wizardGenerate(){
   t.pt.data=order.map(c=>[wzPtLabel(c)+":", c]);
   t.en.data=order.map(c=>[(WZ_ENLBL[c]||wzPtLabel(c))+":", c]);
   proj().templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
-  const brief=(wz.brief||"").trim();
+  const brief=(wz.brief||"").trim(), tone=wz.tone||"neutro";
   save(); closeModal(); renderAll();
-  if(brief && CLOUD && sb){
+  if((brief || tone!=="neutro") && CLOUD && sb){
     toast("Template criado — a IA está a escrever o texto…");
-    sb.functions.invoke("analyze-site",{ body:{ action:"write", hotel:proj().hotel, purpose:st.name, lang:"pt", instruction:brief.slice(0,400) } })
+    sb.functions.invoke("analyze-site",{ body:{ action:"write", hotel:proj().hotel, purpose:st.name, lang:"pt", instruction:toneInstruction(tone,brief) } })
       .then(({data,error})=>{
         if(error||!data||data.error||!Array.isArray(data.blocks)||!data.blocks.length) throw new Error((data&&data.error)||"sem resposta");
         const tpl=proj().templates.find(x=>x.id===t.id); if(!tpl) return;
