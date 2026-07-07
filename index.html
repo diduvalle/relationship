@@ -356,6 +356,13 @@
   .canvas-toolbar{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 16px;box-shadow:var(--sh-sm)}
   .ct-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .canvas-toolbar .prevtog{border:0;background:var(--panel2)}
+  /* pílulas dos temas sazonais na galeria (emoji em crachá com a cor do tema) */
+  .schips{display:flex;flex-wrap:wrap;gap:8px}
+  .schip{display:inline-flex;align-items:center;gap:9px;padding:6px 16px 6px 7px;background:var(--panel);border:1px solid var(--line);border-radius:999px;cursor:pointer;box-shadow:var(--sh-sm);transition:border-color .14s,transform .12s,box-shadow .14s;font-family:inherit}
+  .schip-ic{width:31px;height:31px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
+  .schip-nm{font-size:12.5px;font-weight:600;color:var(--navy);white-space:nowrap}
+  .schip:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 6px 16px -6px rgba(6,103,255,.35)}
+  .schip:hover .schip-nm{color:var(--accent)}
   /* chips de tom do texto (à imagem do Hey!Travel AI) */
   .tonechips{display:flex;flex-wrap:wrap;gap:6px}
   .tonechip{height:30px;padding:0 14px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:background .14s,border-color .14s,color .14s;box-shadow:var(--sh-sm)}
@@ -2450,16 +2457,15 @@ function renderGal(){
   }).join("");
   const seasonCards=SEASONAL.map((s,si)=>{
     const P=pal(s.palette);
-    return `<div class="gvcard" data-gsea="${si}" title="${escAttr(s.name+" · "+s.design+" · "+P.name)}">
-      <div style="position:relative"><div class="gvthumb">${designThumb(s.design)}</div><div style="position:absolute;top:3px;right:5px;font-size:17px;line-height:1">${s.emoji}</div></div>
-      <div class="gvmeta"><span class="gvname">${escText(s.name)}</span><span class="gvdots"><i style="background:${P.accent}"></i><i style="background:${P.accentDark}"></i></span></div>
-    </div>`;
+    return `<button type="button" class="schip" data-gsea="${si}" title="${escAttr(s.design+" · "+P.name+" — clica para criar o template")}">
+      <span class="schip-ic" style="background:${P.tint}">${s.emoji}</span><span class="schip-nm">${escText(s.name)}</span>
+    </button>`;
   }).join("");
   w.innerHTML=`<div class="gchips">${chips}</div>
     <div class="gevhead"><span class="gevcode" style="background:${st.accent}">${escText(st.code||"")}</span><span class="gevname">${escText(st.name)}</span><span style="flex:1"></span><button class="btn sm" id="galMore" title="Gerar mais uma variante visual deste evento">${ic("wand",14)} Gerar mais</button></div>
     <div class="gvgrid">${cards}</div>
     <div class="gevhead" style="margin-top:22px"><span class="gevcode" style="background:#d97706">ÉPOCA</span><span class="gevname">Campanhas temáticas</span><span style="flex:1"></span><span class="hint" style="margin:0">Tema, cores e imagem decorativa incluídos — nos 6 idiomas</span></div>
-    <div class="gvgrid">${seasonCards}</div>`;
+    <div class="schips">${seasonCards}</div>`;
   w.querySelectorAll("[data-gev]").forEach(el=>el.addEventListener("click",()=>{ galSel=+el.dataset.gev; renderGal(); }));
   w.querySelectorAll("[data-gvi]").forEach(el=>el.addEventListener("click",()=>galPick(+el.dataset.gvi)));
   w.querySelectorAll("[data-gsea]").forEach(el=>el.addEventListener("click",()=>instSeasonal(SEASONAL[+el.dataset.gsea])));
