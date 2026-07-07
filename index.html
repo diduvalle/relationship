@@ -2136,6 +2136,88 @@ const GAL_POOL=[
   {design:"escuro",   palette:"dourado",  font:"elegant", shade:44, label:"Rooftop bar"},
   {design:"minimal",  palette:"azul",     font:"lucida",  shade:52, label:"Costa atlântica"}
 ];
+/* ===== Templates sazonais/temáticos — prontos a usar, com tema, cores e imagem decorativa ===== */
+const SEASONAL=[
+  { key:"valentim", name:"São Valentim", emoji:"💘", design:"boutique", palette:"vermelho", font:"elegant", shade:48,
+    hero:"https://loremflickr.com/1200/440/roses,red?lock=100",
+    pt:{ subject:"São Valentim no @COMMERCIALNAME@ — uma noite a dois", data:[],
+      body:[H("Caro(a) @GUESTNAME@,"),P("O amor está no ar. Neste São Valentim, o @COMMERCIALNAME@ veste-se de romance: jantar à luz das velas, espumante de boas-vindas e uma surpresa a pensar nos dois."),P("Os lugares para a noite mais romântica do ano são limitados — garanta já o vosso momento."),C("Reservar a noite a dois","#"),P("Com carinho,\nA equipa do @COMMERCIALNAME@")] },
+    en:{ subject:"Valentine's at @COMMERCIALNAME@ — a night for two", data:[],
+      body:[H("Dear @GUESTNAME@,"),P("Love is in the air. This Valentine's, @COMMERCIALNAME@ dresses up for romance: candlelit dinner, welcome sparkling wine and a little surprise made for two."),P("Seats for the most romantic night of the year are limited — secure your moment now."),C("Book a night for two","#"),P("With love,\nThe @COMMERCIALNAME@ team")] },
+    es:{ subject:"San Valentín en @COMMERCIALNAME@ — una noche para dos", data:[],
+      body:[H("Estimado/a @GUESTNAME@,"),P("El amor está en el aire. Este San Valentín, @COMMERCIALNAME@ se viste de romance: cena a la luz de las velas, espumoso de bienvenida y una sorpresa pensada para dos."),P("Las plazas para la noche más romántica del año son limitadas — asegure ya su momento."),C("Reservar una noche para dos","#"),P("Con cariño,\nEl equipo de @COMMERCIALNAME@")] },
+    it:{ subject:"San Valentino a @COMMERCIALNAME@ — una notte per due", data:[],
+      body:[H("Gentile @GUESTNAME@,"),P("L'amore è nell'aria. Questo San Valentino, @COMMERCIALNAME@ si veste di romanticismo: cena a lume di candela, spumante di benvenuto e una sorpresa pensata per due."),P("I posti per la notte più romantica dell'anno sono limitati — assicuri subito il suo momento."),C("Prenotare una notte per due","#"),P("Con affetto,\nIl team di @COMMERCIALNAME@")] },
+    de:{ subject:"Valentinstag im @COMMERCIALNAME@ — eine Nacht zu zweit", data:[],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Liebe liegt in der Luft. Zum Valentinstag zeigt sich das @COMMERCIALNAME@ von seiner romantischen Seite: Dinner bei Kerzenschein, Begrüßungssekt und eine kleine Überraschung für Sie beide."),P("Die Plätze für die romantischste Nacht des Jahres sind begrenzt — sichern Sie sich Ihren Moment."),C("Eine Nacht zu zweit reservieren","#"),P("Herzlichst,\nIhr Team vom @COMMERCIALNAME@")] },
+    fr:{ subject:"Saint-Valentin à @COMMERCIALNAME@ — une nuit à deux", data:[],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("L'amour est dans l'air. Pour la Saint-Valentin, @COMMERCIALNAME@ se pare de romantisme : dîner aux chandelles, vin pétillant de bienvenue et une surprise pensée pour deux."),P("Les places pour la nuit la plus romantique de l'année sont limitées — réservez votre moment dès maintenant."),C("Réserver une nuit à deux","#"),P("Avec tendresse,\nL'équipe de @COMMERCIALNAME@")] } },
+  { key:"pascoa", name:"Páscoa", emoji:"🐣", design:"boutique", palette:"verde", font:"sans", shade:50,
+    hero:"https://loremflickr.com/1200/440/easter?lock=200",
+    pt:{ subject:"Páscoa no @COMMERCIALNAME@ — programa em família", data:[],
+      body:[H("Caro(a) @GUESTNAME@,"),P("A primavera chegou e a Páscoa celebra-se connosco: caça aos ovos no jardim, brunch de Páscoa e atividades para os mais pequenos."),P("Junte a família e venha criar memórias — o programa completo espera por si."),C("Reservar a Páscoa","#"),P("Até já,\nA equipa do @COMMERCIALNAME@")] },
+    en:{ subject:"Easter at @COMMERCIALNAME@ — a family programme", data:[],
+      body:[H("Dear @GUESTNAME@,"),P("Spring has arrived and Easter is celebrated with us: an egg hunt in the garden, Easter brunch and activities for the little ones."),P("Gather the family and come make memories — the full programme awaits."),C("Book your Easter","#"),P("See you soon,\nThe @COMMERCIALNAME@ team")] },
+    es:{ subject:"Semana Santa en @COMMERCIALNAME@ — plan en familia", data:[],
+      body:[H("Estimado/a @GUESTNAME@,"),P("La primavera ha llegado y la Pascua se celebra con nosotros: búsqueda de huevos en el jardín, brunch de Pascua y actividades para los más pequeños."),P("Reúna a la familia y venga a crear recuerdos — el programa completo le espera."),C("Reservar la Pascua","#"),P("Hasta pronto,\nEl equipo de @COMMERCIALNAME@")] },
+    it:{ subject:"Pasqua a @COMMERCIALNAME@ — programma in famiglia", data:[],
+      body:[H("Gentile @GUESTNAME@,"),P("La primavera è arrivata e la Pasqua si festeggia con noi: caccia alle uova in giardino, brunch pasquale e attività per i più piccoli."),P("Riunisca la famiglia e venga a creare ricordi — il programma completo la aspetta."),C("Prenotare la Pasqua","#"),P("A presto,\nIl team di @COMMERCIALNAME@")] },
+    de:{ subject:"Ostern im @COMMERCIALNAME@ — Programm für die ganze Familie", data:[],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Der Frühling ist da und Ostern feiern wir gemeinsam: Eiersuche im Garten, Osterbrunch und Aktivitäten für die Kleinen."),P("Bringen Sie die Familie mit und schaffen Sie Erinnerungen — das komplette Programm wartet auf Sie."),C("Ostern reservieren","#"),P("Bis bald,\nIhr Team vom @COMMERCIALNAME@")] },
+    fr:{ subject:"Pâques à @COMMERCIALNAME@ — programme en famille", data:[],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Le printemps est arrivé et Pâques se fête chez nous : chasse aux œufs dans le jardin, brunch de Pâques et activités pour les plus petits."),P("Réunissez la famille et venez créer des souvenirs — le programme complet vous attend."),C("Réserver Pâques","#"),P("À bientôt,\nL'équipe de @COMMERCIALNAME@")] } },
+  { key:"natal", name:"Natal", emoji:"🎄", design:"luxo", palette:"vermelho", font:"elegant", shade:44,
+    hero:"https://loremflickr.com/1200/440/xmas,tree?lock=128",
+    pt:{ subject:"Este Natal, a sua mesa está posta no @COMMERCIALNAME@", data:[],
+      body:[H("Caro(a) @GUESTNAME@,"),P("Há luzes na fachada, lareira acesa e o aroma da consoada no ar. Este Natal, o @COMMERCIALNAME@ recebe-o com uma ceia de autor e todo o conforto de casa — sem o trabalho."),P("Consulte o menu de Natal e garanta a sua mesa (ou a sua estadia) antes que esgote."),C("Reservar para o Natal","#"),P("Boas Festas,\nA equipa do @COMMERCIALNAME@")] },
+    en:{ subject:"This Christmas, your table is set at @COMMERCIALNAME@", data:[],
+      body:[H("Dear @GUESTNAME@,"),P("Lights on the façade, a crackling fireplace and the aroma of Christmas dinner in the air. This Christmas, @COMMERCIALNAME@ welcomes you with a signature dinner and all the comfort of home — without the work."),P("Browse the Christmas menu and secure your table (or your stay) before it sells out."),C("Book for Christmas","#"),P("Season's Greetings,\nThe @COMMERCIALNAME@ team")] },
+    es:{ subject:"Esta Navidad, su mesa está puesta en @COMMERCIALNAME@", data:[],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Luces en la fachada, chimenea encendida y el aroma de la cena navideña en el aire. Esta Navidad, @COMMERCIALNAME@ le recibe con una cena de autor y todo el confort del hogar — sin el trabajo."),P("Consulte el menú de Navidad y asegure su mesa (o su estancia) antes de que se agote."),C("Reservar para Navidad","#"),P("Felices Fiestas,\nEl equipo de @COMMERCIALNAME@")] },
+    it:{ subject:"Questo Natale la sua tavola è pronta a @COMMERCIALNAME@", data:[],
+      body:[H("Gentile @GUESTNAME@,"),P("Luci sulla facciata, camino acceso e il profumo della cena di Natale nell'aria. Questo Natale, @COMMERCIALNAME@ la accoglie con una cena d'autore e tutto il comfort di casa — senza il lavoro."),P("Consulti il menù di Natale e assicuri il suo tavolo (o il suo soggiorno) prima che si esaurisca."),C("Prenotare per Natale","#"),P("Buone Feste,\nIl team di @COMMERCIALNAME@")] },
+    de:{ subject:"Dieses Weihnachten ist Ihr Tisch im @COMMERCIALNAME@ gedeckt", data:[],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Lichter an der Fassade, ein knisternder Kamin und der Duft des Weihnachtsessens in der Luft. Dieses Weihnachten empfängt Sie das @COMMERCIALNAME@ mit einem festlichen Menü und dem Komfort von Zuhause — ohne die Arbeit."),P("Entdecken Sie das Weihnachtsmenü und sichern Sie sich Ihren Tisch (oder Ihren Aufenthalt), bevor alles ausgebucht ist."),C("Für Weihnachten reservieren","#"),P("Frohe Festtage,\nIhr Team vom @COMMERCIALNAME@")] },
+    fr:{ subject:"Ce Noël, votre table est dressée à @COMMERCIALNAME@", data:[],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Des lumières sur la façade, une cheminée crépitante et le parfum du dîner de Noël dans l'air. Ce Noël, @COMMERCIALNAME@ vous accueille avec un dîner signature et tout le confort de la maison — sans le travail."),P("Découvrez le menu de Noël et réservez votre table (ou votre séjour) avant qu'il ne soit complet."),C("Réserver pour Noël","#"),P("Joyeuses Fêtes,\nL'équipe de @COMMERCIALNAME@")] } },
+  { key:"reveillon", name:"Passagem de Ano", emoji:"🎆", design:"escuro", palette:"dourado", font:"elegant", shade:46,
+    hero:"https://loremflickr.com/1200/440/fireworks?lock=41",
+    pt:{ subject:"Passagem de Ano no @COMMERCIALNAME@ — brinde connosco", data:[],
+      body:[H("Caro(a) @GUESTNAME@,"),P("Jantar de gala, música ao vivo e espumante à meia-noite: no @COMMERCIALNAME@, o novo ano começa em grande."),P("Os lugares para a última noite do ano voam — garanta já o seu."),C("Garantir o meu lugar","#"),P("Um brinde a si,\nA equipa do @COMMERCIALNAME@")] },
+    en:{ subject:"New Year's Eve at @COMMERCIALNAME@ — raise a glass with us", data:[],
+      body:[H("Dear @GUESTNAME@,"),P("Gala dinner, live music and sparkling wine at midnight: at @COMMERCIALNAME@, the new year starts in style."),P("Seats for the last night of the year go fast — secure yours now."),C("Secure my seat","#"),P("Here's to you,\nThe @COMMERCIALNAME@ team")] },
+    es:{ subject:"Fin de Año en @COMMERCIALNAME@ — brinde con nosotros", data:[],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Cena de gala, música en directo y espumoso a medianoche: en @COMMERCIALNAME@, el nuevo año empieza a lo grande."),P("Las plazas para la última noche del año vuelan — asegure ya la suya."),C("Asegurar mi plaza","#"),P("Un brindis por usted,\nEl equipo de @COMMERCIALNAME@")] },
+    it:{ subject:"Capodanno a @COMMERCIALNAME@ — brindi con noi", data:[],
+      body:[H("Gentile @GUESTNAME@,"),P("Cena di gala, musica dal vivo e spumante a mezzanotte: a @COMMERCIALNAME@, il nuovo anno inizia alla grande."),P("I posti per l'ultima notte dell'anno volano — assicuri subito il suo."),C("Assicurare il mio posto","#"),P("Un brindisi a lei,\nIl team di @COMMERCIALNAME@")] },
+    de:{ subject:"Silvester im @COMMERCIALNAME@ — stoßen Sie mit uns an", data:[],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Galadinner, Livemusik und Sekt um Mitternacht: im @COMMERCIALNAME@ beginnt das neue Jahr mit Stil."),P("Die Plätze für die letzte Nacht des Jahres sind schnell vergeben — sichern Sie sich Ihren."),C("Meinen Platz sichern","#"),P("Auf Sie,\nIhr Team vom @COMMERCIALNAME@")] },
+    fr:{ subject:"Réveillon à @COMMERCIALNAME@ — trinquez avec nous", data:[],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Dîner de gala, musique live et vin pétillant à minuit : à @COMMERCIALNAME@, la nouvelle année commence en beauté."),P("Les places pour la dernière nuit de l'année partent vite — réservez la vôtre."),C("Réserver ma place","#"),P("À la vôtre,\nL'équipe de @COMMERCIALNAME@")] } },
+  { key:"oktoberfest", name:"Oktoberfest", emoji:"🍺", design:"vibrante", palette:"dourado", font:"sans", shade:48,
+    hero:"https://loremflickr.com/1200/440/beer,pint?lock=207",
+    pt:{ subject:"Oktoberfest no @COMMERCIALNAME@ — Prost!", data:[],
+      body:[H("Caro(a) @GUESTNAME@,"),P("Cervejas artesanais, gastronomia bávara e música ao vivo: o Oktoberfest chegou ao @COMMERCIALNAME@."),P("Junte os amigos e reserve a vossa mesa — a festa é melhor com companhia."),C("Reservar mesa","#"),P("Prost!\nA equipa do @COMMERCIALNAME@")] },
+    en:{ subject:"Oktoberfest at @COMMERCIALNAME@ — Prost!", data:[],
+      body:[H("Dear @GUESTNAME@,"),P("Craft beers, Bavarian food and live music: Oktoberfest has arrived at @COMMERCIALNAME@."),P("Round up your friends and book your table — the party is better together."),C("Book a table","#"),P("Prost!\nThe @COMMERCIALNAME@ team")] },
+    es:{ subject:"Oktoberfest en @COMMERCIALNAME@ — ¡Prost!", data:[],
+      body:[H("Estimado/a @GUESTNAME@,"),P("Cervezas artesanales, gastronomía bávara y música en directo: el Oktoberfest ha llegado a @COMMERCIALNAME@."),P("Reúna a los amigos y reserve su mesa — la fiesta es mejor en compañía."),C("Reservar mesa","#"),P("¡Prost!\nEl equipo de @COMMERCIALNAME@")] },
+    it:{ subject:"Oktoberfest a @COMMERCIALNAME@ — Prost!", data:[],
+      body:[H("Gentile @GUESTNAME@,"),P("Birre artigianali, gastronomia bavarese e musica dal vivo: l'Oktoberfest è arrivato a @COMMERCIALNAME@."),P("Riunisca gli amici e prenoti il vostro tavolo — la festa è più bella in compagnia."),C("Prenotare un tavolo","#"),P("Prost!\nIl team di @COMMERCIALNAME@")] },
+    de:{ subject:"Oktoberfest im @COMMERCIALNAME@ — Prost!", data:[],
+      body:[H("Sehr geehrte(r) @GUESTNAME@,"),P("Craft-Biere, bayerische Küche und Livemusik: das Oktoberfest ist im @COMMERCIALNAME@ angekommen."),P("Trommeln Sie Ihre Freunde zusammen und reservieren Sie Ihren Tisch — gefeiert wird am besten gemeinsam."),C("Tisch reservieren","#"),P("Prost!\nIhr Team vom @COMMERCIALNAME@")] },
+    fr:{ subject:"Oktoberfest à @COMMERCIALNAME@ — Prost !", data:[],
+      body:[H("Cher/Chère @GUESTNAME@,"),P("Bières artisanales, gastronomie bavaroise et musique live : l'Oktoberfest est arrivée à @COMMERCIALNAME@."),P("Rassemblez vos amis et réservez votre table — la fête est meilleure ensemble."),C("Réserver une table","#"),P("Prost !\nL'équipe de @COMMERCIALNAME@")] } }
+];
+function instSeasonal(s){
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const t={ id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()), name:s.name, mode:"house",
+    design:s.design, font:s.font, palette:s.palette, shade:s.shade,
+    brand:{ logo:"", hero:s.hero }, settings:{ width:0 } };
+  LANG_CODES.forEach(lc=>{ const c=s[lc]||s.pt; t[lc]={ subject:c.subject, data:clone(c.data||[]), body:clone(c.body||[]) }; });
+  proj().templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
+  save(); closeModal(); renderAll(); toast("«"+s.name+"» criado em "+proj().hotel+" — troca a imagem de topo pela do teu hotel.");
+}
 let galSel=0; let galExtra={};
 function galVars(ei){ return GAL_VARIANTS.concat(galExtra[ei]||[]); }
 function openGallery(){
@@ -2156,11 +2238,21 @@ function renderGal(){
       <div class="gvmeta"><span class="gvname">${escText(v.label)}</span><span class="gvdots"><i style="background:${P.accent}"></i><i style="background:${P.accentDark}"></i></span></div>
     </div>`;
   }).join("");
+  const seasonCards=SEASONAL.map((s,si)=>{
+    const P=pal(s.palette);
+    return `<div class="gvcard" data-gsea="${si}" title="${escAttr(s.name+" · "+s.design+" · "+P.name)}">
+      <div style="position:relative"><div class="gvthumb">${designThumb(s.design)}</div><div style="position:absolute;top:3px;right:5px;font-size:17px;line-height:1">${s.emoji}</div></div>
+      <div class="gvmeta"><span class="gvname">${escText(s.name)}</span><span class="gvdots"><i style="background:${P.accent}"></i><i style="background:${P.accentDark}"></i></span></div>
+    </div>`;
+  }).join("");
   w.innerHTML=`<div class="gchips">${chips}</div>
     <div class="gevhead"><span class="gevcode" style="background:${st.accent}">${escText(st.code||"")}</span><span class="gevname">${escText(st.name)}</span><span style="flex:1"></span><button class="btn sm" id="galMore" title="Gerar mais uma variante visual deste evento">${ic("wand",14)} Gerar mais</button></div>
-    <div class="gvgrid">${cards}</div>`;
+    <div class="gvgrid">${cards}</div>
+    <div class="gevhead" style="margin-top:22px"><span class="gevcode" style="background:#d97706">ÉPOCA</span><span class="gevname">Campanhas temáticas</span><span style="flex:1"></span><span class="hint" style="margin:0">Tema, cores e imagem decorativa incluídos — nos 6 idiomas</span></div>
+    <div class="gvgrid">${seasonCards}</div>`;
   w.querySelectorAll("[data-gev]").forEach(el=>el.addEventListener("click",()=>{ galSel=+el.dataset.gev; renderGal(); }));
   w.querySelectorAll("[data-gvi]").forEach(el=>el.addEventListener("click",()=>galPick(+el.dataset.gvi)));
+  w.querySelectorAll("[data-gsea]").forEach(el=>el.addEventListener("click",()=>instSeasonal(SEASONAL[+el.dataset.gsea])));
   const more=$("galMore"); if(more) more.addEventListener("click",galMore);
 }
 function galPick(vi){
@@ -2421,9 +2513,11 @@ function renderHome(view){
         '<button class="btn primary" id="hNew" style="flex:1;padding:14px;font-size:14px">'+ic("plus",16)+' Novo Projeto</button>'+
         '<button class="btn" id="hOpen" style="flex:1;padding:14px;font-size:14px">'+ic("folder",16)+' Abrir Projeto</button>'+
       '</div>'+
+      (state.projects.length?'<button class="btn ghost" id="hGallery" style="width:100%;margin-top:10px;font-size:13px" title="Modelos prontos por evento e campanhas temáticas (Natal, São Valentim, …)">'+ic("grid",15)+' Galeria de modelos</button>':'')+
       '<div class="hint" style="margin-top:12px;text-align:center">'+state.projects.length+' projeto(s) guardado(s)</div></div>';
     document.getElementById("hNew").addEventListener("click",()=>{ nf={ hotel:"", events:[], design:"moderno", palette:"azul", font:"sans", shade:50 }; renderHome("new"); const hi=document.getElementById("nfHotel"); if(hi) hi.focus(); });
     document.getElementById("hOpen").addEventListener("click",hideHome);
+    const hg=document.getElementById("hGallery"); if(hg) hg.addEventListener("click",()=>{ hideHome(); openGallery(); });
     return;
   }
   // ----- formulário Novo Projeto -----
