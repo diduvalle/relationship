@@ -1476,26 +1476,39 @@ const LANGS=[
 const LANG_CODES=LANGS.map(l=>l.code);
 function langInfo(code){ return LANGS.find(l=>l.code===code)||LANGS.find(l=>l.code==="pt"); }
 /* Garante que o template t tem o slot do idioma code; se não, cria-o clonando pt (fallback en). */
-function starterFor(t){ return (t&&t.name)?STARTERS.find(s=>s.name===t.name):null; }
+/* Modelo-base de origem: ciclo de estadia → pelo NOME; modelo do PMS → pelo CÓDIGO. */
+function starterFor(t){
+  if(!t) return null;
+  if(tkind(t)==="pms"){ const c=(t.pms&&t.pms.code)||""; return c?(PMS_STARTERS.find(s=>s.code===c)||null):null; }
+  return t.name ? (STARTERS.find(s=>s.name===t.name)||null) : null;
+}
 function sameHouse(a,b){ return !!a && !!b && JSON.stringify([a.subject,a.data,a.body])===JSON.stringify([b.subject,b.data,b.body]); }
 const clLang = o=>JSON.parse(JSON.stringify(o||[]));
-function starterTr(t, code){ const st=starterFor(t); const m=st&&STARTER_I18N[st.code]; return (m&&m[code])?{st:st,tr:m[code]}:null; }
+/* Traduções: nos modelos do ciclo vivem no STARTER_I18N; nos do PMS vivem no próprio starter. */
+function starterTr(t, code){
+  const st=starterFor(t); if(!st) return null;
+  const tr = (tkind(t)==="pms") ? st[code] : (STARTER_I18N[st.code]||{})[code];
+  return tr ? {st:st, tr:tr} : null;
+}
 function ensureLang(t, code){
   if(!t) return null;
+  /* Nos modelos do ciclo, o EN é escrito à mão (não se toca). Nos do PMS, o EN também vem do starter. */
+  const enIsTranslatable = tkind(t)==="pms";
   if(!t[code]){
     const src = t.pt || t.en || {};
     if(t.mode==="html")        t[code]={ subject: src.subject||"", html: src.html||"" };
     else if(t.mode==="blocks") t[code]={ subject: src.subject||"", blocks: clLang(src.blocks) };
     else {
-      // Modelo-base conhecido (pelo nome) → usa a tradução pronta; senão clona o PT.
-      const s = (code!=="pt"&&code!=="en") ? starterTr(t, code) : null;
+      // Modelo-base conhecido → usa a tradução pronta; senão clona o PT.
+      const s = (code!=="pt" && (enIsTranslatable || code!=="en")) ? starterTr(t, code) : null;
       if(s) t[code]={ subject:s.tr.subject, data:clLang(s.tr.data), body:clLang(s.tr.body) };
       else t[code]={ subject: src.subject||"", data: clLang(src.data), body: clLang(src.body) };
     }
     return t[code];
   }
-  // Atualiza um idioma que ainda seja apenas uma cópia por traduzir do PT, num modelo-base conhecido.
-  if(t.mode==="house" && code!=="pt" && code!=="en"){
+  /* Auto-cura: um idioma que ainda seja só uma cópia por traduzir do PT é substituído pela tradução do starter.
+     (é isto que conserta os modelos do PMS criados antes de as traduções existirem) */
+  if(t.mode==="house" && code!=="pt" && (enIsTranslatable || code!=="en")){
     const s = starterTr(t, code);
     if(s && sameHouse(t[code], t.pt))
       t[code]={ subject:s.tr.subject, data:clLang(s.tr.data), body:clLang(s.tr.body) };
@@ -2752,45 +2765,116 @@ function galMore(){
 const G='@Model[0].GuestName', RN='@Model[0].ReservationNumber', CI='@Model[0].CheckIn.ToString("dd-MM-yyyy")', CO='@Model[0].CheckOut.ToString("dd-MM-yyyy")', CAT='@Model[0].CategoryDescription', HN='@Model[0].HotelName1';
 /* Tags só de Invoices (grafias próprias!) */
 const IG='@Model[0].GuestName', INUM='@Model[0].InvoiceNumber', IDOC='@Model[0].InvoiceDocType', IDT='@Model[0].InvoiceDate.ToString("dd-MM-yyyy")', ITOT='@Model[0].TotalRate.ToString("0.00")', IHN='@Model[0].HotelName1';
+/* mais tags usadas nos modelos */
+const OCI='@Model[0].OnlineCheckIn', TOT='@Model[0].TotalRate.ToString("0.00")', OPT='@Model[0].OptionDate.ToString("dd-MM-yyyy")',
+      OFR='@Model[0].OfferLongText', BE='@Model[0].UrlBookingEngine', PLU='@Model[0].PaymentLinkUrl',
+      DEP='@Model[0].DepositValue.ToString("0.00")', DDUE='@Model[0].DepositDueDate.ToString("dd-MM-yyyy")',
+      MBE='@Model[0].MultibancoPaymentEntity', MBR='@Model[0].MultibancoPaymentReference',
+      RM='@Model[0].RoomNumber', WSSID='@Model[0].WIFISSID', WKEY='@Model[0].WIFIKEY', KPIN='@Model[0].KeyPin',
+      INAME='@Model[0].InvoiceName', BNK='@Model[0].BankName', BIBAN='@Model[0].BankIBAN', BSWIFT='@Model[0].BankSWIFT', BACC='@Model[0].BankAccountName', HWEB='@Model[0].HotelNameWebsite';
+/* Cada modelo traz o conteúdo escrito nos 6 IDIOMAS (assunto, etiquetas e corpo). */
 const PMS_STARTERS=[
   /* ===== Fonte: ReservationsWithNation ===== */
   { source:"ReservationsWithNation", code:"CONFIRMATIONLETTER", name:"Carta de Confirmação", desc:"Carta de Confirmação", icon:"mail",
-    about:"Confirmação da reserva com o resumo completo.",
-    design:"moderno", palette:"azul", font:"sans", shade:50,
-    data:[["Hóspede:",G],["Nº de reserva:",RN],["Tipologia:",CAT],["Chegada:",CI],["Saída:",CO],["Total:",'@Model[0].TotalRate.ToString("0.00")']],
-    body:[H("Reserva confirmada"),P("Caro(a) "+G+", temos o prazer de confirmar a sua reserva no "+HN+". Em cima encontra o resumo da sua estadia."),P("Para uma chegada mais rápida, pode adiantar já o seu check-in online."),C("Fazer check-in online",'@Model[0].OnlineCheckIn'),P("Se precisar de alterar alguma coisa, basta responder a este email."),P("Até breve,\nA Direção do "+HN)] },
+    about:"Confirmação da reserva com o resumo completo.", design:"moderno", palette:"azul", font:"sans", shade:50,
+    pt:{ subject:"Reserva confirmada — "+HN, data:[["Hóspede:",G],["Nº de reserva:",RN],["Tipologia:",CAT],["Chegada:",CI],["Saída:",CO],["Total:",TOT]],
+      body:[H("Reserva confirmada"),P("Caro(a) "+G+", temos o prazer de confirmar a sua reserva no "+HN+". Em cima encontra o resumo da sua estadia."),P("Para uma chegada mais rápida, pode adiantar já o seu check-in online."),C("Fazer check-in online",OCI),P("Se precisar de alterar alguma coisa, basta responder a este email."),P("Até breve,\nA Direção do "+HN)] },
+    en:{ subject:"Booking confirmed — "+HN, data:[["Guest:",G],["Reservation no.:",RN],["Room type:",CAT],["Arrival:",CI],["Departure:",CO],["Total:",TOT]],
+      body:[H("Booking confirmed"),P("Dear "+G+", we are delighted to confirm your booking at "+HN+". Above you'll find your stay summary."),P("For a faster arrival, you can complete your online check-in in advance."),C("Check in online",OCI),P("If you need to change anything, just reply to this email."),P("See you soon,\nThe Management of "+HN)] },
+    es:{ subject:"Reserva confirmada — "+HN, data:[["Huésped:",G],["Nº de reserva:",RN],["Tipo de habitación:",CAT],["Llegada:",CI],["Salida:",CO],["Total:",TOT]],
+      body:[H("Reserva confirmada"),P("Estimado/a "+G+", nos complace confirmar su reserva en "+HN+". Arriba encontrará el resumen de su estancia."),P("Para una llegada más rápida, puede adelantar su check-in online."),C("Hacer el check-in online",OCI),P("Si necesita cambiar algo, basta con responder a este correo."),P("Hasta pronto,\nLa Dirección de "+HN)] },
+    fr:{ subject:"Réservation confirmée — "+HN, data:[["Client :",G],["Numéro de réservation :",RN],["Type de chambre :",CAT],["Arrivée :",CI],["Départ :",CO],["Total :",TOT]],
+      body:[H("Réservation confirmée"),P("Cher/Chère "+G+", nous avons le plaisir de confirmer votre réservation à "+HN+". Vous trouverez ci-dessus le récapitulatif de votre séjour."),P("Pour une arrivée plus rapide, vous pouvez effectuer votre check-in en ligne à l'avance."),C("Faire le check-in en ligne",OCI),P("Si vous souhaitez modifier quelque chose, il vous suffit de répondre à cet e-mail."),P("À bientôt,\nLa Direction de "+HN)] },
+    de:{ subject:"Buchung bestätigt — "+HN, data:[["Gast:",G],["Reservierungsnummer:",RN],["Zimmerkategorie:",CAT],["Anreise:",CI],["Abreise:",CO],["Gesamt:",TOT]],
+      body:[H("Buchung bestätigt"),P("Sehr geehrte(r) "+G+", wir freuen uns, Ihre Buchung im "+HN+" zu bestätigen. Oben finden Sie die Übersicht Ihres Aufenthalts."),P("Für eine schnellere Ankunft können Sie Ihren Online-Check-in bereits vornehmen."),C("Online einchecken",OCI),P("Wenn Sie etwas ändern möchten, antworten Sie einfach auf diese E-Mail."),P("Bis bald,\nDie Direktion des "+HN)] },
+    it:{ subject:"Prenotazione confermata — "+HN, data:[["Ospite:",G],["Numero di prenotazione:",RN],["Tipologia camera:",CAT],["Arrivo:",CI],["Partenza:",CO],["Totale:",TOT]],
+      body:[H("Prenotazione confermata"),P("Gentile "+G+", siamo lieti di confermare la sua prenotazione presso "+HN+". Qui sopra trova il riepilogo del suo soggiorno."),P("Per un arrivo più rapido, può anticipare il suo check-in online."),C("Effettua il check-in online",OCI),P("Se desidera modificare qualcosa, basta rispondere a questa email."),P("A presto,\nLa Direzione di "+HN)] } },
+
   { source:"ReservationsWithNation", code:"COTACAORESERVA", name:"Cotação de Reserva", desc:"Cotação de Reserva", icon:"doc",
-    about:"Proposta com preço e validade, antes de fechar a reserva.",
-    design:"luxo", palette:"grafite", font:"elegant", shade:44,
-    data:[["Hóspede:",G],["Tipologia:",CAT],["Chegada:",CI],["Saída:",CO],["Valor:",'@Model[0].TotalRate.ToString("0.00")'],["Válida até:",'@Model[0].OptionDate.ToString("dd-MM-yyyy")']],
-    body:[H("A sua proposta"),P("Caro(a) "+G+", obrigado pelo seu interesse no "+HN+". Segue a nossa proposta para as datas pretendidas."),P('@Model[0].OfferLongText'),P("Esta cotação é válida até "+'@Model[0].OptionDate.ToString("dd-MM-yyyy")'+"."),C("Reservar agora",'@Model[0].UrlBookingEngine'),P("Melhores cumprimentos,\nA Direção do "+HN)] },
+    about:"Proposta com preço e validade, antes de fechar a reserva.", design:"luxo", palette:"grafite", font:"elegant", shade:44,
+    pt:{ subject:"A sua proposta — "+HN, data:[["Hóspede:",G],["Tipologia:",CAT],["Chegada:",CI],["Saída:",CO],["Valor:",TOT],["Válida até:",OPT]],
+      body:[H("A sua proposta"),P("Caro(a) "+G+", obrigado pelo seu interesse no "+HN+". Segue a nossa proposta para as datas pretendidas."),P(OFR),P("Esta cotação é válida até "+OPT+"."),C("Reservar agora",BE),P("Melhores cumprimentos,\nA Direção do "+HN)] },
+    en:{ subject:"Your proposal — "+HN, data:[["Guest:",G],["Room type:",CAT],["Arrival:",CI],["Departure:",CO],["Amount:",TOT],["Valid until:",OPT]],
+      body:[H("Your proposal"),P("Dear "+G+", thank you for your interest in "+HN+". Please find our proposal for the requested dates below."),P(OFR),P("This quotation is valid until "+OPT+"."),C("Book now",BE),P("Kind regards,\nThe Management of "+HN)] },
+    es:{ subject:"Su propuesta — "+HN, data:[["Huésped:",G],["Tipo de habitación:",CAT],["Llegada:",CI],["Salida:",CO],["Importe:",TOT],["Válida hasta:",OPT]],
+      body:[H("Su propuesta"),P("Estimado/a "+G+", gracias por su interés en "+HN+". A continuación, nuestra propuesta para las fechas solicitadas."),P(OFR),P("Esta cotización es válida hasta "+OPT+"."),C("Reservar ahora",BE),P("Un cordial saludo,\nLa Dirección de "+HN)] },
+    fr:{ subject:"Votre proposition — "+HN, data:[["Client :",G],["Type de chambre :",CAT],["Arrivée :",CI],["Départ :",CO],["Montant :",TOT],["Valable jusqu'au :",OPT]],
+      body:[H("Votre proposition"),P("Cher/Chère "+G+", merci de l'intérêt que vous portez à "+HN+". Voici notre proposition pour les dates souhaitées."),P(OFR),P("Ce devis est valable jusqu'au "+OPT+"."),C("Réserver maintenant",BE),P("Meilleures salutations,\nLa Direction de "+HN)] },
+    de:{ subject:"Ihr Angebot — "+HN, data:[["Gast:",G],["Zimmerkategorie:",CAT],["Anreise:",CI],["Abreise:",CO],["Betrag:",TOT],["Gültig bis:",OPT]],
+      body:[H("Ihr Angebot"),P("Sehr geehrte(r) "+G+", vielen Dank für Ihr Interesse am "+HN+". Nachfolgend unser Angebot für die gewünschten Daten."),P(OFR),P("Dieses Angebot ist gültig bis "+OPT+"."),C("Jetzt buchen",BE),P("Mit freundlichen Grüßen,\nDie Direktion des "+HN)] },
+    it:{ subject:"La sua proposta — "+HN, data:[["Ospite:",G],["Tipologia camera:",CAT],["Arrivo:",CI],["Partenza:",CO],["Importo:",TOT],["Valida fino al:",OPT]],
+      body:[H("La sua proposta"),P("Gentile "+G+", grazie per il suo interesse verso "+HN+". Di seguito la nostra proposta per le date richieste."),P(OFR),P("Questo preventivo è valido fino al "+OPT+"."),C("Prenota ora",BE),P("Cordiali saluti,\nLa Direzione di "+HN)] } },
+
   { source:"ReservationsWithNation", code:"PAYMENTLINK", name:"Link de Pagamento", desc:"Payment Link", icon:"copy",
-    about:"Pagamento com link + dados de Multibanco.",
-    design:"minimal", palette:"verde", font:"sans", shade:52,
-    data:[["Nº de reserva:",RN],["Valor a pagar:",'@Model[0].DepositValue.ToString("0.00")'],["Data limite:",'@Model[0].DepositDueDate.ToString("dd-MM-yyyy")'],["Entidade:",'@Model[0].MultibancoPaymentEntity'],["Referência:",'@Model[0].MultibancoPaymentReference']],
-    body:[H("Falta só o pagamento"),P("Caro(a) "+G+", para garantir a sua reserva no "+HN+" falta apenas concluir o pagamento. Pode pagar em segurança através do botão abaixo."),C("Pagar agora",'@Model[0].PaymentLinkUrl'),P("Em alternativa, use os dados de Multibanco indicados em cima."),P("Obrigado,\nA Direção do "+HN)] },
+    about:"Pagamento com link + dados de Multibanco.", design:"minimal", palette:"verde", font:"sans", shade:52,
+    pt:{ subject:"Falta só o pagamento — "+HN, data:[["Nº de reserva:",RN],["Valor a pagar:",DEP],["Data limite:",DDUE],["Entidade:",MBE],["Referência:",MBR]],
+      body:[H("Falta só o pagamento"),P("Caro(a) "+G+", para garantir a sua reserva no "+HN+" falta apenas concluir o pagamento. Pode pagar em segurança através do botão abaixo."),C("Pagar agora",PLU),P("Em alternativa, use os dados de Multibanco indicados em cima."),P("Obrigado,\nA Direção do "+HN)] },
+    en:{ subject:"Only the payment is missing — "+HN, data:[["Reservation no.:",RN],["Amount due:",DEP],["Due date:",DDUE],["Entity:",MBE],["Reference:",MBR]],
+      body:[H("Only the payment is missing"),P("Dear "+G+", to secure your booking at "+HN+" only the payment is missing. You can pay securely using the button below."),C("Pay now",PLU),P("Alternatively, use the Multibanco details shown above."),P("Thank you,\nThe Management of "+HN)] },
+    es:{ subject:"Solo falta el pago — "+HN, data:[["Nº de reserva:",RN],["Importe a pagar:",DEP],["Fecha límite:",DDUE],["Entidad:",MBE],["Referencia:",MBR]],
+      body:[H("Solo falta el pago"),P("Estimado/a "+G+", para garantizar su reserva en "+HN+" solo falta completar el pago. Puede pagar de forma segura con el botón de abajo."),C("Pagar ahora",PLU),P("Como alternativa, utilice los datos de Multibanco indicados arriba."),P("Gracias,\nLa Dirección de "+HN)] },
+    fr:{ subject:"Il ne manque que le paiement — "+HN, data:[["Numéro de réservation :",RN],["Montant à payer :",DEP],["Date limite :",DDUE],["Entité :",MBE],["Référence :",MBR]],
+      body:[H("Il ne manque que le paiement"),P("Cher/Chère "+G+", pour garantir votre réservation à "+HN+", il ne manque que le paiement. Vous pouvez payer en toute sécurité via le bouton ci-dessous."),C("Payer maintenant",PLU),P("Vous pouvez également utiliser les données Multibanco indiquées ci-dessus."),P("Merci,\nLa Direction de "+HN)] },
+    de:{ subject:"Nur die Zahlung fehlt noch — "+HN, data:[["Reservierungsnummer:",RN],["Zu zahlender Betrag:",DEP],["Fällig bis:",DDUE],["Entität:",MBE],["Referenz:",MBR]],
+      body:[H("Nur die Zahlung fehlt noch"),P("Sehr geehrte(r) "+G+", um Ihre Buchung im "+HN+" zu sichern, fehlt nur noch die Zahlung. Sie können sicher über die Schaltfläche unten bezahlen."),C("Jetzt bezahlen",PLU),P("Alternativ nutzen Sie die oben angegebenen Multibanco-Daten."),P("Vielen Dank,\nDie Direktion des "+HN)] },
+    it:{ subject:"Manca solo il pagamento — "+HN, data:[["Numero di prenotazione:",RN],["Importo da pagare:",DEP],["Scadenza:",DDUE],["Entità:",MBE],["Riferimento:",MBR]],
+      body:[H("Manca solo il pagamento"),P("Gentile "+G+", per garantire la sua prenotazione presso "+HN+" manca solo il pagamento. Può pagare in sicurezza tramite il pulsante qui sotto."),C("Paga ora",PLU),P("In alternativa, utilizzi i dati Multibanco indicati sopra."),P("Grazie,\nLa Direzione di "+HN)] } },
+
   { source:"ReservationsWithNation", code:"EMAIL-BEFORE-CHECKIN", name:"Antes da chegada (WiFi + chave)", desc:"BEFORE-CHECKIN — Future reservations.", icon:"bolt",
-    about:"Check-in online, KeyPass, PIN da porta e WiFi.",
-    design:"boutique", palette:"azul", font:"sans", shade:48,
-    data:[["Hóspede:",G],["Nº de reserva:",RN],["Chegada:",CI],["Alojamento:",'@Model[0].RoomNumber']],
-    body:[H("Falta pouco para a sua chegada"),P("Caro(a) "+G+", a sua chegada ao "+HN+" está a aproximar-se. Para que tudo corra depressa, adiante já o seu check-in online."),C("Fazer check-in online",'@Model[0].OnlineCheckIn'),P("No dia da chegada vai precisar destes dados:\nRede WiFi: "+'@Model[0].WIFISSID'+"\nPalavra-passe: "+'@Model[0].WIFIKEY'+"\nPIN da porta: "+'@Model[0].KeyPin'),P("Até já,\nA Direção do "+HN)] },
+    about:"Check-in online, PIN da porta e WiFi.", design:"boutique", palette:"azul", font:"sans", shade:48,
+    pt:{ subject:"A sua chegada ao "+HN+" está próxima", data:[["Hóspede:",G],["Nº de reserva:",RN],["Chegada:",CI],["Alojamento:",RM]],
+      body:[H("Falta pouco para a sua chegada"),P("Caro(a) "+G+", a sua chegada ao "+HN+" está a aproximar-se. Para que tudo corra depressa, adiante já o seu check-in online."),C("Fazer check-in online",OCI),P("No dia da chegada vai precisar destes dados:\nRede WiFi: "+WSSID+"\nPalavra-passe: "+WKEY+"\nPIN da porta: "+KPIN),P("Até já,\nA Direção do "+HN)] },
+    en:{ subject:"Your arrival at "+HN+" is coming up", data:[["Guest:",G],["Reservation no.:",RN],["Arrival:",CI],["Room:",RM]],
+      body:[H("Your arrival is almost here"),P("Dear "+G+", your arrival at "+HN+" is coming up. To make everything quicker, complete your online check-in in advance."),C("Check in online",OCI),P("On arrival day you'll need these details:\nWiFi network: "+WSSID+"\nPassword: "+WKEY+"\nDoor PIN: "+KPIN),P("See you soon,\nThe Management of "+HN)] },
+    es:{ subject:"Su llegada a "+HN+" se acerca", data:[["Huésped:",G],["Nº de reserva:",RN],["Llegada:",CI],["Alojamiento:",RM]],
+      body:[H("Su llegada está muy cerca"),P("Estimado/a "+G+", su llegada a "+HN+" se acerca. Para que todo sea más rápido, adelante su check-in online."),C("Hacer el check-in online",OCI),P("El día de la llegada necesitará estos datos:\nRed WiFi: "+WSSID+"\nContraseña: "+WKEY+"\nPIN de la puerta: "+KPIN),P("Hasta pronto,\nLa Dirección de "+HN)] },
+    fr:{ subject:"Votre arrivée à "+HN+" approche", data:[["Client :",G],["Numéro de réservation :",RN],["Arrivée :",CI],["Logement :",RM]],
+      body:[H("Votre arrivée approche"),P("Cher/Chère "+G+", votre arrivée à "+HN+" approche. Pour que tout aille plus vite, effectuez votre check-in en ligne dès maintenant."),C("Faire le check-in en ligne",OCI),P("Le jour de l'arrivée, vous aurez besoin de ces informations :\nRéseau WiFi : "+WSSID+"\nMot de passe : "+WKEY+"\nCode de la porte : "+KPIN),P("À très bientôt,\nLa Direction de "+HN)] },
+    de:{ subject:"Ihre Ankunft im "+HN+" steht bevor", data:[["Gast:",G],["Reservierungsnummer:",RN],["Anreise:",CI],["Unterkunft:",RM]],
+      body:[H("Ihre Ankunft steht bevor"),P("Sehr geehrte(r) "+G+", Ihre Ankunft im "+HN+" rückt näher. Damit alles schneller geht, nehmen Sie Ihren Online-Check-in schon jetzt vor."),C("Online einchecken",OCI),P("Am Anreisetag benötigen Sie diese Daten:\nWLAN-Netz: "+WSSID+"\nPasswort: "+WKEY+"\nTür-PIN: "+KPIN),P("Bis bald,\nDie Direktion des "+HN)] },
+    it:{ subject:"Il suo arrivo a "+HN+" si avvicina", data:[["Ospite:",G],["Numero di prenotazione:",RN],["Arrivo:",CI],["Alloggio:",RM]],
+      body:[H("Il suo arrivo è vicino"),P("Gentile "+G+", il suo arrivo a "+HN+" si avvicina. Per fare tutto più in fretta, effettui subito il check-in online."),C("Effettua il check-in online",OCI),P("Il giorno dell'arrivo le serviranno questi dati:\nRete WiFi: "+WSSID+"\nPassword: "+WKEY+"\nPIN della porta: "+KPIN),P("A prestissimo,\nLa Direzione di "+HN)] } },
+
   /* ===== Fonte: Invoices ===== */
   { source:"Invoices", code:"EMAIL-INVOICE", name:"Envio de Fatura", desc:"EMAIL-INVOICE", icon:"doc",
-    about:"Envia a fatura ao hóspede, com o documento e o total.",
-    design:"minimal", palette:"grafite", font:"sans", shade:50,
-    data:[["Documento:",IDOC],["Nº:",INUM],["Data:",IDT],["Nome:",'@Model[0].InvoiceName'],["Total:",ITOT]],
-    body:[H("A sua fatura"),P("Caro(a) "+IG+", em anexo segue a fatura referente à sua estadia no "+IHN+"."),P("Se os dados de faturação não estiverem corretos, responda a este email e corrigimos."),P("Obrigado pela sua preferência,\nA Direção do "+IHN)] },
+    about:"Envia a fatura ao hóspede, com o documento e o total.", design:"minimal", palette:"grafite", font:"sans", shade:50,
+    pt:{ subject:"A sua fatura "+INUM+" — "+IHN, data:[["Documento:",IDOC],["Nº:",INUM],["Data:",IDT],["Nome:",INAME],["Total:",ITOT]],
+      body:[H("A sua fatura"),P("Caro(a) "+IG+", em anexo segue a fatura referente à sua estadia no "+IHN+"."),P("Se os dados de faturação não estiverem corretos, responda a este email e corrigimos."),P("Obrigado pela sua preferência,\nA Direção do "+IHN)] },
+    en:{ subject:"Your invoice "+INUM+" — "+IHN, data:[["Document:",IDOC],["No.:",INUM],["Date:",IDT],["Name:",INAME],["Total:",ITOT]],
+      body:[H("Your invoice"),P("Dear "+IG+", please find attached the invoice for your stay at "+IHN+"."),P("If the billing details are not correct, reply to this email and we'll fix them."),P("Thank you for choosing us,\nThe Management of "+IHN)] },
+    es:{ subject:"Su factura "+INUM+" — "+IHN, data:[["Documento:",IDOC],["Nº:",INUM],["Fecha:",IDT],["Nombre:",INAME],["Total:",ITOT]],
+      body:[H("Su factura"),P("Estimado/a "+IG+", adjunto encontrará la factura correspondiente a su estancia en "+IHN+"."),P("Si los datos de facturación no son correctos, responda a este correo y los corregimos."),P("Gracias por su preferencia,\nLa Dirección de "+IHN)] },
+    fr:{ subject:"Votre facture "+INUM+" — "+IHN, data:[["Document :",IDOC],["N° :",INUM],["Date :",IDT],["Nom :",INAME],["Total :",ITOT]],
+      body:[H("Votre facture"),P("Cher/Chère "+IG+", veuillez trouver ci-joint la facture correspondant à votre séjour à "+IHN+"."),P("Si les données de facturation ne sont pas correctes, répondez à cet e-mail et nous les corrigerons."),P("Merci de votre confiance,\nLa Direction de "+IHN)] },
+    de:{ subject:"Ihre Rechnung "+INUM+" — "+IHN, data:[["Dokument:",IDOC],["Nr.:",INUM],["Datum:",IDT],["Name:",INAME],["Gesamt:",ITOT]],
+      body:[H("Ihre Rechnung"),P("Sehr geehrte(r) "+IG+", anbei erhalten Sie die Rechnung für Ihren Aufenthalt im "+IHN+"."),P("Sollten die Rechnungsdaten nicht korrekt sein, antworten Sie auf diese E-Mail und wir korrigieren sie."),P("Vielen Dank für Ihr Vertrauen,\nDie Direktion des "+IHN)] },
+    it:{ subject:"La sua fattura "+INUM+" — "+IHN, data:[["Documento:",IDOC],["N.:",INUM],["Data:",IDT],["Nome:",INAME],["Totale:",ITOT]],
+      body:[H("La sua fattura"),P("Gentile "+IG+", in allegato trova la fattura relativa al suo soggiorno presso "+IHN+"."),P("Se i dati di fatturazione non sono corretti, risponda a questa email e li correggeremo."),P("Grazie per averci scelto,\nLa Direzione di "+IHN)] } },
+
   { source:"Invoices", code:"EMAIL-INVOICE-PAYMENTLINK", name:"Fatura por pagar", desc:"Payment Link Invoice", icon:"copy",
-    about:"Fatura em aberto, com IBAN e link de pagamento.",
-    design:"moderno", palette:"dourado", font:"sans", shade:50,
-    data:[["Documento:",IDOC],["Nº:",INUM],["Data:",IDT],["Valor em dívida:",ITOT]],
-    body:[H("Fatura por regularizar"),P("Caro(a) "+IG+", segue a fatura "+INUM+", emitida a "+IDT+", ainda por regularizar."),P("Pode pagar por transferência bancária:\nBanco: "+'@Model[0].BankName'+"\nIBAN: "+'@Model[0].BankIBAN'+"\nSWIFT: "+'@Model[0].BankSWIFT'+"\nTitular: "+'@Model[0].BankAccountName'),P("Se já efetuou o pagamento, ignore este email."),P("Obrigado,\nA Direção do "+IHN)] },
-  /* ===== Sub-modelos (fragmentos reutilizáveis) ===== */
+    about:"Fatura em aberto, com IBAN e dados bancários.", design:"moderno", palette:"dourado", font:"sans", shade:50,
+    pt:{ subject:"Fatura "+INUM+" por regularizar — "+IHN, data:[["Documento:",IDOC],["Nº:",INUM],["Data:",IDT],["Valor em dívida:",ITOT]],
+      body:[H("Fatura por regularizar"),P("Caro(a) "+IG+", segue a fatura "+INUM+", emitida a "+IDT+", ainda por regularizar."),P("Pode pagar por transferência bancária:\nBanco: "+BNK+"\nIBAN: "+BIBAN+"\nSWIFT: "+BSWIFT+"\nTitular: "+BACC),P("Se já efetuou o pagamento, ignore este email."),P("Obrigado,\nA Direção do "+IHN)] },
+    en:{ subject:"Invoice "+INUM+" outstanding — "+IHN, data:[["Document:",IDOC],["No.:",INUM],["Date:",IDT],["Amount due:",ITOT]],
+      body:[H("Outstanding invoice"),P("Dear "+IG+", invoice "+INUM+", issued on "+IDT+", is still outstanding."),P("You can pay by bank transfer:\nBank: "+BNK+"\nIBAN: "+BIBAN+"\nSWIFT: "+BSWIFT+"\nAccount holder: "+BACC),P("If you have already paid, please ignore this email."),P("Thank you,\nThe Management of "+IHN)] },
+    es:{ subject:"Factura "+INUM+" pendiente — "+IHN, data:[["Documento:",IDOC],["Nº:",INUM],["Fecha:",IDT],["Importe pendiente:",ITOT]],
+      body:[H("Factura pendiente"),P("Estimado/a "+IG+", la factura "+INUM+", emitida el "+IDT+", sigue pendiente de pago."),P("Puede pagar por transferencia bancaria:\nBanco: "+BNK+"\nIBAN: "+BIBAN+"\nSWIFT: "+BSWIFT+"\nTitular: "+BACC),P("Si ya ha realizado el pago, ignore este correo."),P("Gracias,\nLa Dirección de "+IHN)] },
+    fr:{ subject:"Facture "+INUM+" en attente — "+IHN, data:[["Document :",IDOC],["N° :",INUM],["Date :",IDT],["Montant dû :",ITOT]],
+      body:[H("Facture en attente"),P("Cher/Chère "+IG+", la facture "+INUM+", émise le "+IDT+", reste à régler."),P("Vous pouvez payer par virement bancaire :\nBanque : "+BNK+"\nIBAN : "+BIBAN+"\nSWIFT : "+BSWIFT+"\nTitulaire : "+BACC),P("Si vous avez déjà effectué le paiement, ignorez cet e-mail."),P("Merci,\nLa Direction de "+IHN)] },
+    de:{ subject:"Rechnung "+INUM+" offen — "+IHN, data:[["Dokument:",IDOC],["Nr.:",INUM],["Datum:",IDT],["Offener Betrag:",ITOT]],
+      body:[H("Offene Rechnung"),P("Sehr geehrte(r) "+IG+", die Rechnung "+INUM+" vom "+IDT+" ist noch offen."),P("Sie können per Banküberweisung zahlen:\nBank: "+BNK+"\nIBAN: "+BIBAN+"\nSWIFT: "+BSWIFT+"\nKontoinhaber: "+BACC),P("Falls Sie bereits gezahlt haben, ignorieren Sie diese E-Mail bitte."),P("Vielen Dank,\nDie Direktion des "+IHN)] },
+    it:{ subject:"Fattura "+INUM+" da saldare — "+IHN, data:[["Documento:",IDOC],["N.:",INUM],["Data:",IDT],["Importo dovuto:",ITOT]],
+      body:[H("Fattura da saldare"),P("Gentile "+IG+", la fattura "+INUM+", emessa il "+IDT+", risulta ancora da saldare."),P("Può pagare tramite bonifico bancario:\nBanca: "+BNK+"\nIBAN: "+BIBAN+"\nSWIFT: "+BSWIFT+"\nIntestatario: "+BACC),P("Se ha già effettuato il pagamento, ignori questa email."),P("Grazie,\nLa Direzione di "+IHN)] } },
+
+  /* ===== Sub-modelos (fragmentos reutilizáveis — sem assunto) ===== */
   { source:"ReservationsWithNation", code:"EMAIL-SIGNATURE-SUBTEMPLATE", name:"Assinatura", desc:"Subtemplate for the signature", icon:"pencil", sub:true,
-    about:"Fragmento reutilizável. Inclui-o em qualquer modelo com o bloco «Sub-modelo».",
-    design:"moderno", palette:"azul", font:"sans", shade:50,
-    data:[],
-    body:[P("Melhores cumprimentos,\nA Direção do "+HN),P('@Model[0].HotelNameWebsite')] }
+    about:"Fragmento reutilizável. Inclui-o em qualquer modelo com o bloco «Sub-modelo».", design:"moderno", palette:"azul", font:"sans", shade:50,
+    pt:{ subject:"", data:[], body:[P("Melhores cumprimentos,\nA Direção do "+HN),P(HWEB)] },
+    en:{ subject:"", data:[], body:[P("Kind regards,\nThe Management of "+HN),P(HWEB)] },
+    es:{ subject:"", data:[], body:[P("Un cordial saludo,\nLa Dirección de "+HN),P(HWEB)] },
+    fr:{ subject:"", data:[], body:[P("Meilleures salutations,\nLa Direction de "+HN),P(HWEB)] },
+    de:{ subject:"", data:[], body:[P("Mit freundlichen Grüßen,\nDie Direktion des "+HN),P(HWEB)] },
+    it:{ subject:"", data:[], body:[P("Cordiali saluti,\nLa Direzione di "+HN),P(HWEB)] } }
 ];
 function instPms(st,srcOverride){
   const clone=o=>JSON.parse(JSON.stringify(o||[]));
@@ -2805,11 +2889,16 @@ function instPms(st,srcOverride){
     contacts: isSub ? null : (base.contacts?clone(base.contacts):null),
     settings:{width:0},
     pms:{ code:st?st.code:"", desc:st?st.desc:"", sender:"", sendTo:"@Model[0].GuestEmail", cc:"", bcc:"", section:"", order:"", resState:"Standard", active:true, sms:false, sub:isSub } };
-  const hotelTag=(t.source==="Invoices")?IHN:HN;
-  LANG_CODES.forEach(lc=>{ t[lc]={ subject: st?(isSub?"":(st.name+" — "+hotelTag)):"", data:clone(st?st.data:[]), body:clone(st?st.body:[{t:"h",v:"Caro(a) "+(t.source==="Invoices"?IG:G)+","},{t:"p",v:"Escreve aqui a tua mensagem."}]) }; });
+  /* Cada idioma leva o SEU conteúdo (o starter traz os 6 escritos) — não é uma cópia do PT. */
+  const gTag=(t.source==="Invoices")?IG:G;
+  const blank={ subject:"", data:[], body:[{t:"h",v:"Caro(a) "+gTag+","},{t:"p",v:"Escreve aqui a tua mensagem."}] };
+  LANG_CODES.forEach(lc=>{
+    const c=(st && (st[lc]||st.pt)) || blank;
+    t[lc]={ subject:c.subject||"", data:clone(c.data||[]), body:clone(c.body||[]) };
+  });
   p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
   save(); closeModal(); renderAll();
-  toast(st?("«"+st.name+"» criado — traduz com IA os outros idiomas."):"Modelo do PMS criado.");
+  toast(st?("«"+st.name+"» criado — já nos 6 idiomas."):"Modelo do PMS criado.");
 }
 function openPmsNew(){
   const card=(s,i)=>`<button type="button" class="pmscard" data-pms="${i}" title="${escAttr(s.design+" · "+pal(s.palette).name)}">
