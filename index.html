@@ -360,10 +360,28 @@
   .kindbadge{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto}
   .kindbadge.k-life{background:var(--chip);color:var(--accent)}
   .kindbadge.k-pms{background:#fef3c7;color:#b45309}
-  /* cabeçalhos dos dois grupos de templates na sidebar */
-  .kindhead{margin:12px 2px 6px}
-  .kindhead .sectitle{display:flex;align-items:center;gap:6px}
+  /* cabeçalhos dos dois grupos de templates — com destaque a sério */
+  .kindhead{display:flex;align-items:center;gap:7px;margin:16px 0 8px;padding:7px 8px 7px 9px;border-radius:10px;border:1px solid transparent}
   .kindhead:first-child{margin-top:2px}
+  .kindhead .kh-ic{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;flex:0 0 auto}
+  .kindhead .kh-nm{flex:1;min-width:0;font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kindhead .kh-n{flex:0 0 auto;font-size:10px;font-weight:700;min-width:19px;height:19px;padding:0 6px;border-radius:20px;display:inline-flex;align-items:center;justify-content:center}
+  .kindhead .kh-add{flex:0 0 auto;width:24px;height:24px;border:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;background:#fff;box-shadow:var(--sh-sm);transition:transform .12s,box-shadow .12s}
+  .kindhead .kh-add:hover{transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(24,38,51,.3)}
+  .kindhead.k-life{background:var(--chip);border-color:#d6e4ff}
+  .kindhead.k-life .kh-ic{background:var(--accent);color:#fff}
+  .kindhead.k-life .kh-nm{color:var(--accent)}
+  .kindhead.k-life .kh-n{background:#fff;color:var(--accent)}
+  .kindhead.k-life .kh-add{color:var(--accent)}
+  .kindhead.k-pms{background:#fef8e7;border-color:#f5e3b8}
+  .kindhead.k-pms .kh-ic{background:#d97706;color:#fff}
+  .kindhead.k-pms .kh-nm{color:#b45309}
+  .kindhead.k-pms .kh-n{background:#fff;color:#b45309}
+  .kindhead.k-pms .kh-add{color:#b45309}
+  /* cabeçalho de fonte de dados no modal de novo modelo */
+  .srchead{display:flex;align-items:center;gap:8px;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .srcname{font-size:12.5px;font-weight:700;color:var(--navy)}
+  .srccode{font-size:9.5px;font-family:Consolas,monospace;color:var(--muted);background:var(--panel2);border-radius:20px;padding:2px 8px}
   /* cartões de starter dos modelos do PMS */
   .pmsgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .pmscard{display:flex;align-items:flex-start;gap:10px;text-align:left;padding:11px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;cursor:pointer;box-shadow:var(--sh-sm);transition:border-color .14s,transform .12s,box-shadow .14s;font-family:inherit;width:100%}
@@ -767,8 +785,11 @@ const KINDS={
 function tkind(t){ return (t && t.kind==="pms") ? "pms" : "life"; }
 function kinfo(t){ return KINDS[tkind(t)]; }
 /* Tags rápidas por módulo */
-const QUICK_LIFE=DEFAULT_TAGS.map(t=>t[2]);
-const QUICK_PMS=['@Model[0].GuestName','@Model[0].ReservationNumber','@Model[0].CheckIn.ToString("dd-MM-yyyy")','@Model[0].CheckOut.ToString("dd-MM-yyyy")','@Model[0].CategoryDescription','@Model[0].HotelName1','@Model[0].OnlineCheckIn','@Model[0].KeyPassUrl','@Model[0].PaymentLinkUrl'];
+const QUICK={
+  "RelationShipEmail": DEFAULT_TAGS.map(t=>t[2]),
+  "ReservationsWithNation": ['@Model[0].GuestName','@Model[0].ReservationNumber','@Model[0].CheckIn.ToString("dd-MM-yyyy")','@Model[0].CheckOut.ToString("dd-MM-yyyy")','@Model[0].CategoryDescription','@Model[0].HotelName1','@Model[0].OnlineCheckIn','@Model[0].KeyPassUrl','@Model[0].PaymentLinkUrl'],
+  "Invoices": ['@Model[0].GuestName','@Model[0].InvoiceNumber','@Model[0].InvoiceDocType','@Model[0].InvoiceDate.ToString("dd-MM-yyyy")','@Model[0].TotalRate.ToString("0.00")','@Model[0].ReservationNumber','@Model[0].HotelName1','@Model[0].BankIBAN']
+};
 /* Sub-modelo: o PMS inclui outro modelo com @@@CODIGO(0) */
 function subCode(v){ return (v||"").trim().toUpperCase().replace(/[^A-Z0-9_-]/g,""); }
 function subHTML(it){ const c=subCode(it.v); return c?`<p style="margin:0">@@@${c}(0)</p>`:""; }
@@ -786,9 +807,88 @@ const PMS_FIELDS=[
 ];
 function pmsData(t){ if(!t.pms) t.pms={ code:"", desc:"", sender:"", sendTo:"@Model[0].GuestEmail", cc:"", bcc:"", section:"", order:"", resState:"Standard", active:true, sms:false, sub:false }; return t.pms; }
 
+/* ===== Fonte de dados «Invoices» (faturas/recibos) — ATENÇÃO: nomes DIFERENTES dos de ReservationsWithNation
+   (aqui é OnlineCheckin com i minúsculo, GuestMobileNumber, resid, Voucher com V — não trocar!) ===== */
+const INVOICE_TAGS = [
+  ["Fatura","Nº da fatura","@Model[0].InvoiceNumber","FT 2026/1043"],
+  ["Fatura","Tipo de documento","@Model[0].InvoiceDocType","Fatura-Recibo"],
+  ["Fatura","Série (ID)","@Model[0].InvoiceSerialId","1"],
+  ["Fatura","Série","@Model[0].InvoiceSerial","2026A"],
+  ["Fatura","Nome na fatura","@Model[0].InvoiceName","João Silva"],
+  ["Fatura","Nome completo na fatura","@Model[0].InvoiceFullName","João Miguel Silva"],
+  ["Fatura","Data da fatura",'@Model[0].InvoiceDate.ToString("dd-MM-yyyy")',"23-06-2026"],
+  ["Fatura","Entidade da fatura","@Model[0].InvoiceEntity","Empresa Exemplo, Lda."],
+  ["Fatura","Folio (ID)","@Model[0].FolioId","F-2026-88"],
+  ["Fatura","Voucher","@Model[0].Voucher","VCH-2026-001"],
+  ["Valores","Total","@Model[0].TotalRate.ToString(\"0.00\")","420.00"],
+  ["Valores","Total do detalhe",'@Model[0].TotalRateForDetail.ToString("0.00")',"420.00"],
+  ["Valores","Total só alojamento",'@Model[0].TotalRateForDetailAccommodationOnly.ToString("0.00")',"360.00"],
+  ["Hóspede","Nome","@Model[0].GuestName","Sr. João Silva"],
+  ["Hóspede","Primeiro nome","@Model[0].GuestFirstName","João"],
+  ["Hóspede","Apelido","@Model[0].GuestLastName","Silva"],
+  ["Hóspede","Tratamento","@Model[0].GuestTitle","Sr."],
+  ["Hóspede","Tipo de hóspede","@Model[0].GuestType","Individual"],
+  ["Hóspede","Email","@Model[0].GuestEmail","joao.silva@email.com"],
+  ["Hóspede","Telefone","@Model[0].GuestPhoneNumber","+351 210 000 000"],
+  ["Hóspede","Telemóvel","@Model[0].GuestMobileNumber","+351 910 000 000"],
+  ["Hóspede","Recebe newsletter","@Model[0].ReceiveNewsletter","Sim"],
+  ["Hóspede","Idioma (código)","@Model[0].GuestLanguage_Code","PT"],
+  ["Hóspede","Idioma","@Model[0].GuestLanguage_Description","Português"],
+  ["Hóspede","Idioma (cultura)","@Model[0].GuestLanguage_CultureCode","pt-PT"],
+  ["Hóspede","Nacionalidade (código)","@Model[0].NationCode","PT"],
+  ["Hóspede","País (código)","@Model[0].CountryCode","PT"],
+  ["Reserva","Nº de reserva","@Model[0].ReservationNumber","RES-2026-00147"],
+  ["Reserva","Nome do grupo","@Model[0].GroupName","Grupo Silva"],
+  ["Reserva","Chegada",'@Model[0].CheckIn.ToString("dd-MM-yyyy")',"20-06-2026"],
+  ["Reserva","Saída",'@Model[0].CheckOut.ToString("dd-MM-yyyy")',"23-06-2026"],
+  ["Reserva","Origem (ligação)","@Model[0].ConnectionName","Booking.com"],
+  ["Reserva","Nº de quartos","@Model[0].RoomsTotal","1"],
+  ["Reserva","Total de adultos","@Model[0].AdultsTotal","2"],
+  ["Reserva","Crianças grupo 1","@Model[0].ChildrenGroup1Total","1"],
+  ["Reserva","Crianças grupo 2","@Model[0].ChildrenGroup2Total","0"],
+  ["Reserva","Crianças grupo 3","@Model[0].ChildrenGroup3Total","0"],
+  ["Reserva","Total de crianças","@Model[0].ChildrenTotal","1"],
+  ["Quarto","Nº do quarto","@Model[0].RoomNumber","204"],
+  ["Quarto","Descrição do quarto","@Model[0].RoomDescription","Quarto Duplo Deluxe"],
+  ["Quarto","Morada do quarto","@Model[0].RoomAddress","Piso 2, Ala Nascente"],
+  ["Quarto","Tipologia (código)","@Model[0].HouseTypeCode","DBL"],
+  ["Quarto","Tipologia","@Model[0].HouseTypeDescription","Duplo"],
+  ["Hotel","Nome do hotel","@Model[0].HotelName1","Hotel Demo1 Boutique Design"],
+  ["Hotel","Nome do hotel (2)","@Model[0].HotelName2","Hotel Demo1"],
+  ["Hotel","Cidade","@Model[0].HotelCity","Fátima"],
+  ["Hotel","Data do hotel",'@Model[0].HotelDate.ToString("dd-MM-yyyy")',"23-06-2026"],
+  ["Hotel","Website","@Model[0].HotelNameWebsite","www.hoteldemo.com"],
+  ["Hotel","Condições gerais","@Model[0].GeneralUnitTerm","Condições gerais de venda"],
+  ["Pagamento","Banco","@Model[0].BankName","Banco Exemplo"],
+  ["Pagamento","IBAN","@Model[0].BankIBAN","PT50 0000 0000 0000 0000 0000 0"],
+  ["Pagamento","NIB","@Model[0].BankNIB","0000 0000 0000 0000 0000 0"],
+  ["Pagamento","Titular da conta","@Model[0].BankAccountName","Hotel Demo1, Lda."],
+  ["Pagamento","SWIFT","@Model[0].BankSWIFT","EXMPPTPL"],
+  ["Pagamento","Conta PayPal","@Model[0].PaypalAccountEmail","pagamentos@hoteldemo.com"],
+  ["Links","Check-in online","@Model[0].OnlineCheckin","https://checkin.hostpms.com/abc"],
+  ["Links","Check-in online (curto)","@Model[0].OnlineCheckinShort","hpms.pt/abc"],
+  ["Links","Motor de reservas","@Model[0].UrlBookingEngine","https://book.hoteldemo.com"],
+  ["Links","Cancelar reserva (URL)","@Model[0].ShowCancelationUrl","https://hoteldemo.com/cancel/abc"],
+  ["IDs","Id","@Model[0].Id","1"],
+  ["IDs","resid","@Model[0].resid","5001"],
+  ["IDs","ResDetailId","@Model[0].ResDetailId","9001"],
+  ["IDs","ResGuestId","@Model[0].ResGuestId","7001"],
+  ["IDs","GuestId","@Model[0].GuestId","3001"],
+  ["IDs","BlockId","@Model[0].BlockId","B-12"],
+  ["IDs","CompanyId","@Model[0].CompanyId","C-77"]
+];
+/* Cada fonte de dados tem o SEU conjunto de tags — é a fonte que manda, não o formato. */
+const SOURCES={
+  "RelationShipEmail":       { label:"Ciclo de estadia",  tags:DEFAULT_TAGS, fmt:"token" },
+  "ReservationsWithNation":  { label:"Reservas",          tags:MODEL_TAGS,   fmt:"model" },
+  "Invoices":                { label:"Faturas",           tags:INVOICE_TAGS, fmt:"model" }
+};
+function tsource(t){ return tkind(t)==="pms" ? ((t&&t.source) || "ReservationsWithNation") : "RelationShipEmail"; }
+function tagsFor(t){ const s=tsource(t); return tags.filter(x=>x.src===s); }
+
 /* ============================ STATE ============================ */
 const LS_KEY = "relationship.projects.v2";
-const LS_TAGS = "relationship.tags.v4";
+const LS_TAGS = "relationship.tags.v5";
 let state = { projects:[], currentProjectId:null, currentTemplateId:null, lang:"pt", selectedBlock:null, activeField:null };
 let tags = loadTags();
 
@@ -829,7 +929,12 @@ async function bootstrap(){
   renderHome("home");
 }
 
-function defaultTagSet(){ return DEFAULT_TAGS.concat(MODEL_TAGS).map(t=>({cat:t[0],label:t[1],code:t[2],sample:t[3]})); }
+/* cada tag carrega a fonte a que pertence (src) — é isso que permite filtrar por fonte de dados */
+function defaultTagSet(){
+  const out=[];
+  Object.keys(SOURCES).forEach(src=>SOURCES[src].tags.forEach(t=>out.push({cat:t[0],label:t[1],code:t[2],sample:t[3],src:src})));
+  return out;
+}
 function loadTags(){
   try{ const s=localStorage.getItem(LS_TAGS); if(s) return JSON.parse(s); }catch(e){}
   return defaultTagSet();
@@ -1133,7 +1238,20 @@ function designThumb(k){
   if(k==="escuro") return `<div style="background:#0b0f16;padding:7px;border-radius:5px"><div style="background:#141a24;border:1px solid #232b38;border-radius:5px;padding:6px">${line('38%',A)}<div style="background:#1b2330;border-radius:4px;padding:4px;margin:4px 0">${line('80%','#566178')}${line('60%','#566178')}</div>${btn(A,4)}</div></div>`;
   return "";
 }
-function houseHTML(o){ o=o||{}; o.palette=o.palette||PALETTES.azul; return (DESIGNS[o.design]||designModerno)(o); }
+/* ===== FRAGMENTO (sub-modelo) — só o corpo. Sem cartão, hero, logótipo, resumo nem rodapé:
+   o sub-modelo é inserido DENTRO de outro email, que já traz tudo isso. ===== */
+function fragmentHTML(o){
+  const P=o.palette, F=fontFam(o.font), BODY="#4a5568", W=520;
+  const renderB=(items)=>(items||[]).map(it=>!it?"":
+    it.t==="sub"?subHTML(it):
+    it.t==="img"?imgHTML(it,F,W):
+    it.t==="h"?`<p style="margin:0 0 12px;font-family:${F};font-size:19px;line-height:1.35;font-weight:700;color:${P.text}">${tokenizeText(it.v)}</p>`:
+    it.t==="cta"?`<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:18px auto"><tr><td align="center" bgcolor="${P.accent}" style="background:${P.accent};border-radius:10px"><a href="${tokenizeAttr(ctaUrl(it.u))}" target="_blank" rel="noopener" style="display:inline-block;padding:14px 34px;font-family:${F};font-size:15px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px">${fcol(tokenizeText(it.v),"#ffffff",true)}</a></td></tr></table>`:
+    `<p style="margin:0 0 14px;font-family:${F};font-size:15px;line-height:1.65;color:${BODY}">${tokenizeText(it.v)}</p>`
+  ).join("\n");
+  return renderBodyEditable(o.body,0,renderB,o);
+}
+function houseHTML(o){ o=o||{}; o.palette=o.palette||PALETTES.azul; if(o.fragment) return fragmentHTML(o); return (DESIGNS[o.design]||designModerno)(o); }
 
 
 /* ===== Galeria atual: modelos RelationshipEmail no estilo da casa (tokens @TAGNAME@) ===== */
@@ -1409,7 +1527,9 @@ function dirty(){ $("saveState").textContent="a guardar…"; clearTimeout(window
 /* sample data replacement for preview.
    Highlights tags in text content, but inside HTML tags (attributes like href/src) replaces with plain value. */
 function applySample(html){
-  const sorted=[...tags].sort((a,b)=>b.code.length-a.code.length);
+  /* amostras da FONTE do template atual (Reservas e Faturas têm campos com o mesmo nome mas grafias diferentes) */
+  const mine=(typeof cur==="function" && cur()) ? tagsFor(cur()) : tags;
+  const sorted=[...(mine.length?mine:tags)].sort((a,b)=>b.code.length-a.code.length);
   const parts=html.split(/(<[^>]*>)/);
   for(let i=0;i<parts.length;i++){
     const isTag=parts[i].charAt(0)==="<";
@@ -1466,11 +1586,12 @@ function buildEmail(lang, editable, forExport){
   if(t.mode==="html") return (t[lang] && t[lang].html) || "";
   if(t.mode==="house"){
     const L=t[lang]||{};
+    const isSub=tkind(t)==="pms" && t.pms && t.pms.sub;
     /* no export, hero vazio ou igual ao placeholder fica vazio (o picsum é só para pré-visualizar) */
     const bh=(t.brand&&t.brand.hero)||"";
-    const hero=(bh&&bh!==DEFAULT_HERO)?bh:(forExport?"":DEFAULT_HERO);
-    return houseHTML({ design:t.design||"moderno", font:t.font||"sans", lang:lang, palette: shadedPalette(pal(t.palette), t.shade), width: (t.settings&&t.settings.width)||0,
-      logo:(t.brand&&t.brand.logo)||"", hero:hero, contacts:t.contacts||null, data:L.data||[], body:L.body||[], editable: editable===true });
+    const hero=isSub?"":((bh&&bh!==DEFAULT_HERO)?bh:(forExport?"":DEFAULT_HERO));
+    return houseHTML({ fragment:!!isSub, design:t.design||"moderno", font:t.font||"sans", lang:lang, palette: shadedPalette(pal(t.palette), t.shade), width: (t.settings&&t.settings.width)||0,
+      logo:isSub?"":((t.brand&&t.brand.logo)||""), hero:hero, contacts:isSub?null:(t.contacts||null), data:isSub?[]:(L.data||[]), body:L.body||[], editable: editable===true });
   }
   const s=t.settings; const L=t[lang];
   /* no export, blocos de imagem sem src são omitidos (o placeholder "sem src" é só para o editor) */
@@ -1606,7 +1727,7 @@ function acc(key,title,inner){
 }
 function renderHouseProps(box){
   const L=curLang();
-  const QT=(tkind(cur())==="pms"?QUICK_PMS:QUICK_LIFE);
+  const QT=QUICK[tsource(cur())]||QUICK.RelationShipEmail;
   const lg=cur().brand.logo||"";
   // 1 — Logótipo
   let logoI=`<div style="display:flex;gap:6px;margin-bottom:5px">
@@ -1656,12 +1777,15 @@ function renderHouseProps(box){
         </div>`;
   }
   const ah=(n,t)=>`<span style="display:flex;align-items:center;gap:8px">${ic(n,15)}${t}</span>`;
+  /* Sub-modelo é um fragmento: logótipo, caixa de dados e rodapé vêm do modelo principal — não se aplicam aqui. */
+  const isSub=tkind(cur())==="pms" && pmsData(cur()).sub;
   box.innerHTML = (pmsI?acc("pms",ah("doc","Definições do PMS"),pmsI):"")
-    + acc("logo",ah("image","Logótipo do hotel"),logoI)
+    + (isSub?'<div class="tag-hint" style="border-style:solid;border-color:#f0c674;background:#fef8e7">Este é um <b>sub-modelo</b>: sai só o corpo, sem cartão, logótipo, imagem de topo nem rodapé — quem os traz é o modelo principal onde o incluíres.</div>':"")
+    + (isSub?"":acc("logo",ah("image","Logótipo do hotel"),logoI))
     + acc("subject",ah("mail","Assunto & idioma"),subjI)
     + acc("quick",ah("bolt","Tags rápidas"),quickI)
-    + acc("data",ah("list","Caixa de dados"),dataI)
-    + acc("contacts",ah("building","Contactos (rodapé)"),contactsI);
+    + (isSub?"":acc("data",ah("list","Caixa de dados"),dataI))
+    + (isSub?"":acc("contacts",ah("building","Contactos (rodapé)"),contactsI));
 
   box.querySelectorAll(".acc-h").forEach(hd=>hd.addEventListener("click",()=>{ const a=hd.parentElement,k=a.dataset.acc; panelOpen[k]=!panelOpen[k]; a.classList.toggle("open",panelOpen[k]); }));
 
@@ -1735,9 +1859,11 @@ const TONES=[
 function toneChipsHTML(sel){ return '<div class="tonechips">'+TONES.map(t=>`<button type="button" class="tonechip${sel===t[0]?' on':''}" data-tone="${t[0]}">${t[1]}</button>`).join("")+'</div>'; }
 /* A IA tem de usar as tags do MÓDULO do template — nunca as do outro (senão o email sai partido). */
 function tagDirective(){
-  if(tkind(cur())!=="pms") return "";
+  const src=tsource(cur());
+  if(src==="RelationShipEmail") return "";
   /* curto de propósito: a função corta a instruction aos 400 caracteres */
-  return 'Usa SÓ tags @Model[0].Campo (ex.: @Model[0].GuestName, @Model[0].ReservationNumber, @Model[0].HotelName1, @Model[0].OnlineCheckIn). NUNCA uses @NOME@. ';
+  const ex=(QUICK[src]||[]).slice(0,4).join(", ");
+  return 'Usa SÓ tags @Model[0].Campo desta lista (ex.: '+ex+'). NUNCA uses @NOME@. ';
 }
 function toneInstruction(tone,brief){ const t=TONES.find(x=>x[0]===tone); const parts=[]; const d=tagDirective(); if(d) parts.push(d); if(t&&t[2]) parts.push(t[2]); if(brief) parts.push(brief); return parts.join(" ").slice(0,400); }
 function bindToneChips(boxSel,onPick){ document.querySelectorAll(boxSel+" .tonechip").forEach(el=>el.addEventListener("click",()=>{ document.querySelectorAll(boxSel+" .tonechip").forEach(x=>x.classList.toggle("on",x===el)); onPick(el.dataset.tone); })); }
@@ -1943,16 +2069,17 @@ function embedImage(p){ embedImageInto(u=>{p.src=u;}); }
 function renderTags(filter){
   const box=$("tabTags");
   filter=(filter||"").toLowerCase();
-  /* As tags do template são as do MÓDULO a que ele pertence — nunca as dos dois misturadas. */
-  const K=kinfo(cur()), fmt=K.fmt;
-  const mine=tags.filter(t=>tagFormat(t.code)===fmt);
+  /* As tags do template são as da sua FONTE DE DADOS — nunca as de outra fonte misturadas.
+     Reservas e Faturas usam ambas @Model[0], mas os campos são DIFERENTES (ex.: OnlineCheckIn vs OnlineCheckin). */
+  const t0=cur(), src=tsource(t0), S=SOURCES[src]||SOURCES.RelationShipEmail, K=kinfo(t0);
+  const mine=tagsFor(t0);
   const showAll=!!state.tagAll;
   let h=`<div class="tag-hint" style="border-style:solid;border-color:#cfe0ff;background:var(--chip)">
-    Tags de <b>${escText(K.label)}</b> — formato <b>${fmt==="token"?"@TAGNAME@":"@Model[0].Campo"}</b> (${mine.length}).<br>${escText(K.where)}</div>`;
+    <b>${escText(K.label)}</b> · fonte de dados <b>${escText(src)}</b> — ${mine.length} tags no formato <b>${S.fmt==="token"?"@TAGNAME@":"@Model[0].Campo"}</b>.<br>${escText(K.where)}</div>`;
   h+=`<input class="tagsearch" id="tagSearch" placeholder="🔎 Procurar tag…" value="${esc(filter)}">`;
   h+='<div class="ready off" id="tagReady"></div>';
   const cats={};
-  tags.filter(t=> (showAll||tagFormat(t.code)===fmt) &&
+  tags.filter(t=> (showAll||t.src===src) &&
                   (!filter || (t.label.toLowerCase().includes(filter)||t.code.toLowerCase().includes(filter)||t.cat.toLowerCase().includes(filter))))
       .forEach(t=>{ (cats[t.cat]=cats[t.cat]||[]).push(t); });
   const keys=Object.keys(cats);
@@ -1960,12 +2087,12 @@ function renderTags(filter){
   for(const c of keys){
     h+=`<div class="tagcat">${escText(c)}</div>`;
     cats[c].forEach(t=>{
-      const foreign=tagFormat(t.code)!==fmt;
-      h+=`<div class="tag" data-code="${escAttr(t.code)}"${foreign?' title="Atenção: esta tag é do outro módulo e não vai ser substituída neste template" style="opacity:.55"':''}><div><div class="tlab">${escText(t.label)}${foreign?' ⚠':''}</div><div class="tcode">${escText(t.code)}</div></div><div class="ins">inserir ＋</div></div>`;
+      const foreign=t.src!==src;
+      h+=`<div class="tag" data-code="${escAttr(t.code)}"${foreign?' title="Atenção: esta tag é de outra fonte de dados ('+escAttr((SOURCES[t.src]||{}).label||t.src)+') e não vai ser substituída neste template" style="opacity:.55"':''}><div><div class="tlab">${escText(t.label)}${foreign?' ⚠':''}</div><div class="tcode">${escText(t.code)}</div></div><div class="ins">inserir ＋</div></div>`;
     });
   }
   h+=`<div style="margin-top:14px;display:flex;gap:6px"><button class="btn sm" id="btnAddTag" style="flex:1">+ Adicionar tag</button><button class="btn sm" id="btnResetTags">↺ Repor</button></div>`;
-  h+=`<label class="hint" style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer"><input type="checkbox" id="tagAll" ${showAll?"checked":""} style="accent-color:var(--accent)"> Mostrar também as tags do outro módulo (não recomendado)</label>`;
+  h+=`<label class="hint" style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer"><input type="checkbox" id="tagAll" ${showAll?"checked":""} style="accent-color:var(--accent)"> Mostrar também tags de outras fontes de dados (não recomendado)</label>`;
   box.innerHTML=h;
   const ta=box.querySelector("#tagAll"); if(ta) ta.addEventListener("change",()=>{ state.tagAll=ta.checked; renderTags($("tagSearch").value); });
   $("tagSearch").addEventListener("input",e=>renderTags(e.target.value));
@@ -2129,9 +2256,11 @@ function renderTplList(){
   ["life","pms"].forEach(k=>{
     const K=KINDS[k], list=p.templates.filter(t=>tkind(t)===k);
     const head=document.createElement("div");
-    head.className="sechead kindhead";
-    head.innerHTML=`<span class="sectitle" title="${escAttr(K.where)}">${ic(K.icon,12)} ${escText(K.label)} <span class="muted-count">${list.length}</span></span>`
-      +`<button class="btn sm icon" data-newkind="${k}" title="${escAttr("Novo template — "+K.label)}">${ic("plus",15)}</button>`;
+    head.className="kindhead k-"+k;
+    head.innerHTML=`<span class="kh-ic">${ic(K.icon,13)}</span>`
+      +`<span class="kh-nm" title="${escAttr(K.where)}">${escText(K.label)}</span>`
+      +`<span class="kh-n">${list.length}</span>`
+      +`<button class="kh-add" data-newkind="${k}" title="${escAttr("Novo template — "+K.label)}">${ic("plus",14)}</button>`;
     box.appendChild(head);
     if(!list.length){
       const e=document.createElement("div"); e.className="hint"; e.style.margin="0 4px 6px";
@@ -2203,7 +2332,7 @@ function openExport(){
     fichaI=`<div class="field"><label>1 · Cabeçalho do modelo (preenche uma vez, serve para todos os idiomas)</label>
       <table style="width:100%;border-collapse:collapse">
         ${PMS_FIELDS.map(([k,lbl])=>row(lbl,pd[k],"pf_"+k)).join("")}
-        <tr><td style="padding:5px 10px 5px 0;color:var(--muted)">Fonte de dados</td><td colspan="2" style="padding:5px 0"><b>${escText(K.source)}</b></td></tr>
+        <tr><td style="padding:5px 10px 5px 0;color:var(--muted)">Fonte de dados</td><td colspan="2" style="padding:5px 0"><b>${escText(tsource(t))}</b></td></tr>
         <tr><td style="padding:5px 10px 5px 0;color:var(--muted)">Opções</td><td colspan="2" style="padding:5px 0">${pd.active?"✓ Ativo":"○ Inativo"} · ${pd.sms?"✓ SMS":"○ Sem SMS"} · ${pd.sub?"✓ Sub-Modelo":"○ Não é sub-modelo"}</td></tr>
       </table></div>`;
   }
@@ -2621,53 +2750,89 @@ function galMore(){
 
 /* ============================ MODELOS DO PMS (ReservationsWithNation) ============================ */
 const G='@Model[0].GuestName', RN='@Model[0].ReservationNumber', CI='@Model[0].CheckIn.ToString("dd-MM-yyyy")', CO='@Model[0].CheckOut.ToString("dd-MM-yyyy")', CAT='@Model[0].CategoryDescription', HN='@Model[0].HotelName1';
+/* Tags só de Invoices (grafias próprias!) */
+const IG='@Model[0].GuestName', INUM='@Model[0].InvoiceNumber', IDOC='@Model[0].InvoiceDocType', IDT='@Model[0].InvoiceDate.ToString("dd-MM-yyyy")', ITOT='@Model[0].TotalRate.ToString("0.00")', IHN='@Model[0].HotelName1';
 const PMS_STARTERS=[
-  { code:"CONFIRMATIONLETTER", name:"Carta de Confirmação", desc:"Carta de Confirmação", icon:"mail",
-    about:"Confirmação da reserva com o resumo completo e as condições.",
+  /* ===== Fonte: ReservationsWithNation ===== */
+  { source:"ReservationsWithNation", code:"CONFIRMATIONLETTER", name:"Carta de Confirmação", desc:"Carta de Confirmação", icon:"mail",
+    about:"Confirmação da reserva com o resumo completo.",
+    design:"moderno", palette:"azul", font:"sans", shade:50,
     data:[["Hóspede:",G],["Nº de reserva:",RN],["Tipologia:",CAT],["Chegada:",CI],["Saída:",CO],["Total:",'@Model[0].TotalRate.ToString("0.00")']],
-    body:[H("Caro(a) "+G+","),P("Temos o prazer de confirmar a sua reserva no "+HN+". Em cima encontra o resumo da sua estadia."),P("Se precisar de alterar alguma coisa, responda a este email ou contacte-nos."),C("Fazer check-in online",'@Model[0].OnlineCheckIn'),P("Até breve,\nA Direção do "+HN)] },
-  { code:"COTACAORESERVA", name:"Cotação de Reserva", desc:"Cotação de Reserva", icon:"doc",
-    about:"Proposta com preço e condições, antes de a reserva estar fechada.",
+    body:[H("Reserva confirmada"),P("Caro(a) "+G+", temos o prazer de confirmar a sua reserva no "+HN+". Em cima encontra o resumo da sua estadia."),P("Para uma chegada mais rápida, pode adiantar já o seu check-in online."),C("Fazer check-in online",'@Model[0].OnlineCheckIn'),P("Se precisar de alterar alguma coisa, basta responder a este email."),P("Até breve,\nA Direção do "+HN)] },
+  { source:"ReservationsWithNation", code:"COTACAORESERVA", name:"Cotação de Reserva", desc:"Cotação de Reserva", icon:"doc",
+    about:"Proposta com preço e validade, antes de fechar a reserva.",
+    design:"luxo", palette:"grafite", font:"elegant", shade:44,
     data:[["Hóspede:",G],["Tipologia:",CAT],["Chegada:",CI],["Saída:",CO],["Valor:",'@Model[0].TotalRate.ToString("0.00")'],["Válida até:",'@Model[0].OptionDate.ToString("dd-MM-yyyy")']],
-    body:[H("Caro(a) "+G+","),P("Obrigado pelo seu interesse no "+HN+". Segue a nossa proposta para as datas pretendidas."),P('@Model[0].OfferLongText'),P("Esta cotação é válida até "+'@Model[0].OptionDate.ToString("dd-MM-yyyy")'+". Para confirmar, basta responder a este email."),C("Reservar agora",'@Model[0].UrlBookingEngine'),P("Melhores cumprimentos,\nA Direção do "+HN)] },
-  { code:"PAYMENTLINK", name:"Link de Pagamento", desc:"Payment Link", icon:"copy",
-    about:"Pedido de pagamento com link e dados de Multibanco.",
+    body:[H("A sua proposta"),P("Caro(a) "+G+", obrigado pelo seu interesse no "+HN+". Segue a nossa proposta para as datas pretendidas."),P('@Model[0].OfferLongText'),P("Esta cotação é válida até "+'@Model[0].OptionDate.ToString("dd-MM-yyyy")'+"."),C("Reservar agora",'@Model[0].UrlBookingEngine'),P("Melhores cumprimentos,\nA Direção do "+HN)] },
+  { source:"ReservationsWithNation", code:"PAYMENTLINK", name:"Link de Pagamento", desc:"Payment Link", icon:"copy",
+    about:"Pagamento com link + dados de Multibanco.",
+    design:"minimal", palette:"verde", font:"sans", shade:52,
     data:[["Nº de reserva:",RN],["Valor a pagar:",'@Model[0].DepositValue.ToString("0.00")'],["Data limite:",'@Model[0].DepositDueDate.ToString("dd-MM-yyyy")'],["Entidade:",'@Model[0].MultibancoPaymentEntity'],["Referência:",'@Model[0].MultibancoPaymentReference']],
-    body:[H("Caro(a) "+G+","),P("Para garantir a sua reserva no "+HN+", falta apenas concluir o pagamento. Pode pagar em segurança através do link abaixo."),C("Pagar agora",'@Model[0].PaymentLinkUrl'),P("Em alternativa, use os dados de Multibanco indicados em cima."),P("Obrigado,\nA Direção do "+HN)] },
-  { code:"EMAIL-BEFORE-CHECKIN", name:"Antes da chegada (WiFi + chave)", desc:"BEFORE-CHECKIN — Future reservations.", icon:"bolt",
-    about:"Pré-chegada com check-in online, KeyPass, PIN da porta e WiFi.",
+    body:[H("Falta só o pagamento"),P("Caro(a) "+G+", para garantir a sua reserva no "+HN+" falta apenas concluir o pagamento. Pode pagar em segurança através do botão abaixo."),C("Pagar agora",'@Model[0].PaymentLinkUrl'),P("Em alternativa, use os dados de Multibanco indicados em cima."),P("Obrigado,\nA Direção do "+HN)] },
+  { source:"ReservationsWithNation", code:"EMAIL-BEFORE-CHECKIN", name:"Antes da chegada (WiFi + chave)", desc:"BEFORE-CHECKIN — Future reservations.", icon:"bolt",
+    about:"Check-in online, KeyPass, PIN da porta e WiFi.",
+    design:"boutique", palette:"azul", font:"sans", shade:48,
     data:[["Hóspede:",G],["Nº de reserva:",RN],["Chegada:",CI],["Alojamento:",'@Model[0].RoomNumber']],
-    body:[H("Caro(a) "+G+","),P("A sua chegada ao "+HN+" está a aproximar-se. Para que tudo corra depressa, adiante já o seu check-in online."),C("Fazer check-in online",'@Model[0].OnlineCheckIn'),P("No dia da chegada vai precisar destes dados:\nRede WiFi: "+'@Model[0].WIFISSID'+"\nPalavra-passe: "+'@Model[0].WIFIKEY'+"\nPIN da porta: "+'@Model[0].KeyPin'),P("Até já,\nA Direção do "+HN)] },
-  { code:"EMAIL-SIGNATURE-SUBTEMPLATE", name:"Assinatura (sub-modelo)", desc:"Subtemplate for the signature", icon:"pencil", sub:true,
-    about:"Fragmento reutilizável. Depois inclui-o em qualquer modelo com o bloco «Sub-modelo».",
+    body:[H("Falta pouco para a sua chegada"),P("Caro(a) "+G+", a sua chegada ao "+HN+" está a aproximar-se. Para que tudo corra depressa, adiante já o seu check-in online."),C("Fazer check-in online",'@Model[0].OnlineCheckIn'),P("No dia da chegada vai precisar destes dados:\nRede WiFi: "+'@Model[0].WIFISSID'+"\nPalavra-passe: "+'@Model[0].WIFIKEY'+"\nPIN da porta: "+'@Model[0].KeyPin'),P("Até já,\nA Direção do "+HN)] },
+  /* ===== Fonte: Invoices ===== */
+  { source:"Invoices", code:"EMAIL-INVOICE", name:"Envio de Fatura", desc:"EMAIL-INVOICE", icon:"doc",
+    about:"Envia a fatura ao hóspede, com o documento e o total.",
+    design:"minimal", palette:"grafite", font:"sans", shade:50,
+    data:[["Documento:",IDOC],["Nº:",INUM],["Data:",IDT],["Nome:",'@Model[0].InvoiceName'],["Total:",ITOT]],
+    body:[H("A sua fatura"),P("Caro(a) "+IG+", em anexo segue a fatura referente à sua estadia no "+IHN+"."),P("Se os dados de faturação não estiverem corretos, responda a este email e corrigimos."),P("Obrigado pela sua preferência,\nA Direção do "+IHN)] },
+  { source:"Invoices", code:"EMAIL-INVOICE-PAYMENTLINK", name:"Fatura por pagar", desc:"Payment Link Invoice", icon:"copy",
+    about:"Fatura em aberto, com IBAN e link de pagamento.",
+    design:"moderno", palette:"dourado", font:"sans", shade:50,
+    data:[["Documento:",IDOC],["Nº:",INUM],["Data:",IDT],["Valor em dívida:",ITOT]],
+    body:[H("Fatura por regularizar"),P("Caro(a) "+IG+", segue a fatura "+INUM+", emitida a "+IDT+", ainda por regularizar."),P("Pode pagar por transferência bancária:\nBanco: "+'@Model[0].BankName'+"\nIBAN: "+'@Model[0].BankIBAN'+"\nSWIFT: "+'@Model[0].BankSWIFT'+"\nTitular: "+'@Model[0].BankAccountName'),P("Se já efetuou o pagamento, ignore este email."),P("Obrigado,\nA Direção do "+IHN)] },
+  /* ===== Sub-modelos (fragmentos reutilizáveis) ===== */
+  { source:"ReservationsWithNation", code:"EMAIL-SIGNATURE-SUBTEMPLATE", name:"Assinatura", desc:"Subtemplate for the signature", icon:"pencil", sub:true,
+    about:"Fragmento reutilizável. Inclui-o em qualquer modelo com o bloco «Sub-modelo».",
+    design:"moderno", palette:"azul", font:"sans", shade:50,
     data:[],
     body:[P("Melhores cumprimentos,\nA Direção do "+HN),P('@Model[0].HotelNameWebsite')] }
 ];
-function instPms(st){
+function instPms(st,srcOverride){
   const clone=o=>JSON.parse(JSON.stringify(o||[]));
-  const p=proj(), src=p.templates[0]||{};
+  const p=proj(), base=p.templates.find(x=>tkind(x)==="life")||p.templates[0]||{};
+  const isSub=!!(st&&st.sub);
   const t={ id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()), name:st?st.name:"Novo modelo",
-    kind:"pms", source:KINDS.pms.source, mode:"house",
-    design:src.design||"moderno", font:src.font||"sans", palette:src.palette||"azul", shade:src.shade,
-    brand:clone(src.brand)||{logo:"",hero:""}, contacts:src.contacts?clone(src.contacts):null, settings:{width:0},
-    pms:{ code:st?st.code:"", desc:st?st.desc:"", sender:"", sendTo:"@Model[0].GuestEmail", cc:"", bcc:"", section:"", order:"", resState:"Standard", active:true, sms:false, sub:!!(st&&st.sub) } };
-  LANG_CODES.forEach(lc=>{ t[lc]={ subject: st?(st.name+" — "+HN):"", data:clone(st?st.data:[]), body:clone(st?st.body:[{t:"h",v:"Caro(a) "+G+","},{t:"p",v:"Escreve aqui a tua mensagem."}]) }; });
+    kind:"pms", source:(st?st.source:srcOverride)||"ReservationsWithNation", mode:"house",
+    design:(st&&st.design)||base.design||"moderno", font:(st&&st.font)||base.font||"sans",
+    palette:(st&&st.palette)||base.palette||"azul", shade:(st&&st.shade)!=null?st.shade:base.shade,
+    /* Sub-modelo é um FRAGMENTO: não leva logótipo nem imagem de topo — o modelo principal é que os traz. */
+    brand: isSub ? {logo:"",hero:""} : (base.brand?clone(base.brand):{logo:"",hero:""}),
+    contacts: isSub ? null : (base.contacts?clone(base.contacts):null),
+    settings:{width:0},
+    pms:{ code:st?st.code:"", desc:st?st.desc:"", sender:"", sendTo:"@Model[0].GuestEmail", cc:"", bcc:"", section:"", order:"", resState:"Standard", active:true, sms:false, sub:isSub } };
+  const hotelTag=(t.source==="Invoices")?IHN:HN;
+  LANG_CODES.forEach(lc=>{ t[lc]={ subject: st?(isSub?"":(st.name+" — "+hotelTag)):"", data:clone(st?st.data:[]), body:clone(st?st.body:[{t:"h",v:"Caro(a) "+(t.source==="Invoices"?IG:G)+","},{t:"p",v:"Escreve aqui a tua mensagem."}]) }; });
   p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
   save(); closeModal(); renderAll();
   toast(st?("«"+st.name+"» criado — traduz com IA os outros idiomas."):"Modelo do PMS criado.");
 }
 function openPmsNew(){
-  const cards=PMS_STARTERS.map((s,i)=>`<button type="button" class="pmscard" data-pms="${i}">
+  const card=(s,i)=>`<button type="button" class="pmscard" data-pms="${i}" title="${escAttr(s.design+" · "+pal(s.palette).name)}">
       <span class="pmscard-ic">${ic(s.icon,16)}</span>
       <span class="pmscard-tx"><span class="pmscard-nm">${escText(s.name)}${s.sub?' <span class="pmscard-sub">sub-modelo</span>':''}</span><span class="pmscard-ab">${escText(s.about)}</span><span class="pmscard-cd">${escText(s.code)}</span></span>
-    </button>`).join("");
-  showModal("Novo modelo do PMS",
-    `<div class="tag-hint">Modelos livres sobre <b>reservas</b> (fonte <b>ReservationsWithNation</b>, tags <b>@Model[0]</b>). Vão para <b>Configuração Geral → Relacionamento com o hóspede → Modelos de E-mail</b>.</div>
-     <div class="pmsgrid">${cards}</div>
-     <button class="btn sm" id="pmsBlank" style="width:100%;margin-top:10px">＋ Começar em branco</button>`,
-    `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button>`);
+    </button>`;
+  /* Agrupado por FONTE DE DADOS — é ela que manda nas tags disponíveis. */
+  let body=`<div class="tag-hint">Modelos livres do PMS (<b>Configuração Geral → Relacionamento com o hóspede → Modelos de E-mail</b>). Escolhe pela <b>fonte de dados</b> — é ela que define as tags que podes usar.</div>`;
+  Object.keys(SOURCES).filter(s=>s!=="RelationShipEmail").forEach(src=>{
+    const list=PMS_STARTERS.map((s,i)=>({s,i})).filter(x=>x.s.source===src && !x.s.sub);
+    if(!list.length) return;
+    body+=`<div class="srchead"><span class="srcname">${escText(SOURCES[src].label)}</span><span class="srccode">${escText(src)}</span><span style="flex:1"></span><span class="hint" style="margin:0">${SOURCES[src].tags.length} tags</span></div>`;
+    body+=`<div class="pmsgrid">${list.map(x=>card(x.s,x.i)).join("")}</div>`;
+    body+=`<button class="btn sm" data-blank="${escAttr(src)}" style="width:100%;margin:8px 0 4px">＋ Em branco sobre ${escText(SOURCES[src].label.toLowerCase())}</button>`;
+  });
+  const subs=PMS_STARTERS.map((s,i)=>({s,i})).filter(x=>x.s.sub);
+  if(subs.length){
+    body+=`<div class="srchead"><span class="srcname">Sub-modelos</span><span class="srccode">fragmentos reutilizáveis</span><span style="flex:1"></span><span class="hint" style="margin:0">sem logótipo nem imagem</span></div>`;
+    body+=`<div class="pmsgrid">${subs.map(x=>card(x.s,x.i)).join("")}</div>`;
+  }
+  showModal("Novo modelo do PMS", body, `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button>`);
   document.querySelectorAll("[data-pms]").forEach(el=>el.addEventListener("click",()=>instPms(PMS_STARTERS[+el.dataset.pms])));
-  $("pmsBlank").addEventListener("click",()=>instPms(null));
+  document.querySelectorAll("[data-blank]").forEach(el=>el.addEventListener("click",()=>instPms(null,el.dataset.blank)));
 }
 
 /* ============================ WIZARD (gerar template) ============================ */
@@ -3054,10 +3219,11 @@ function renderAll(){
   const t=cur();
   $("tplName").value=t?t.name:"";
   const kb=$("kindBadge");
-  if(kb){ const K=kinfo(t);
+  if(kb){ const K=kinfo(t), src=tsource(t), isSub=t&&tkind(t)==="pms"&&t.pms&&t.pms.sub;
     kb.className="kindbadge k-"+tkind(t);
-    kb.innerHTML=ic(K.icon,12)+"<span>"+escText(K.label)+"</span>";
-    kb.title=K.where+" — "+K.hint;
+    const extra = tkind(t)==="pms" ? " · "+((SOURCES[src]||{}).label||src)+(isSub?" · sub-modelo":"") : "";
+    kb.innerHTML=ic(K.icon,12)+"<span>"+escText(K.label+extra)+"</span>";
+    kb.title=K.where+" — fonte de dados: "+src;
   }
   const blocksMode=t&&t.mode==="blocks";
   $("addBlockTitle").style.display=blocksMode?"":"none";
