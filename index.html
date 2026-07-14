@@ -370,9 +370,9 @@
   .kindhead .kh-add:hover{transform:translateY(-1px);box-shadow:0 4px 12px -4px rgba(24,38,51,.3)}
   .kindhead.k-life{background:var(--chip);border-color:#d6e4ff}
   .kindhead.k-life .kh-ic{background:var(--accent);color:#fff}
-  .kindhead.k-life .kh-nm{color:var(--accent)}
-  .kindhead.k-life .kh-n{background:#fff;color:var(--accent)}
-  .kindhead.k-life .kh-add{color:var(--accent)}
+  .kindhead.k-life .kh-nm{color:var(--accent2)} /* accent2: contraste >=4.5:1 sobre o chip */
+  .kindhead.k-life .kh-n{background:#fff;color:var(--accent2)}
+  .kindhead.k-life .kh-add{color:var(--accent2)}
   .kindhead.k-pms{background:#fef8e7;border-color:#f5e3b8}
   .kindhead.k-pms .kh-ic{background:#d97706;color:#fff}
   .kindhead.k-pms .kh-nm{color:#b45309}
@@ -2167,40 +2167,61 @@ function renderHouseStyle(box){
   h+='</div>';
   h+='<div class="shade-row"><span class="shade-lbl">Claro</span><input type="range" id="houseShade" min="0" max="100" value="'+(t.shade==null?50:t.shade)+'" class="shade-slider" style="background:'+shadeGradient(pal(t.palette))+'"><span class="shade-lbl">Escuro</span></div>';
   h+='<div class="hint" style="margin:-2px 0 4px">Intensidade do tom — arrasta para clarear ou escurecer a cor.</div>';
-  h+='<div class="sectitle" style="margin-top:18px">Imagens (partilhadas PT/EN)</div>';
-  h+=`<div class="field"><label>Logótipo (URL)</label><input type="text" id="brandLogo" value="${escAttr(t.brand.logo||'')}" placeholder="https://… ou publica abaixo" style="width:100%;${HIN}"></div>
-      <div style="display:flex;gap:6px;margin:-4px 0 4px"><button class="btn sm" data-pub="logo" style="flex:1">⤴ Publicar</button><button class="btn sm" data-emb="logo">Embeber</button></div>
-      <div class="hint" id="logoStatus" style="margin-bottom:10px"></div>`;
-  h+=`<div class="field"><label>Imagem de topo / hero (URL)</label><input type="text" id="brandHero" value="${escAttr(t.brand.hero||'')}" placeholder="https://… (opcional)" style="width:100%;${HIN}"></div>
-      <div style="display:flex;gap:6px;margin:-4px 0 4px"><button class="btn sm" data-pub="hero" style="flex:1">⤴ Publicar</button><button class="btn sm" data-emb="hero">Embeber</button></div>
-      <div class="hint" id="heroStatus"></div>`;
-  h+='<div class="sectitle" style="margin-top:18px">Largura (opcional)</div>';
-  h+=`<div class="field"><input type="number" id="houseWidth" value="${t.settings.width||''}" placeholder="auto (do design)" min="480" max="800" style="width:100%;${HIN}"><div class="hint">Deixa vazio para a largura natural do design.</div></div>`;
-  h+='<div class="tag-hint" style="margin-top:8px">Design, paleta, letra e imagens aplicam-se aos dois idiomas. O texto edita-se no separador «Configurações».</div>';
-  h+='<button class="btn" id="applyAll" style="width:100%;margin-top:12px">'+ic("copy",14)+' Aplicar esta marca a todo o projeto</button>';
-  h+='<div class="hint" style="margin-top:5px">Copia design, paleta, letra, tom, logótipo, hero e contactos para <b>todos</b> os templates de «'+escText(proj().hotel)+'».</div>';
+  /* Sub-modelo é um fragmento: não renderiza logótipo, imagem de topo nem largura de cartão. */
+  const isSubT = tkind(t)==="pms" && t.pms && t.pms.sub;
+  if(isSubT){
+    h+='<div class="tag-hint" style="border-style:solid;border-color:#f0c674;background:#fef8e7;margin-top:18px">Este é um <b>sub-modelo</b> — sai só o corpo. Logótipo, imagem de topo e largura vêm do modelo principal onde o incluíres, por isso não se configuram aqui.</div>';
+  } else {
+    h+='<div class="sectitle" style="margin-top:18px">Imagens (partilhadas por todos os idiomas)</div>';
+    h+=`<div class="field"><label>Logótipo (URL)</label><input type="text" id="brandLogo" value="${escAttr(t.brand.logo||'')}" placeholder="https://… ou publica abaixo" style="width:100%;${HIN}"></div>
+        <div style="display:flex;gap:6px;margin:-4px 0 4px"><button class="btn sm" data-pub="logo" style="flex:1">⤴ Publicar</button><button class="btn sm" data-emb="logo">Embeber</button></div>
+        <div class="hint" id="logoStatus" style="margin-bottom:10px"></div>`;
+    h+=`<div class="field"><label>Imagem de topo / hero (URL)</label><input type="text" id="brandHero" value="${escAttr(t.brand.hero||'')}" placeholder="https://… (opcional)" style="width:100%;${HIN}"></div>
+        <div style="display:flex;gap:6px;margin:-4px 0 4px"><button class="btn sm" data-pub="hero" style="flex:1">⤴ Publicar</button><button class="btn sm" data-emb="hero">Embeber</button></div>
+        <div class="hint" id="heroStatus"></div>`;
+    h+='<div class="sectitle" style="margin-top:18px">Largura (opcional)</div>';
+    h+=`<div class="field"><input type="number" id="houseWidth" value="${t.settings.width||''}" placeholder="auto (do design)" min="480" max="800" style="width:100%;${HIN}"><div class="hint">Deixa vazio para a largura natural do design.</div></div>`;
+  }
+  h+='<div class="tag-hint" style="margin-top:8px">Design, paleta, letra e imagens aplicam-se a <b>todos os idiomas</b>. O texto edita-se no separador «Conteúdo».</div>';
+  h+='<button class="btn" id="applyAll" style="width:100%;margin-top:12px">'+ic("image",14)+' Aplicar a marca a todo o projeto</button>';
+  h+='<div class="hint" style="margin-top:5px">Copia <b>logótipo, imagem de topo e contactos</b> para todos os templates de «'+escText(proj().hotel)+'» (os sub-modelos não levam marca).</div>';
+  h+='<button class="btn" id="applyLook" style="width:100%;margin-top:8px">'+ic("copy",14)+' Aplicar também o visual (design, paleta, letra)</button>';
+  h+='<div class="hint" style="margin-top:5px">Uniformiza o aspeto de todos os templates. <b>Atenção:</b> os modelos do PMS perdem o design próprio (a Cotação em luxo, a Fatura em minimal…).</div>';
   box.innerHTML=h;
   box.querySelectorAll("[data-design]").forEach(el=>el.addEventListener("click",()=>{ t.design=el.dataset.design; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
   box.querySelectorAll("[data-font]").forEach(el=>el.addEventListener("click",()=>{ t.font=el.dataset.font; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
   box.querySelectorAll("[data-pal]").forEach(el=>el.addEventListener("click",()=>{ t.palette=el.dataset.pal; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
   const shd=box.querySelector("#houseShade"); if(shd) shd.addEventListener("input",()=>{ t.shade=parseInt(shd.value); dirty(); refreshHtmlPrev(); });
-  const lg=box.querySelector("#brandLogo"); lg.addEventListener("input",()=>{ t.brand.logo=lg.value; dirty(); refreshHtmlPrev(); });
-  const hr=box.querySelector("#brandHero"); hr.addEventListener("input",()=>{ t.brand.hero=hr.value; dirty(); refreshHtmlPrev(); });
-  const wd=box.querySelector("#houseWidth"); wd.addEventListener("input",()=>{ t.settings.width=parseInt(wd.value)||0; dirty(); refreshHtmlPrev(); });
+  /* estes campos não existem nos sub-modelos (fragmentos) */
+  const lg=box.querySelector("#brandLogo"); if(lg) lg.addEventListener("input",()=>{ t.brand.logo=lg.value; dirty(); refreshHtmlPrev(); });
+  const hr=box.querySelector("#brandHero"); if(hr) hr.addEventListener("input",()=>{ t.brand.hero=hr.value; dirty(); refreshHtmlPrev(); });
+  const wd=box.querySelector("#houseWidth"); if(wd) wd.addEventListener("input",()=>{ t.settings.width=parseInt(wd.value)||0; dirty(); refreshHtmlPrev(); });
   box.querySelectorAll("[data-pub]").forEach(el=>el.addEventListener("click",()=>{ const k=el.dataset.pub; publishImageInto(u=>{t.brand[k]=u;}, k+"Status"); }));
   box.querySelectorAll("[data-emb]").forEach(el=>el.addEventListener("click",()=>{ const k=el.dataset.emb; embedImageInto(u=>{t.brand[k]=u;}, k+"Status"); }));
+  const isSubTpl=tp=>tkind(tp)==="pms" && tp.pms && tp.pms.sub;
+  /* Marca: logótipo, imagem e contactos. NÃO toca no design de cada template nem nos sub-modelos. */
   const aa=box.querySelector("#applyAll"); if(aa) aa.addEventListener("click",()=>{
-    const p=proj(), n=p.templates.length;
-    if(!confirm("Aplicar o design, paleta, letra, tom, logótipo, hero e contactos deste template aos "+n+" templates de «"+p.hotel+"»?")) return;
+    const p=proj(), alvos=p.templates.filter(tp=>!isSubTpl(tp)), n=alvos.length;
+    if(!confirm("Copiar o logótipo, a imagem de topo e os contactos deste template para os outros "+(n-1)+" templates de «"+p.hotel+"»?\n\nO design de cada um mantém-se.")) return;
     const hasContacts = t.contacts && Object.keys(t.contacts).some(k=>t.contacts[k]);
-    p.templates.forEach(tp=>{
-      tp.design=t.design; tp.font=t.font; tp.palette=t.palette; tp.shade=t.shade;
-      if(tp.settings) tp.settings.width=t.settings.width;
+    alvos.forEach(tp=>{
       if(!tp.brand) tp.brand={};
-      tp.brand.logo=t.brand.logo; tp.brand.hero=t.brand.hero;
+      tp.brand.logo=(t.brand&&t.brand.logo)||""; tp.brand.hero=(t.brand&&t.brand.hero)||"";
       if(hasContacts) tp.contacts=JSON.parse(JSON.stringify(t.contacts));
     });
     dirty(); renderAll(); toast("Marca aplicada a "+n+" templates de «"+p.hotel+"»");
+  });
+  /* Visual: uniformiza design/paleta/letra/tom — aqui sim, os modelos do PMS perdem o design próprio. */
+  const al=box.querySelector("#applyLook"); if(al) al.addEventListener("click",()=>{
+    const p=proj(), n=p.templates.length;
+    const pms=p.templates.filter(tp=>tkind(tp)==="pms" && !isSubTpl(tp)).length;
+    if(!confirm("Aplicar o design «"+(DESIGN_LIST.find(d=>d[0]===t.design)||[,t.design])[1]+"», a paleta e a letra deste template a TODOS os "+n+" templates de «"+p.hotel+"»?"
+      +(pms?"\n\nAtenção: "+pms+" modelo(s) do PMS vão perder o design próprio.":""))) return;
+    p.templates.forEach(tp=>{
+      tp.design=t.design; tp.font=t.font; tp.palette=t.palette; tp.shade=t.shade;
+      if(tp.settings && !isSubTpl(tp)) tp.settings.width=t.settings.width;
+    });
+    dirty(); renderAll(); toast("Visual aplicado a "+n+" templates");
   });
   box.scrollTop=sc;
 }
@@ -3394,7 +3415,20 @@ function inspectEdit(key){
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.getAttribute("data-tab"))));
 $("btnNewTpl").addEventListener("click",()=>{ const p=proj(); const t=blankTemplate("Novo template "+(p.templates.length+1)); p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
-$("btnDupTpl").addEventListener("click",()=>{ const p=proj(); const c=JSON.parse(JSON.stringify(cur())); c.id="tpl"+(_ctr++)+"_"+Math.floor(performance.now()); c.name=cur().name+" (cópia)"; p.templates.push(c); state.currentTemplateId=c.id; save(); renderAll(); });
+$("btnDupTpl").addEventListener("click",()=>{
+  const p=proj(); const c=JSON.parse(JSON.stringify(cur()));
+  c.id="tpl"+(_ctr++)+"_"+Math.floor(performance.now());
+  c.name=cur().name+" (cópia)";
+  /* No PMS os códigos são ÚNICOS — a cópia tem de levar um código novo, senão colide lá. */
+  if(tkind(c)==="pms" && c.pms && c.pms.code){
+    const usados=p.templates.filter(t=>tkind(t)==="pms" && t.pms).map(t=>t.pms.code);
+    const base=c.pms.code.replace(/_\d+$/,"");
+    let i=2; while(usados.indexOf(base+"_"+i)>=0) i++;
+    c.pms.code=base+"_"+i;
+    if(c.pms.desc) c.pms.desc=c.pms.desc+" (cópia)";
+  }
+  p.templates.push(c); state.currentTemplateId=c.id; save(); renderAll();
+});
 $("btnDelTpl").addEventListener("click",()=>{ const p=proj(); if(p.templates.length<=1){toast("O projeto tem de ter pelo menos 1 template");return;} if(confirm("Apagar este template?")){ p.templates=p.templates.filter(t=>t.id!==state.currentTemplateId); state.currentTemplateId=p.templates[0].id; save(); renderAll(); } });
 $("btnNewPrj").addEventListener("click",()=>{ const name=prompt("Nome do hotel / projeto:"); if(!name) return; const p=newProject(name.trim()); state.projects.push(p); state.currentProjectId=p.id; state.currentTemplateId=p.templates[0].id; state.selectedBlock=null; save(); renderAll(); toast("Projeto criado"); });
 $("btnRenPrj").addEventListener("click",()=>{ const p=proj(); const name=prompt("Renomear hotel / projeto:",p.hotel); if(!name) return; p.hotel=name.trim(); save(); renderAll(); });
