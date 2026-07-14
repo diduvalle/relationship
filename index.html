@@ -287,7 +287,9 @@
   .evrow{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:13px;cursor:pointer;box-shadow:var(--sh-sm)}
   .evrow:hover{border-color:#c9d6ee}
   .evrow input{flex:0 0 auto;accent-color:var(--accent)}
-  .evrow .tn{flex:1}
+  .evrow .tn{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+  .evrow .ev-code{font-family:Consolas,"SF Mono",monospace;font-size:11.5px;font-weight:700;letter-spacing:.3px;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .evrow .ev-desc{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .evrow .tc{font-family:Consolas,monospace;font-size:10px;color:var(--muted)}
   .wsub{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:12px 0 7px}
   /* galeria de modelos */
@@ -335,8 +337,17 @@
   .tb-l{padding:0 16px;border-right:1px solid var(--line)}
   .tb-c{padding:0 18px;gap:12px}
   .tb-r{padding:0 16px;gap:10px;border-left:1px solid var(--line);justify-content:flex-end}
-  .tb-doc{display:flex;align-items:center;gap:10px;min-width:0}
-  .tname{background:transparent;border:1px solid transparent;box-shadow:none;font-weight:600;font-size:14px;color:var(--navy);min-width:230px}
+  .tb-doc{display:flex;align-items:center;gap:9px;min-width:0;flex:1 1 auto;overflow:hidden}
+  /* CÓDIGO em cima (é o nome no PMS), descrição por baixo — empilhados para o seletor de idiomas nunca ser cortado */
+  .tb-id{display:flex;flex-direction:column;justify-content:center;gap:0;min-width:0;flex:1 1 auto}
+  .tb-doc .tcodechip{height:auto;padding:0;border:0;background:transparent;font-size:12px;line-height:14px;max-width:100%}
+  .tname{background:transparent;border:0;box-shadow:none;font-weight:500;font-size:12.5px;line-height:16px;height:18px;padding:0;color:var(--muted);min-width:60px;width:100%}
+  .tname:focus{color:var(--txt)}
+  .tb-doc .kindbadge{min-width:0;overflow:hidden}
+  .tb-doc .kindbadge span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tb-doc .langtoggle{flex:0 0 auto}
+  /* ecrãs de portátil: o crachá do módulo fica só com o ícone (o nome vai para o tooltip) */
+  @media (max-width:1439px){ .tb-doc .kindbadge span{display:none} .tb-doc .kindbadge{padding:0 7px;gap:0} }
   .tname:hover{background:var(--panel2);border-color:transparent}
   .tname:focus{background:#fff;border-color:var(--accent)}
   .tb-status{display:flex;align-items:center;gap:10px;margin-right:2px}
@@ -356,10 +367,19 @@
   .canvas-toolbar{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 16px;box-shadow:var(--sh-sm)}
   .ct-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .canvas-toolbar .prevtog{border:0;background:var(--panel2)}
-  /* crachá do módulo (Ciclo de estadia / Modelo do PMS) na barra de topo */
+  /* crachá do módulo (Relationship Email / Template Email) na barra de topo */
   .kindbadge{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.3px;white-space:nowrap;flex:0 0 auto}
   .kindbadge.k-life{background:var(--chip);color:var(--accent)}
   .kindbadge.k-pms{background:#fef3c7;color:#b45309}
+  /* o CÓDIGO é o identificador real no PMS — vem antes da descrição */
+  .tcodechip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:7px;background:var(--panel2);border:1px solid var(--line);font-family:Consolas,"SF Mono",monospace;font-size:11.5px;font-weight:700;letter-spacing:.3px;color:var(--navy);white-space:nowrap;flex:0 0 auto;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+  /* item de template: CÓDIGO em destaque, descrição por baixo */
+  .tpl-item.tw{align-items:center;padding:7px 10px}
+  .tpl-item.tw .nm{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .tpl-item .t-code{font-size:11.5px;font-weight:700;letter-spacing:.3px;font-family:Consolas,"SF Mono",monospace;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tpl-item .t-desc{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tpl-item.active .t-code{color:var(--accent2)}
+  .tpl-item.active .t-desc{color:var(--accent)}
   /* cabeçalhos dos dois grupos de templates — com destaque a sério */
   .kindhead{display:flex;align-items:center;gap:7px;margin:16px 0 8px;padding:7px 8px 7px 9px;border-radius:10px;border:1px solid transparent}
   .kindhead:first-child{margin-top:2px}
@@ -388,10 +408,10 @@
   .pmscard:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 6px 16px -6px rgba(6,103,255,.3)}
   .pmscard-ic{flex:0 0 auto;width:30px;height:30px;border-radius:9px;background:var(--chip);color:var(--accent);display:inline-flex;align-items:center;justify-content:center}
   .pmscard-tx{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .pmscard-nm{font-size:12.5px;font-weight:600;color:var(--navy)}
-  .pmscard-sub{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#b45309;background:#fef3c7;border-radius:20px;padding:1px 6px}
+  .pmscard-nm{font-size:12px;font-weight:700;letter-spacing:.3px;font-family:Consolas,"SF Mono",monospace;color:var(--navy);word-break:break-all}
+  .pmscard-sub{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#b45309;background:#fef3c7;border-radius:20px;padding:1px 6px;font-family:Poppins,sans-serif}
+  .pmscard-cd{font-size:12px;font-weight:600;color:var(--txt)}
   .pmscard-ab{font-size:11px;color:var(--muted);line-height:1.45}
-  .pmscard-cd{font-size:9.5px;font-family:Consolas,monospace;color:var(--muted);opacity:.8}
   /* fichas dos temas sazonais na galeria: grelha alinhada, ordem de calendário, mês à direita */
   .schips{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:8px}
   .schip{display:flex;align-items:center;gap:9px;width:100%;padding:6px 12px 6px 7px;background:var(--panel);border:1px solid var(--line);border-radius:12px;cursor:pointer;box-shadow:var(--sh-sm);transition:border-color .14s,transform .12s,box-shadow .14s;font-family:inherit;text-align:left}
@@ -448,7 +468,10 @@
     <div class="tb-zone tb-c">
       <div class="tb-doc">
         <span class="kindbadge" id="kindBadge"></span>
-        <input class="tname" id="tplName" placeholder="Nome do template" title="Nome do template atual — escreve para renomear">
+        <span class="tb-id">
+          <span class="tcodechip" id="tplCode" title="Código do template no PMS — é este o identificador que o PMS usa"></span>
+          <input class="tname" id="tplName" placeholder="Descrição do template" title="Descrição do template (nome amigável) — escreve para renomear">
+        </span>
         <div class="langtoggle" id="langToggle" title="Idioma do conteúdo que estás a editar (a ordem é a do PMS)">
           <button data-lang="en">EN</button>
           <button data-lang="es">ES</button>
@@ -775,15 +798,24 @@ const DEFAULT_TAGS = [
    pms  = Modelos de E-mail  (Config. Geral → Relacionamento com o hóspede) · tags @Model[0]
    O PROJETO é o hotel (marca partilhada); é o TEMPLATE que pertence a um dos mundos. */
 const KINDS={
-  life:{ key:"life", label:"Ciclo de estadia", icon:"mail", fmt:"token", source:"RelationShipEmail",
+  life:{ key:"life", label:"Relationship Email", icon:"mail", fmt:"token", source:"RelationShipEmail",
     where:"PMS → Utilitários → Relationship Email",
     hint:"Emails automáticos do ciclo de estadia. Disparados por evento (NEW, BEFORE-CHECKIN, …)." },
-  pms:{ key:"pms", label:"Modelo do PMS", icon:"doc", fmt:"model", source:"ReservationsWithNation",
+  pms:{ key:"pms", label:"Template Email", icon:"doc", fmt:"model", source:"ReservationsWithNation",
     where:"PMS → Configuração Geral → Relacionamento com o hóspede → Modelos de E-mail",
     hint:"Modelos livres sobre reservas (confirmação, cotação, pagamento…). Fonte de dados: ReservationsWithNation." }
 };
 function tkind(t){ return (t && t.kind==="pms") ? "pms" : "life"; }
 function kinfo(t){ return KINDS[tkind(t)]; }
+/* O CÓDIGO é o identificador do template no PMS — é ele o nome principal em toda a app.
+   Nos Template Email vem de pms.code; nos Relationship Email de t.code (ou, nos antigos, do modelo-base). */
+function tcode(t){
+  if(!t) return "";
+  if(tkind(t)==="pms") return (t.pms && t.pms.code) || "";
+  if(t.code) return t.code;
+  const st=(typeof starterFor==="function") ? starterFor(t) : null;
+  return (st && st.code) || "";
+}
 /* Tags rápidas por módulo */
 const QUICK={
   "RelationShipEmail": DEFAULT_TAGS.map(t=>t[2]),
@@ -879,7 +911,7 @@ const INVOICE_TAGS = [
 ];
 /* Cada fonte de dados tem o SEU conjunto de tags — é a fonte que manda, não o formato. */
 const SOURCES={
-  "RelationShipEmail":       { label:"Ciclo de estadia",  tags:DEFAULT_TAGS, fmt:"token" },
+  "RelationShipEmail":       { label:"Relationship Email", tags:DEFAULT_TAGS, fmt:"token" },
   "ReservationsWithNation":  { label:"Reservas",          tags:MODEL_TAGS,   fmt:"model" },
   "Invoices":                { label:"Faturas",           tags:INVOICE_TAGS, fmt:"model" }
 };
@@ -1402,7 +1434,7 @@ function instStarter(st){
     const clone=o=>JSON.parse(JSON.stringify(o));
     const t={
       id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()),
-      name: st.name, mode:"house", design: st.design||"moderno", font: st.font||"sans", palette: st.palette||"azul",
+      name: st.name, code: st.code||"", mode:"house", design: st.design||"moderno", font: st.font||"sans", palette: st.palette||"azul",
       brand: clone(st.brand||{logo:"",hero:""}),
       settings:{ width:0 },
       pt:{ subject:st.pt.subject, data:clone(st.pt.data||[]), body:clone(st.pt.body||[]) },
@@ -1804,7 +1836,12 @@ function renderHouseProps(box){
 
   const upd=()=>{ dirty(); refreshHtmlPrev(); };
   const restruct=()=>{ dirty(); renderHouseProps(box); refreshHtmlPrev(); };
-  box.querySelectorAll("[data-pmsf]").forEach(el=>el.addEventListener("input",()=>{ pmsData(cur())[el.dataset.pmsf]=el.value; dirty(); }));
+  box.querySelectorAll("[data-pmsf]").forEach(el=>el.addEventListener("input",()=>{
+    pmsData(cur())[el.dataset.pmsf]=el.value;
+    /* o código é o nome principal do template — mudá-lo tem de refrescar lista e barra de topo */
+    if(el.dataset.pmsf==="code"){ const c=$("tplCode"), v=el.value.trim(); if(c){ c.textContent=v; c.style.display=v?"":"none"; } renderTplList(); }
+    dirty();
+  }));
   box.querySelectorAll("[data-pmsb]").forEach(el=>el.addEventListener("change",()=>{ pmsData(cur())[el.dataset.pmsb]=el.checked; dirty(); }));
   const lgp=box.querySelector("#houseLogoP");
   if(lgp) lgp.addEventListener("input",()=>{ cur().brand.logo=lgp.value; dirty(); refreshHtmlPrev(); });
@@ -1850,7 +1887,7 @@ function builderCard(it,i){
     const opts=PMS_STARTERS.filter(s=>s.sub).map(s=>s.code);
     inner=`<input type="text" value="${escAttr(it.v||"")}" data-bbv="${i}" list="sublist${i}" placeholder="CÓDIGO-DO-SUB-MODELO" style="width:100%;${HIN};font-family:Consolas,monospace">
       <datalist id="sublist${i}">${opts.map(o=>`<option value="${escAttr(o)}">`).join("")}</datalist>
-      <div class="hint" style="margin-top:5px">Inclui outro modelo do PMS aqui. Sai no HTML como <code>@@@${escText(subCode(it.v)||"CÓDIGO")}(0)</code> — o PMS substitui pelo conteúdo desse modelo.</div>`;
+      <div class="hint" style="margin-top:5px">Inclui outro Template Email aqui. Sai no HTML como <code>@@@${escText(subCode(it.v)||"CÓDIGO")}(0)</code> — o PMS substitui pelo conteúdo desse modelo.</div>`;
   } else if(it.t==="cta"){
     inner=`<input type="text" value="${escAttr(it.v)}" data-bbv="${i}" data-tagtarget="1" placeholder="Texto do botão" style="width:100%;margin-bottom:6px;${HIN}">
       <input type="text" value="${escAttr(it.u||'')}" data-bbu="${i}" data-tagtarget="1" placeholder="Link / tag (ex.: @ONLINECHECKIN@)" style="width:100%;${HIN}">`;
@@ -2186,7 +2223,7 @@ function renderHouseStyle(box){
   h+='<button class="btn" id="applyAll" style="width:100%;margin-top:12px">'+ic("image",14)+' Aplicar a marca a todo o projeto</button>';
   h+='<div class="hint" style="margin-top:5px">Copia <b>logótipo, imagem de topo e contactos</b> para todos os templates de «'+escText(proj().hotel)+'» (os sub-modelos não levam marca).</div>';
   h+='<button class="btn" id="applyLook" style="width:100%;margin-top:8px">'+ic("copy",14)+' Aplicar também o visual (design, paleta, letra)</button>';
-  h+='<div class="hint" style="margin-top:5px">Uniformiza o aspeto de todos os templates. <b>Atenção:</b> os modelos do PMS perdem o design próprio (a Cotação em luxo, a Fatura em minimal…).</div>';
+  h+='<div class="hint" style="margin-top:5px">Uniformiza o aspeto de todos os templates. <b>Atenção:</b> os Template Email perdem o design próprio (a Cotação em luxo, a Fatura em minimal…).</div>';
   box.innerHTML=h;
   box.querySelectorAll("[data-design]").forEach(el=>el.addEventListener("click",()=>{ t.design=el.dataset.design; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
   box.querySelectorAll("[data-font]").forEach(el=>el.addEventListener("click",()=>{ t.font=el.dataset.font; dirty(); renderHouseStyle(box); refreshHtmlPrev(); }));
@@ -2298,13 +2335,18 @@ function renderTplList(){
     box.appendChild(head);
     if(!list.length){
       const e=document.createElement("div"); e.className="hint"; e.style.margin="0 4px 6px";
-      e.textContent = k==="life" ? "Sem emails do ciclo de estadia." : "Sem modelos do PMS. Usa o + para criar.";
+      e.textContent = k==="life" ? "Sem Relationship Emails." : "Sem Template Emails. Usa o + para criar.";
       box.appendChild(e);
     }
     list.forEach(t=>{
       const d=document.createElement("div");
-      d.className="tpl-item"+(t.id===state.currentTemplateId?" active":"");
-      d.innerHTML=`<span class="nm">${esc(t.name)}</span>`
+      d.className="tpl-item tw"+(t.id===state.currentTemplateId?" active":"");
+      const code=tcode(t);
+      /* O código é o nome principal (é por ele que se procura no PMS); a descrição fica em segundo plano. */
+      d.innerHTML=`<span class="nm">`
+          +`<span class="t-code">${esc(code||t.name)}</span>`
+          +(code?`<span class="t-desc">${esc(t.name)}</span>`:"")
+        +`</span>`
         +`<span class="rowact"><button data-tact="dup" title="Duplicar o template">${ic("doc",12)}</button><button data-tact="del" title="Apagar o template">${ic("trash",12)}</button></span>`;
       d.addEventListener("click",()=>{ state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
       d.querySelectorAll("[data-tact]").forEach(b=>b.addEventListener("click",e=>{
@@ -2925,12 +2967,12 @@ function instPms(st,srcOverride){
   const t=buildPmsTemplate(st,srcOverride,base);
   p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
   save(); closeModal(); renderAll();
-  toast(st?("«"+st.name+"» criado — já nos 6 idiomas."):"Modelo do PMS criado.");
+  toast(st?("«"+(st.code||st.name)+"» criado — já nos 6 idiomas."):"Template Email criado.");
 }
 function openPmsNew(){
   const card=(s,i)=>`<button type="button" class="pmscard" data-pms="${i}" title="${escAttr(s.design+" · "+pal(s.palette).name)}">
       <span class="pmscard-ic">${ic(s.icon,16)}</span>
-      <span class="pmscard-tx"><span class="pmscard-nm">${escText(s.name)}${s.sub?' <span class="pmscard-sub">sub-modelo</span>':''}</span><span class="pmscard-ab">${escText(s.about)}</span><span class="pmscard-cd">${escText(s.code)}</span></span>
+      <span class="pmscard-tx"><span class="pmscard-nm">${escText(s.code)}${s.sub?' <span class="pmscard-sub">sub-modelo</span>':''}</span><span class="pmscard-cd">${escText(s.name)}</span><span class="pmscard-ab">${escText(s.about)}</span></span>
     </button>`;
   /* Agrupado por FONTE DE DADOS — é ela que manda nas tags disponíveis. */
   let body=`<div class="tag-hint">Modelos livres do PMS (<b>Configuração Geral → Relacionamento com o hóspede → Modelos de E-mail</b>). Escolhe pela <b>fonte de dados</b> — é ela que define as tags que podes usar.</div>`;
@@ -2946,7 +2988,7 @@ function openPmsNew(){
     body+=`<div class="srchead"><span class="srcname">Sub-modelos</span><span class="srccode">fragmentos reutilizáveis</span><span style="flex:1"></span><span class="hint" style="margin:0">sem logótipo nem imagem</span></div>`;
     body+=`<div class="pmsgrid">${subs.map(x=>card(x.s,x.i)).join("")}</div>`;
   }
-  showModal("Novo modelo do PMS", body, `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button>`);
+  showModal("Novo Template Email", body, `<button class="btn ghost" onclick="window.__closeModal()">Cancelar</button>`);
   document.querySelectorAll("[data-pms]").forEach(el=>el.addEventListener("click",()=>instPms(PMS_STARTERS[+el.dataset.pms])));
   document.querySelectorAll("[data-blank]").forEach(el=>el.addEventListener("click",()=>instPms(null,el.dataset.blank)));
 }
@@ -2963,7 +3005,7 @@ function openWizard(){
 function renderWizard(){
   const mbOld=document.getElementById("modalBody"); const wsc=mbOld?mbOld.scrollTop:0;
   const allTags=DEFAULT_TAGS.map(t=>t[2]);
-  const typeOpts=STARTERS.map((st,i)=>`<option value="${i}" ${wz.typeIdx===i?"selected":""}>${escText(st.name)} (${escText(st.code||"")})</option>`).join("");
+  const typeOpts=STARTERS.map((st,i)=>`<option value="${i}" ${wz.typeIdx===i?"selected":""}>${escText(st.code||"")} — ${escText(st.name)}</option>`).join("");
   const designCards=DESIGN_LIST.map(([k,nm,ds])=>`<div class="dcard${wz.design===k?' sel':''}" data-wdesign="${k}" title="${escAttr(ds)}"><div class="dthumb">${designThumb(k)}</div><div class="dname">${nm}</div></div>`).join("");
   const palSwatch=Object.keys(PALETTES).map(k=>{const P=PALETTES[k];return `<div class="wcard${wz.palette===k?' wsel':''}" data-wpal="${k}" style="text-align:center"><div style="display:flex;gap:3px;margin-bottom:5px"><span style="flex:1;height:18px;border-radius:4px;background:${P.accent}"></span><span style="width:18px;height:18px;border-radius:4px;background:${P.accentDark}"></span></div><div style="font-size:11px">${P.name}</div></div>`;}).join("");
   const tagChecks=allTags.map(code=>`<label class="wtag"><input type="checkbox" data-wtag="${escAttr(code)}" ${wz.tags.includes(code)?"checked":""}> <span class="tn">${escText(wzPtLabel(code))}</span> <span class="tc">${escText(code)}</span></label>`).join("");
@@ -3204,10 +3246,11 @@ function renderHome(view){
   // ----- formulário Novo Projeto -----
   if(!nf) nf={ hotel:"", events:[], pms:[], design:"moderno", palette:"azul", font:"sans", shade:50 };
   if(!nf.pms) nf.pms=[];
-  const evRow=i=>{ const st=STARTERS[i]; return `<label class="evrow"><input type="checkbox" data-nfev="${i}" ${nf.events.includes(i)?"checked":""}><span class="tn">${escText(st.name)}</span><span class="tc">${escText(st.code||"")}</span></label>`; };
+  /* O CÓDIGO é o nome principal; a descrição é o secundário. */
+  const evRow=i=>{ const st=STARTERS[i]; return `<label class="evrow"><input type="checkbox" data-nfev="${i}" ${nf.events.includes(i)?"checked":""}><span class="tn"><b class="ev-code">${escText(st.code||st.name)}</b><span class="ev-desc">${escText(st.name)}</span></span></label>`; };
   const mainEv=STARTERS.map((st,i)=>evRow(i)).join("");
   /* Os dois módulos, também aqui: modelos do PMS agrupados por fonte de dados. */
-  const pmsRow=i=>{ const st=PMS_STARTERS[i]; return `<label class="evrow"><input type="checkbox" data-nfpms="${i}" ${nf.pms.includes(i)?"checked":""}><span class="tn">${escText(st.name)}${st.sub?' <span class="pmscard-sub">sub-modelo</span>':''}</span><span class="tc">${escText(st.code||"")}</span></label>`; };
+  const pmsRow=i=>{ const st=PMS_STARTERS[i]; return `<label class="evrow"><input type="checkbox" data-nfpms="${i}" ${nf.pms.includes(i)?"checked":""}><span class="tn"><b class="ev-code">${escText(st.code||st.name)}</b><span class="ev-desc">${escText(st.name)}${st.sub?' <span class="pmscard-sub">sub-modelo</span>':''}</span></span></label>`; };
   let pmsBlocks="";
   Object.keys(SOURCES).filter(s=>s!=="RelationShipEmail").forEach(src=>{
     const list=PMS_STARTERS.map((s,i)=>({s,i})).filter(x=>x.s.source===src);
@@ -3230,9 +3273,9 @@ function renderHome(view){
         '</div>'+
         '<div id="nfSiteMsg" class="hint" style="margin-top:7px">'+analysisSummaryHtml()+'</div>'+
         '<div class="wlbl" style="margin-top:16px">Templates a desenvolver</div>'+
-        kindLbl("k-life","mail","Ciclo de estadia",nf.events.length)+
+        kindLbl("k-life","mail",KINDS.life.label,nf.events.length)+
         '<div class="evlist">'+mainEv+'</div>'+
-        kindLbl("k-pms","doc","Modelos do PMS",nf.pms.length)+
+        kindLbl("k-pms","doc",KINDS.pms.label,nf.pms.length)+
         '<div class="hint" style="margin:-2px 0 6px">Modelos livres (confirmação, cotação, pagamento, faturas…). Opcional.</div>'+
         pmsBlocks+
       '</div>'+
@@ -3367,12 +3410,14 @@ function renderAll(){
   if(!cur()){ if(proj()&&proj().templates[0]) state.currentTemplateId=proj().templates[0].id; }
   const t=cur();
   $("tplName").value=t?t.name:"";
+  const cc=$("tplCode");
+  if(cc){ const code=tcode(t); cc.textContent=code||""; cc.style.display=code?"":"none"; }
   const kb=$("kindBadge");
   if(kb){ const K=kinfo(t), src=tsource(t), isSub=t&&tkind(t)==="pms"&&t.pms&&t.pms.sub;
     kb.className="kindbadge k-"+tkind(t);
     const extra = tkind(t)==="pms" ? " · "+((SOURCES[src]||{}).label||src)+(isSub?" · sub-modelo":"") : "";
     kb.innerHTML=ic(K.icon,12)+"<span>"+escText(K.label+extra)+"</span>";
-    kb.title=K.where+" — fonte de dados: "+src;
+    kb.title=K.label+extra+"\n"+K.where+" — fonte de dados: "+src;
   }
   const blocksMode=t&&t.mode==="blocks";
   $("addBlockTitle").style.display=blocksMode?"":"none";
