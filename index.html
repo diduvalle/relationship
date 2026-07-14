@@ -2876,9 +2876,10 @@ const PMS_STARTERS=[
     de:{ subject:"", data:[], body:[P("Mit freundlichen Grüßen,\nDie Direktion des "+HN),P(HWEB)] },
     it:{ subject:"", data:[], body:[P("Cordiali saluti,\nLa Direzione di "+HN),P(HWEB)] } }
 ];
-function instPms(st,srcOverride){
+/* Constrói o template do PMS (função pura — sem efeitos). Usada pelo + da sidebar e pelo Novo Projeto. */
+function buildPmsTemplate(st,srcOverride,base){
   const clone=o=>JSON.parse(JSON.stringify(o||[]));
-  const p=proj(), base=p.templates.find(x=>tkind(x)==="life")||p.templates[0]||{};
+  base=base||{};
   const isSub=!!(st&&st.sub);
   const t={ id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()), name:st?st.name:"Novo modelo",
     kind:"pms", source:(st?st.source:srcOverride)||"ReservationsWithNation", mode:"house",
@@ -2896,6 +2897,11 @@ function instPms(st,srcOverride){
     const c=(st && (st[lc]||st.pt)) || blank;
     t[lc]={ subject:c.subject||"", data:clone(c.data||[]), body:clone(c.body||[]) };
   });
+  return t;
+}
+function instPms(st,srcOverride){
+  const p=proj(), base=p.templates.find(x=>tkind(x)==="life")||p.templates[0]||{};
+  const t=buildPmsTemplate(st,srcOverride,base);
   p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
   save(); closeModal(); renderAll();
   toast(st?("«"+st.name+"» criado — já nos 6 idiomas."):"Modelo do PMS criado.");
@@ -3175,9 +3181,20 @@ function renderHome(view){
     return;
   }
   // ----- formulário Novo Projeto -----
-  if(!nf) nf={ hotel:"", events:[], design:"moderno", palette:"azul", font:"sans", shade:50 };
+  if(!nf) nf={ hotel:"", events:[], pms:[], design:"moderno", palette:"azul", font:"sans", shade:50 };
+  if(!nf.pms) nf.pms=[];
   const evRow=i=>{ const st=STARTERS[i]; return `<label class="evrow"><input type="checkbox" data-nfev="${i}" ${nf.events.includes(i)?"checked":""}><span class="tn">${escText(st.name)}</span><span class="tc">${escText(st.code||"")}</span></label>`; };
   const mainEv=STARTERS.map((st,i)=>evRow(i)).join("");
+  /* Os dois módulos, também aqui: modelos do PMS agrupados por fonte de dados. */
+  const pmsRow=i=>{ const st=PMS_STARTERS[i]; return `<label class="evrow"><input type="checkbox" data-nfpms="${i}" ${nf.pms.includes(i)?"checked":""}><span class="tn">${escText(st.name)}${st.sub?' <span class="pmscard-sub">sub-modelo</span>':''}</span><span class="tc">${escText(st.code||"")}</span></label>`; };
+  let pmsBlocks="";
+  Object.keys(SOURCES).filter(s=>s!=="RelationShipEmail").forEach(src=>{
+    const list=PMS_STARTERS.map((s,i)=>({s,i})).filter(x=>x.s.source===src);
+    if(!list.length) return;
+    pmsBlocks+=`<div class="wsub" style="margin:10px 0 6px;display:flex;align-items:center;gap:7px">${escText(SOURCES[src].label)}<span class="srccode">${escText(src)}</span></div>`
+      +`<div class="evlist">${list.map(x=>pmsRow(x.i)).join("")}</div>`;
+  });
+  const kindLbl=(cls,ic0,txt,n)=>`<div class="kindhead ${cls}" style="margin:14px 0 8px"><span class="kh-ic">${ic(ic0,13)}</span><span class="kh-nm">${txt}</span><span class="kh-n">${n}</span></div>`;
   const designCards=DESIGN_LIST.map(([k,nm,ds])=>`<div class="dcard${nf.design===k?' sel':''}" data-nfdesign="${k}" title="${escAttr(ds)}"><div class="dthumb">${designThumb(k)}</div><div class="dname">${nm}</div></div>`).join("");
   const palSwatch=Object.keys(PALETTES).map(k=>{const P=PALETTES[k];return `<div class="wcard${nf.palette===k?' wsel':''}" data-nfpal="${k}" style="text-align:center;padding:7px"><div style="display:flex;gap:3px;margin-bottom:4px"><span style="flex:1;height:16px;border-radius:4px;background:${P.accent}"></span><span style="width:16px;height:16px;border-radius:4px;background:${P.accentDark}"></span></div><div style="font-size:10.5px">${P.name}</div></div>`;}).join("");
   d.innerHTML='<div class="login-card" style="width:min(960px,94vw)">'+HOME_BRAND+
@@ -3192,7 +3209,11 @@ function renderHome(view){
         '</div>'+
         '<div id="nfSiteMsg" class="hint" style="margin-top:7px">'+analysisSummaryHtml()+'</div>'+
         '<div class="wlbl" style="margin-top:16px">Templates a desenvolver</div>'+
+        kindLbl("k-life","mail","Ciclo de estadia",nf.events.length)+
         '<div class="evlist">'+mainEv+'</div>'+
+        kindLbl("k-pms","doc","Modelos do PMS",nf.pms.length)+
+        '<div class="hint" style="margin:-2px 0 6px">Modelos livres (confirmação, cotação, pagamento, faturas…). Opcional.</div>'+
+        pmsBlocks+
       '</div>'+
       '<div class="nf-col">'+
         '<div class="wlbl" style="margin-top:14px">Design</div><div class="dgrid" id="nfDesign">'+designCards+'</div>'+
@@ -3209,7 +3230,8 @@ function renderHome(view){
   hotel.addEventListener("input",()=>{ nf.hotel=hotel.value; });
   const site=document.getElementById("nfSite"); if(site) site.addEventListener("input",()=>{ nf.website=site.value; });
   const anbtn=document.getElementById("nfAnalyze"); if(anbtn) anbtn.addEventListener("click",doAnalyze);
-  d.querySelectorAll("[data-nfev]").forEach(el=>el.addEventListener("change",()=>{ const i=+el.dataset.nfev; if(el.checked){ if(!nf.events.includes(i)) nf.events.push(i); } else { nf.events=nf.events.filter(x=>x!==i); } }));
+  d.querySelectorAll("[data-nfev]").forEach(el=>el.addEventListener("change",()=>{ const i=+el.dataset.nfev; if(el.checked){ if(!nf.events.includes(i)) nf.events.push(i); } else { nf.events=nf.events.filter(x=>x!==i); } renderHome("new"); }));
+  d.querySelectorAll("[data-nfpms]").forEach(el=>el.addEventListener("change",()=>{ const i=+el.dataset.nfpms; if(el.checked){ if(!nf.pms.includes(i)) nf.pms.push(i); } else { nf.pms=nf.pms.filter(x=>x!==i); } renderHome("new"); }));
   d.querySelectorAll("[data-nfdesign]").forEach(el=>el.addEventListener("click",()=>{ nf.design=el.dataset.nfdesign; renderHome("new"); }));
   d.querySelectorAll("[data-nfpal]").forEach(el=>el.addEventListener("click",()=>{ nf.palette=el.dataset.nfpal; renderHome("new"); }));
   d.querySelectorAll("[data-font]").forEach(el=>el.addEventListener("click",()=>{ nf.font=el.dataset.font; renderHome("new"); }));
@@ -3279,9 +3301,11 @@ function createProjectFromForm(){
   const m=document.getElementById("nfMsg");
   const name=(nf.hotel||"").trim();
   if(!name){ if(m) m.textContent="Dá um nome ao hotel."; return; }
-  if(!nf.events.length){ if(m) m.textContent="Escolhe pelo menos um template a desenvolver."; return; }
+  if(!nf.pms) nf.pms=[];
+  if(!nf.events.length && !nf.pms.length){ if(m) m.textContent="Escolhe pelo menos um template a desenvolver."; return; }
   const hasContacts = nf.contacts && Object.keys(nf.contacts).some(k=>nf.contacts[k]);
   const p={ id:"prj"+(_ctr++)+"_"+Math.floor(performance.now()), hotel:name, website:nf.website||"", templates:[] };
+  /* 1) Ciclo de estadia */
   nf.events.slice().sort((a,b)=>a-b).forEach(i=>{
     const t=instStarter(STARTERS[i]);
     t.design=nf.design; t.font=nf.font; t.palette=nf.palette; t.shade=nf.shade;
@@ -3290,8 +3314,23 @@ function createProjectFromForm(){
     if(hasContacts) t.contacts=JSON.parse(JSON.stringify(nf.contacts));
     p.templates.push(t);
   });
+  /* 2) Modelos do PMS — mesma marca do hotel; cada um mantém o SEU design (é o que os torna bonitos).
+        Os sub-modelos são fragmentos: sem logótipo, imagem nem contactos. */
+  const base={ design:nf.design, font:nf.font, palette:nf.palette, shade:nf.shade,
+    brand:{ logo:nf.logo||"", hero:nf.hero||"" }, contacts: hasContacts?JSON.parse(JSON.stringify(nf.contacts)):null };
+  nf.pms.slice().sort((a,b)=>a-b).forEach(i=>{
+    const st=PMS_STARTERS[i];
+    const t=buildPmsTemplate(st,null,base);
+    if(!st.sub){
+      if(nf.logo) t.brand.logo=nf.logo;
+      if(nf.hero) t.brand.hero=nf.hero;
+      if(hasContacts) t.contacts=JSON.parse(JSON.stringify(nf.contacts));
+    }
+    p.templates.push(t);
+  });
   state.projects.push(p); state.currentProjectId=p.id; state.currentTemplateId=p.templates[0].id; state.selectedBlock=null; state.lang="pt";
-  cloudSyncProject(p); save(); hideHome(); renderAll(); toast("Projeto «"+name+"» criado");
+  cloudSyncProject(p); save(); hideHome(); renderAll();
+  toast("Projeto «"+name+"» criado — "+nf.events.length+" do ciclo + "+nf.pms.length+" do PMS");
 }
 
 /* ============================ LANG UI ============================ */
