@@ -373,6 +373,27 @@
   .kindbadge.k-pms{background:#fef3c7;color:#b45309}
   /* o CÓDIGO é o identificador real no PMS — vem antes da descrição */
   .tcodechip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:7px;background:var(--panel2);border:1px solid var(--line);font-family:Consolas,"SF Mono",monospace;font-size:11.5px;font-weight:700;letter-spacing:.3px;color:var(--navy);white-space:nowrap;flex:0 0 auto;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+  /* filtro da lista de templates */
+  .tplfind{position:relative;display:flex;align-items:center;margin:0 0 8px}
+  .tplfind input{width:100%;height:32px;padding:0 26px 0 28px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--txt);font-size:12px;font-family:inherit}
+  .tplfind input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--chip)}
+  .tplfind .tf-ic{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:11px;height:11px;border:1.6px solid var(--muted);border-radius:50%;pointer-events:none}
+  .tplfind .tf-ic:after{content:"";position:absolute;right:-4px;bottom:-2px;width:5px;height:1.6px;background:var(--muted);transform:rotate(45deg)}
+  .tplfind button{position:absolute;right:5px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:11px;padding:3px;line-height:1;display:none}
+  .tplfind.on button{display:block}
+  .tplfind button:hover{color:var(--txt)}
+  .tpl-item .t-hit{background:#fde68a;color:var(--navy);border-radius:2px}
+  /* código duplicado: o PMS não aceita dois modelos com o mesmo código */
+  .tpl-item .t-warn{flex:0 0 auto;color:#b45309;font-size:12px;font-weight:700;margin-left:4px}
+  .codeconflict input{border-color:#dc2626 !important;background:#fef2f2 !important}
+  .codewarn{display:flex;gap:6px;align-items:flex-start;margin-top:5px;padding:6px 8px;border:1px solid #fca5a5;background:#fef2f2;border-radius:8px;color:#b42318;font-size:11px;line-height:1.4}
+  /* cabeçalho do «Copiar p/ PMS»: o código manda, é por ele que se encontra o template no PMS */
+  .exp-code{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:9px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel2);border-radius:9px}
+  .exp-code-l{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+  .exp-code-v{font-family:Consolas,"SF Mono",monospace;font-size:14px;font-weight:700;letter-spacing:.4px;color:var(--navy);word-break:break-all}
+  .exp-code-d{font-size:12px;color:var(--muted)}
+  .exp-code-miss{border-left-color:#f59e0b}
+  .exp-code-miss .exp-code-v{color:#b45309}
   /* item de template: CÓDIGO em destaque, descrição por baixo */
   .tpl-item.tw{align-items:center;padding:7px 10px}
   .tpl-item.tw .nm{display:flex;flex-direction:column;gap:1px;min-width:0}
@@ -505,6 +526,11 @@
 
         <div class="sechead" style="margin-top:20px">
           <span class="sectitle" id="tplTitle">Templates</span>
+        </div>
+        <div class="tplfind">
+          <span class="tf-ic"></span>
+          <input id="tplFind" type="text" placeholder="Filtrar por código ou descrição…" autocomplete="off" spellcheck="false">
+          <button id="tplFindX" title="Limpar filtro" type="button">✕</button>
         </div>
         <div id="tplList"></div>
         <span style="display:none"><button id="btnNewTpl"></button></span>
@@ -815,6 +841,13 @@ function tcode(t){
   if(t.code) return t.code;
   const st=(typeof starterFor==="function") ? starterFor(t) : null;
   return (st && st.code) || "";
+}
+function normCode(c){ return (c||"").trim().toUpperCase(); }
+/* O PMS não aceita dois templates com o mesmo código dentro do mesmo módulo — avisamos em vez de deixar rebentar lá. */
+function codeClash(t){
+  const p=proj(); if(!p||!t) return false;
+  const c=normCode(tcode(t)); if(!c) return false;
+  return p.templates.some(o=>o!==t && tkind(o)===tkind(t) && normCode(tcode(o))===c);
 }
 /* Tags rápidas por módulo */
 const QUICK={
@@ -1814,7 +1847,13 @@ function renderHouseProps(box){
   if(tkind(cur())==="pms"){
     const pd=pmsData(cur());
     pmsI='<div class="hint" style="margin-bottom:9px">Campos do ecrã <b>Modelos de E-mail</b> do PMS. Aparecem todos na janela «Copiar p/ PMS», prontos a colar.</div>'
-      + PMS_FIELDS.map(([k,lbl,ph])=>`<div class="field" style="margin:0 0 7px"><label>${escText(lbl)}</label><input type="text" value="${escAttr(pd[k]||"")}" data-pmsf="${k}" placeholder="${escAttr(ph)}" style="width:100%;${HIN}"></div>`).join("")
+      + PMS_FIELDS.map(([k,lbl,ph])=>{
+          const isCode=(k==="code"), clash=isCode&&codeClash(cur());
+          return `<div class="field${clash?" codeconflict":""}" id="pmsfield_${k}" style="margin:0 0 7px"><label>${escText(lbl)}</label>`
+            + `<input type="text" value="${escAttr(pd[k]||"")}" data-pmsf="${k}" placeholder="${escAttr(ph)}" style="width:100%;${HIN}">`
+            + (isCode?`<div class="codewarn" id="pmsCodeWarn" style="${clash?"":"display:none"}">⚠ <span>Já existe outro <b>Template Email</b> com este código neste projeto. O PMS não aceita códigos repetidos — muda um deles.</span></div>`:"")
+            + `</div>`;
+        }).join("")
       + `<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:4px">
           <label class="hint" style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0"><input type="checkbox" data-pmsb="active" ${pd.active?"checked":""} style="accent-color:var(--accent)"> Ativo</label>
           <label class="hint" style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0"><input type="checkbox" data-pmsb="sms" ${pd.sms?"checked":""} style="accent-color:var(--accent)"> SMS</label>
@@ -1838,8 +1877,15 @@ function renderHouseProps(box){
   const restruct=()=>{ dirty(); renderHouseProps(box); refreshHtmlPrev(); };
   box.querySelectorAll("[data-pmsf]").forEach(el=>el.addEventListener("input",()=>{
     pmsData(cur())[el.dataset.pmsf]=el.value;
-    /* o código é o nome principal do template — mudá-lo tem de refrescar lista e barra de topo */
-    if(el.dataset.pmsf==="code"){ const c=$("tplCode"), v=el.value.trim(); if(c){ c.textContent=v; c.style.display=v?"":"none"; } renderTplList(); }
+    /* o código é o nome principal do template — mudá-lo tem de refrescar lista, barra de topo e aviso de duplicado */
+    if(el.dataset.pmsf==="code"){
+      const c=$("tplCode"), v=el.value.trim();
+      if(c){ c.textContent=v; c.style.display=v?"":"none"; }
+      const clash=codeClash(cur()), f=$("pmsfield_code"), w=$("pmsCodeWarn");
+      if(f) f.classList.toggle("codeconflict",clash);
+      if(w) w.style.display=clash?"":"none";
+      renderTplList();
+    }
     dirty();
   }));
   box.querySelectorAll("[data-pmsb]").forEach(el=>el.addEventListener("change",()=>{ pmsData(cur())[el.dataset.pmsb]=el.checked; dirty(); }));
@@ -2319,34 +2365,46 @@ function renderPrjList(){
     box.appendChild(d);
   });
 }
+/* Realça no texto o pedaço que corresponde ao filtro. */
+function hlMatch(txt,q){
+  const s=String(txt||""); if(!q) return esc(s);
+  const i=s.toLowerCase().indexOf(q);
+  if(i<0) return esc(s);
+  return esc(s.slice(0,i))+'<span class="t-hit">'+esc(s.slice(i,i+q.length))+'</span>'+esc(s.slice(i+q.length));
+}
 function renderTplList(){
   const box=$("tplList"); box.innerHTML="";
   const p=proj(); if(!p) return;
   $("tplTitle").innerHTML='Templates · <span style="color:var(--accent)">'+esc(p.hotel)+'</span>';
+  const q=(state.tplFilter||"").trim().toLowerCase();
+  const fbox=document.querySelector(".tplfind"); if(fbox) fbox.classList.toggle("on",!!q);
+  const hits=t=>!q || (tcode(t)+" "+(t.name||"")).toLowerCase().includes(q);
   /* Dois grupos: os dois módulos do PMS. O + de cada grupo cria já do tipo certo — sem perguntas. */
   ["life","pms"].forEach(k=>{
-    const K=KINDS[k], list=p.templates.filter(t=>tkind(t)===k);
+    const K=KINDS[k], all=p.templates.filter(t=>tkind(t)===k), list=all.filter(hits);
     const head=document.createElement("div");
     head.className="kindhead k-"+k;
     head.innerHTML=`<span class="kh-ic">${ic(K.icon,13)}</span>`
       +`<span class="kh-nm" title="${escAttr(K.where)}">${escText(K.label)}</span>`
-      +`<span class="kh-n">${list.length}</span>`
+      +`<span class="kh-n">${q?list.length+"/"+all.length:all.length}</span>`
       +`<button class="kh-add" data-newkind="${k}" title="${escAttr("Novo template — "+K.label)}">${ic("plus",14)}</button>`;
     box.appendChild(head);
     if(!list.length){
       const e=document.createElement("div"); e.className="hint"; e.style.margin="0 4px 6px";
-      e.textContent = k==="life" ? "Sem Relationship Emails." : "Sem Template Emails. Usa o + para criar.";
+      e.textContent = q ? "Nada corresponde ao filtro."
+        : (k==="life" ? "Sem Relationship Emails." : "Sem Template Emails. Usa o + para criar.");
       box.appendChild(e);
     }
     list.forEach(t=>{
       const d=document.createElement("div");
       d.className="tpl-item tw"+(t.id===state.currentTemplateId?" active":"");
-      const code=tcode(t);
+      const code=tcode(t), clash=codeClash(t);
       /* O código é o nome principal (é por ele que se procura no PMS); a descrição fica em segundo plano. */
       d.innerHTML=`<span class="nm">`
-          +`<span class="t-code">${esc(code||t.name)}</span>`
-          +(code?`<span class="t-desc">${esc(t.name)}</span>`:"")
+          +`<span class="t-code">${hlMatch(code||t.name,q)}</span>`
+          +(code?`<span class="t-desc">${hlMatch(t.name,q)}</span>`:"")
         +`</span>`
+        +(clash?`<span class="t-warn" title="${escAttr("Código repetido em «"+K.label+"» — o PMS não aceita dois templates com o mesmo código.")}">⚠</span>`:"")
         +`<span class="rowact"><button data-tact="dup" title="Duplicar o template">${ic("doc",12)}</button><button data-tact="del" title="Apagar o template">${ic("trash",12)}</button></span>`;
       d.addEventListener("click",()=>{ state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
       d.querySelectorAll("[data-tact]").forEach(b=>b.addEventListener("click",e=>{
@@ -2413,7 +2471,19 @@ function openExport(){
       </table></div>`;
   }
   const n=isPms?2:1;
-  showModal(`Copiar para o PMS — ${escText(t.name)} · ${lang.toUpperCase()}`,
+  const code=tcode(t);
+  /* O colega tem de saber EM QUE template do PMS vai colar isto — por isso o código vem primeiro e em destaque. */
+  const codeBar = code
+    ? `<div class="exp-code">
+         <span class="exp-code-l">Template no PMS</span>
+         <b class="exp-code-v">${escText(code)}</b>
+         <span class="exp-code-d">${escText(t.name)}</span>
+       </div>`
+    : `<div class="exp-code exp-code-miss"><span class="exp-code-l">Template no PMS</span><b class="exp-code-v">— sem código —</b><span class="exp-code-d">define-o na ficha «Definições do PMS»</span></div>`;
+  const clashBar = codeClash(t)
+    ? `<div class="codewarn" style="margin:0 0 10px">⚠ <span>Há outro <b>${escText(K.label)}</b> com o código <b>${escText(code)}</b> neste projeto. O PMS não aceita códigos repetidos.</span></div>` : "";
+  showModal(`Copiar para o PMS — ${escText(code||t.name)} · ${lang.toUpperCase()}`,
+    codeBar + clashBar +
     `<div class="tag-hint" style="margin-bottom:10px"><b>${escText(K.label)}</b> — ${escText(K.where)}.<br>
        Cola o <b>Assunto</b> e o <b>HTML</b> no separador do idioma <b>${lang.toUpperCase()}</b>. Os acentos vão como entidades HTML (&amp;#231; …) — é normal e garante compatibilidade máxima no envio.</div>
      ${fichaI}
@@ -3430,6 +3500,10 @@ function renderAll(){
 
 /* ============================ EVENTS ============================ */
 $("tplName").addEventListener("input",e=>{ cur().name=e.target.value; renderTplList(); dirty(); });
+/* Filtro da lista: procura no código E na descrição. Não mexe nos dados — só na vista. */
+$("tplFind").addEventListener("input",e=>{ state.tplFilter=e.target.value; renderTplList(); });
+$("tplFind").addEventListener("keydown",e=>{ if(e.key==="Escape"){ e.target.value=""; state.tplFilter=""; renderTplList(); } });
+$("tplFindX").addEventListener("click",()=>{ $("tplFind").value=""; state.tplFilter=""; renderTplList(); $("tplFind").focus(); });
 $("subjectInput").addEventListener("input",e=>{ curLang().subject=e.target.value; dirty(); });
 $("subjectInput").addEventListener("focus",e=>{ state.activeField=e.target; });
 document.querySelectorAll("#langToggle button").forEach(b=>b.addEventListener("click",()=>{ state.lang=b.getAttribute("data-lang"); state.selectedBlock=null; setLangUI(); renderCanvas(); renderProps(); }));
