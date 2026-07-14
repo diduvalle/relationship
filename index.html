@@ -356,11 +356,12 @@
   .canvas-toolbar{margin-top:14px;display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 16px;box-shadow:var(--sh-sm)}
   .ct-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .canvas-toolbar .prevtog{border:0;background:var(--panel2)}
-  /* pílulas dos temas sazonais na galeria (emoji em crachá com a cor do tema) */
-  .schips{display:flex;flex-wrap:wrap;gap:8px}
-  .schip{display:inline-flex;align-items:center;gap:9px;padding:6px 16px 6px 7px;background:var(--panel);border:1px solid var(--line);border-radius:999px;cursor:pointer;box-shadow:var(--sh-sm);transition:border-color .14s,transform .12s,box-shadow .14s;font-family:inherit}
+  /* fichas dos temas sazonais na galeria: grelha alinhada, ordem de calendário, mês à direita */
+  .schips{display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:8px}
+  .schip{display:flex;align-items:center;gap:9px;width:100%;padding:6px 12px 6px 7px;background:var(--panel);border:1px solid var(--line);border-radius:12px;cursor:pointer;box-shadow:var(--sh-sm);transition:border-color .14s,transform .12s,box-shadow .14s;font-family:inherit;text-align:left}
   .schip-ic{width:31px;height:31px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;flex:0 0 auto}
-  .schip-nm{font-size:12.5px;font-weight:600;color:var(--navy);white-space:nowrap}
+  .schip-nm{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .schip-mo{flex:0 0 auto;font-size:9.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
   .schip:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 6px 16px -6px rgba(6,103,255,.35)}
   .schip:hover .schip-nm{color:var(--accent)}
   /* chips de tom do texto (à imagem do Hey!Travel AI) */
@@ -606,7 +607,7 @@ const MODEL_TAGS = [
   ["Quarto / Estadia","Piso","@Model[0].RoomFloor","2"],
   ["Quarto / Estadia","Package (código)","@Model[0].PackageCode","BB"],
   ["Quarto / Estadia","Package","@Model[0].PackageDescription","Alojamento e Pequeno-almoço"],
-  ["Quarto / Estadia","Tarifa (código)","@Model[0].Pricelistcode","RACK"],
+  ["Quarto / Estadia","Tarifa (código)","@Model[0].Priceliscode","RACK"], /* sim, "Priceliscode" — a gralha existe no próprio PMS; corrigi-la parte a substituição */
   ["Quarto / Estadia","Tarifa","@Model[0].PricelistDescription","Tarifa Balcão"],
   ["Quarto / Estadia","Camas como unidade","@Model[0].UseBedsAsUnit","Não"],
   // Ocupação
@@ -2426,6 +2427,8 @@ const SEASONAL=[
     fr:{ subject:"Joyeux anniversaire, @GUESTNAME@ — nous avons une surprise", data:[],
       body:[H("Joyeux anniversaire, @GUESTNAME@ !"),P("Un anniversaire mérite plus qu'un gâteau : une nuit ailleurs, un toast et quelqu'un qui s'occupe de tout. À @COMMERCIALNAME@, une attention spéciale vous attend lors de votre prochain séjour."),P("Venez fêter ça avec nous — dites-nous simplement quand."),C("Réserver la fête","#"),P("À la vôtre,\nL'équipe de @COMMERCIALNAME@")] } }
 ];
+/* Ordem de calendário + mês de cada tema (para a galeria ficar arrumada e lógica) */
+const SEA_META={ carnaval:[1,"fev"], valentim:[2,"fev"], diapai:[3,"mar"], pascoa:[4,"mar–abr"], diamae:[5,"mai"], diacrianca:[6,"jun"], santos:[7,"jun"], verao:[8,"jun–set"], vindimas:[9,"set"], oktoberfest:[10,"out"], halloween:[11,"out"], outono:[12,"out–nov"], smartinho:[13,"nov"], blackfriday:[14,"nov"], natal:[15,"dez"], reveillon:[16,"dez"], inverno:[17,"dez–fev"], spa:[18,"sempre"], vinho:[19,"sempre"], aniversario:[20,"sempre"] };
 function instSeasonal(s){
   const clone=o=>JSON.parse(JSON.stringify(o));
   const t={ id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()), name:s.name, mode:"house",
@@ -2455,10 +2458,11 @@ function renderGal(){
       <div class="gvmeta"><span class="gvname">${escText(v.label)}</span><span class="gvdots"><i style="background:${P.accent}"></i><i style="background:${P.accentDark}"></i></span></div>
     </div>`;
   }).join("");
-  const seasonCards=SEASONAL.map((s,si)=>{
-    const P=pal(s.palette);
-    return `<button type="button" class="schip" data-gsea="${si}" title="${escAttr(s.design+" · "+P.name+" — clica para criar o template")}">
-      <span class="schip-ic" style="background:${P.tint}">${s.emoji}</span><span class="schip-nm">${escText(s.name)}</span>
+  const seaSorted=SEASONAL.slice().sort((a,b)=>((SEA_META[a.key]||[99])[0])-((SEA_META[b.key]||[99])[0]));
+  const seasonCards=seaSorted.map(s=>{
+    const P=pal(s.palette), mo=(SEA_META[s.key]||[0,""])[1];
+    return `<button type="button" class="schip" data-gsea="${escAttr(s.key)}" title="${escAttr(s.design+" · "+P.name+" — clica para criar o template")}">
+      <span class="schip-ic" style="background:${P.tint}">${s.emoji}</span><span class="schip-nm">${escText(s.name)}</span><span class="schip-mo">${escText(mo)}</span>
     </button>`;
   }).join("");
   w.innerHTML=`<div class="gchips">${chips}</div>
@@ -2468,7 +2472,7 @@ function renderGal(){
     <div class="schips">${seasonCards}</div>`;
   w.querySelectorAll("[data-gev]").forEach(el=>el.addEventListener("click",()=>{ galSel=+el.dataset.gev; renderGal(); }));
   w.querySelectorAll("[data-gvi]").forEach(el=>el.addEventListener("click",()=>galPick(+el.dataset.gvi)));
-  w.querySelectorAll("[data-gsea]").forEach(el=>el.addEventListener("click",()=>instSeasonal(SEASONAL[+el.dataset.gsea])));
+  w.querySelectorAll("[data-gsea]").forEach(el=>el.addEventListener("click",()=>{ const s=SEASONAL.find(x=>x.key===el.dataset.gsea); if(s) instSeasonal(s); }));
   const more=$("galMore"); if(more) more.addEventListener("click",galMore);
 }
 function galPick(vi){
