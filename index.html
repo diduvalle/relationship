@@ -337,6 +337,9 @@
   .tb-l{padding:0 16px;border-right:1px solid var(--line)}
   .tb-c{padding:0 18px;gap:12px}
   .tb-r{padding:0 16px;gap:10px;border-left:1px solid var(--line);justify-content:flex-end}
+  .tb-help{text-decoration:none;gap:6px}
+  .tb-help:hover{text-decoration:none}
+  @media (max-width:1200px){ .tb-help .tb-help-t{display:none} }
   .tb-doc{display:flex;align-items:center;gap:9px;min-width:0;flex:1 1 auto;overflow:hidden}
   /* CÓDIGO em cima (é o nome no PMS), descrição por baixo — empilhados para o seletor de idiomas nunca ser cortado */
   .tb-id{display:flex;flex-direction:column;justify-content:center;gap:0;min-width:0;flex:1 1 auto}
@@ -509,6 +512,10 @@
       </div>
     </div>
     <div class="tb-zone tb-r">
+      <a class="btn ghost tb-help" href="howto/" target="_blank" rel="noopener" title="Como usar a plataforma — abre o manual num separador novo" aria-label="Ajuda">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span class="tb-help-t">Ajuda</span>
+      </a>
       <button class="btn ghost" id="btnPreview" title="Ver o email em grande, com todos os idiomas">👁 Pré-visualizar</button>
       <button class="btn primary" id="btnExport" title="Obter o Assunto + HTML para colar no PMS">⤓ Copiar p/ PMS</button>
     </div>
@@ -3329,13 +3336,14 @@ function renderHome(view){
   }
   if(view==="home"){
     d.innerHTML='<div class="login-card">'+HOME_BRAND+
-      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 18px">Cria a codificação dos emails RelationshipEmail para os teus hotéis.</p>'+
+      '<p style="color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 18px">Cria o HTML dos emails do teu hotel para o HostPMS.</p>'+
       '<div style="display:flex;gap:10px">'+
         '<button class="btn primary" id="hNew" style="flex:1;padding:14px;font-size:14px">'+ic("plus",16)+' Novo Projeto</button>'+
         '<button class="btn" id="hOpen" style="flex:1;padding:14px;font-size:14px">'+ic("folder",16)+' Abrir Projeto</button>'+
       '</div>'+
       (state.projects.length?'<button class="btn ghost" id="hGallery" style="width:100%;margin-top:10px;font-size:13px" title="Modelos prontos por evento e campanhas temáticas (Natal, São Valentim, …)">'+ic("grid",15)+' Galeria de modelos</button>':'')+
-      '<div class="hint" style="margin-top:12px;text-align:center">'+state.projects.length+' projeto(s) guardado(s)</div></div>';
+      '<div class="hint" style="margin-top:12px;text-align:center">'+state.projects.length+' projeto(s) guardado(s)</div>'+
+      '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);text-align:center"><a href="howto/" target="_blank" rel="noopener" style="font-size:12.5px;color:var(--muted);text-decoration:none">Primeira vez aqui? <b style="color:var(--accent)">Ver como usar →</b></a></div></div>';
     document.getElementById("hNew").addEventListener("click",()=>{ nf={ hotel:"", events:[], design:"moderno", palette:"azul", font:"sans", shade:50 }; renderHome("new"); const hi=document.getElementById("nfHotel"); if(hi) hi.focus(); });
     document.getElementById("hOpen").addEventListener("click",hideHome);
     const hg=document.getElementById("hGallery"); if(hg) hg.addEventListener("click",()=>{ hideHome(); openGallery(); });

@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Como usar o Relationship — Manual</title>
+<meta name="description" content="Manual passo a passo da plataforma Relationship — Host Hotel Systems.">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6fb; --panel:#fff; --panel2:#f3f5f9; --line:#e5e9f1; --txt:#182633; --navy:#15202e;
+    --muted:#5c6b7f; --accent:#0667ff; --accentDark:#0048c7; --chip:#eaf1ff;
+    --amber:#b45309; --amberbg:#fef3c7; --amberln:#f4d489;
+    --sh-sm:0 1px 2px rgba(21,32,46,.06); --sh-card:0 6px 24px rgba(21,32,46,.08);
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 80px}
+
+  /* Topo */
+  .top{position:sticky;top:0;z-index:20;background:rgba(244,246,251,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top-in{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand img{width:30px;height:30px;display:block}
+  .brand b{font-weight:800;font-size:17px;letter-spacing:.2px}
+  .brand b span{color:var(--accent)}
+  .brand small{display:block;font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:1px}
+  .top .sp{flex:1}
+  .btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--txt);font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:var(--sh-sm);white-space:nowrap}
+  .btn:hover{border-color:var(--accent);text-decoration:none}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.primary:hover{background:var(--accentDark)}
+  .btn svg{width:15px;height:15px}
+
+  /* Cabeçalho */
+  header.hero{padding:44px 0 10px}
+  .kicker{display:inline-block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:12px}
+  h1{font-size:34px;line-height:1.15;margin:0 0 12px;font-weight:800;letter-spacing:-.4px;color:var(--navy)}
+  .lead{font-size:17px;color:var(--muted);max-width:620px;margin:0}
+
+  /* Índice */
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 8px}
+  .toc a{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--txt);font-size:13px;font-weight:500;box-shadow:var(--sh-sm)}
+  .toc a:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
+  .toc a .n{font-weight:700;color:var(--accent)}
+
+  section{margin-top:44px;scroll-margin-top:80px}
+  h2{font-size:23px;font-weight:700;color:var(--navy);margin:0 0 6px;letter-spacing:-.2px;display:flex;align-items:center;gap:11px}
+  h2 .ix{flex:0 0 auto;width:30px;height:30px;border-radius:9px;background:var(--chip);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+  .sub{color:var(--muted);margin:0 0 18px;font-size:14.5px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-card);padding:22px 24px}
+  figure{margin:20px 0 0}
+  figure svg{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+  figcaption{font-size:12.5px;color:var(--muted);text-align:center;margin-top:9px}
+
+  /* Passos */
+  .steps{display:flex;flex-direction:column;gap:14px}
+  .step{display:flex;gap:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-sm);padding:18px 20px}
+  .step .num{flex:0 0 auto;width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .step h3{margin:2px 0 5px;font-size:16px;font-weight:700;color:var(--navy)}
+  .step p{margin:0;color:var(--muted);font-size:14px}
+  .step p + p{margin-top:7px}
+  .step b{color:var(--txt)}
+  code,.tag{font-family:Consolas,"SF Mono",ui-monospace,monospace;font-size:.88em;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--navy);white-space:nowrap}
+  .tag.blue{background:var(--chip);border-color:#cfe0ff;color:var(--accentDark)}
+  .tag.amber{background:var(--amberbg);border-color:var(--amberln);color:var(--amber)}
+
+  /* Callouts */
+  .note{display:flex;gap:12px;padding:14px 16px;border-radius:12px;font-size:14px;margin-top:16px}
+  .note .ico{flex:0 0 auto;font-size:16px;line-height:1.4}
+  .note.tip{background:var(--chip);border:1px solid #cfe0ff;color:#0d3b8a}
+  .note.warn{background:var(--amberbg);border:1px solid var(--amberln);color:#8a4b09}
+  .note b{font-weight:700}
+
+  /* Duas colunas de módulo */
+  .mods{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
+  .mod{border-radius:var(--radius);padding:18px 18px 16px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--sh-sm)}
+  .mod.blue{border-top:3px solid var(--accent)}
+  .mod.amber{border-top:3px solid #d99213}
+  .mod .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:4px 9px;border-radius:999px;margin-bottom:10px}
+  .mod.blue .badge{background:var(--chip);color:var(--accent)}
+  .mod.amber .badge{background:var(--amberbg);color:var(--amber)}
+  .mod h3{margin:0 0 8px;font-size:16px;color:var(--navy)}
+  .mod ul{margin:0;padding:0;list-style:none}
+  .mod li{position:relative;padding:5px 0 5px 20px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line)}
+  .mod li:first-child{border-top:0}
+  .mod li:before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .mod.amber li:before{background:#d99213}
+  .mod li b{color:var(--txt);font-weight:600}
+
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+
+  @media (max-width:640px){
+    h1{font-size:27px}
+    .mods{grid-template-columns:1fr}
+    .top .btn.ghosthide{display:none}
+  }
+  @media print{
+    .top,.toc,.btn,footer .btn{display:none !important}
+    body{background:#fff;font-size:12px}
+    .card,.step,.mod,figure svg{box-shadow:none}
+    section{margin-top:24px;page-break-inside:avoid}
+    .step,.mod,figure{page-break-inside:avoid}
+    a{color:var(--txt)}
+    header.hero{padding:10px 0}
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <span class="brand"><img src="../favicon.png" alt="Host"><span><b>Relation<span>ship</span></b><small>Manual</small></span></span>
+    <span class="sp"></span>
+    <button class="btn ghosthide" onclick="window.print()" title="Imprimir ou guardar em PDF">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Imprimir / PDF
+    </button>
+    <a class="btn primary" href="../index.html">Abrir a app →</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <span class="kicker">Guia rápido</span>
+    <h1>Como usar o Relationship</h1>
+    <p class="lead">Cria o HTML dos emails do teu hotel e cola-o no HostPMS. Este manual leva-te do zero ao email pronto a enviar em poucos minutos.</p>
+    <div class="toc">
+      <a href="#modulos"><span class="n">·</span> Os dois módulos</a>
+      <a href="#ecra"><span class="n">·</span> O ecrã</a>
+      <a href="#passos"><span class="n">1–8</span> Passo a passo</a>
+      <a href="#pms"><span class="n">·</span> Copiar para o PMS</a>
+      <a href="#dicas"><span class="n">·</span> Dicas</a>
+    </div>
+  </header>
+
+  <!-- ============ OS DOIS MÓDULOS ============ -->
+  <section id="modulos">
+    <h2><span class="ix">◆</span> Antes de começar: os dois módulos</h2>
+    <p class="sub">O HostPMS tem <b>dois sítios diferentes</b> para emails, cada um com as suas tags. Saber qual estás a fazer é o mais importante — o resto é fácil.</p>
+
+    <figure>
+      <svg viewBox="0 0 720 296" xmlns="http://www.w3.org/2000/svg" font-family="Poppins,sans-serif">
+        <!-- projeto -->
+        <rect x="255" y="16" width="210" height="58" rx="12" fill="#eaf1ff" stroke="#cfe0ff"/>
+        <text x="360" y="42" text-anchor="middle" font-size="15" font-weight="700" fill="#15202e">Projeto = o Hotel</text>
+        <text x="360" y="61" text-anchor="middle" font-size="11.5" fill="#5c6b7f">marca, logótipo e contactos partilhados</text>
+        <!-- connectors -->
+        <path d="M330 74 L190 108" stroke="#c4cdda" stroke-width="2" fill="none"/>
+        <path d="M390 74 L530 108" stroke="#c4cdda" stroke-width="2" fill="none"/>
+        <!-- left card: relationship email -->
+        <rect x="26" y="110" width="316" height="168" rx="14" fill="#fff" stroke="#e5e9f1"/>
+        <rect x="26" y="110" width="316" height="4" rx="2" fill="#0667ff"/>
+        <rect x="44" y="128" width="150" height="22" rx="11" fill="#eaf1ff"/>
+        <text x="56" y="143" font-size="11" font-weight="700" fill="#0667ff">RELATIONSHIP EMAIL</text>
+        <text x="44" y="176" font-size="13.5" font-weight="600" fill="#15202e">Ciclo de estadia (automáticos)</text>
+        <text x="44" y="198" font-size="12" fill="#5c6b7f">Disparados por evento: NEW, BEFORE-</text>
+        <text x="44" y="214" font-size="12" fill="#5c6b7f">CHECKIN, AFTER-CHECKOUT…</text>
+        <text x="44" y="240" font-size="12" fill="#5c6b7f">Tags:</text>
+        <rect x="80" y="229" width="86" height="19" rx="5" fill="#eaf1ff" stroke="#cfe0ff"/>
+        <text x="90" y="242" font-size="11.5" font-family="Consolas,monospace" fill="#0048c7">@TAGNAME@</text>
+        <text x="44" y="266" font-size="11" fill="#8a94a3">PMS: Utilitários → Relationship Email</text>
+        <!-- right card: template email -->
+        <rect x="378" y="110" width="316" height="168" rx="14" fill="#fff" stroke="#e5e9f1"/>
+        <rect x="378" y="110" width="316" height="4" rx="2" fill="#d99213"/>
+        <rect x="396" y="128" width="128" height="22" rx="11" fill="#fef3c7"/>
+        <text x="408" y="143" font-size="11" font-weight="700" fill="#b45309">TEMPLATE EMAIL</text>
+        <text x="396" y="176" font-size="13.5" font-weight="600" fill="#15202e">Modelos livres</text>
+        <text x="396" y="198" font-size="12" fill="#5c6b7f">Confirmação, cotação, pagamento,</text>
+        <text x="396" y="214" font-size="12" fill="#5c6b7f">faturas… sobre reservas.</text>
+        <text x="396" y="240" font-size="12" fill="#5c6b7f">Tags:</text>
+        <rect x="432" y="229" width="104" height="19" rx="5" fill="#fef3c7" stroke="#f4d489"/>
+        <text x="442" y="242" font-size="11.5" font-family="Consolas,monospace" fill="#b45309">@Model[0]…</text>
+        <text x="396" y="266" font-size="11" fill="#8a94a3">PMS: Config. Geral → Modelos de E-mail</text>
+      </svg>
+      <figcaption>Um projeto é o hotel; cada template pertence a um dos dois módulos.</figcaption>
+    </figure>
+
+    <div class="mods">
+      <div class="mod blue">
+        <span class="badge">✉ Relationship Email</span>
+        <h3>Emails automáticos do ciclo</h3>
+        <ul>
+          <li>Usa tags <span class="tag blue">@TAGNAME@</span> (ex.: <span class="tag blue">@GUESTNAME@</span>)</li>
+          <li>Um por evento: <b>NEW, BEFORE-CHECKIN, CHECKOUT…</b></li>
+          <li>No PMS: <b>Utilitários → Relationship Email</b></li>
+        </ul>
+      </div>
+      <div class="mod amber">
+        <span class="badge">▤ Template Email</span>
+        <h3>Modelos livres sobre reservas</h3>
+        <ul>
+          <li>Usa tags <span class="tag amber">@Model[0].Campo</span></li>
+          <li>Confirmação, cotação, pagamento, <b>faturas</b>…</li>
+          <li>No PMS: <b>Config. Geral → Relacionamento com o hóspede → Modelos de E-mail</b></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ O ECRÃ ============ -->
+  <section id="ecra">
+    <h2><span class="ix">▦</span> O ecrã, de relance</h2>
+    <p class="sub">Três colunas: <b>os teus templates</b> à esquerda, a <b>pré-visualização ao vivo</b> ao centro e o <b>editor</b> à direita. Em cima, os idiomas e o botão de exportar.</p>
+    <figure>
+      <svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" font-family="Poppins,sans-serif">
+        <rect x="0" y="0" width="720" height="380" rx="12" fill="#f4f6fb"/>
+        <!-- topbar -->
+        <rect x="10" y="10" width="700" height="42" rx="9" fill="#fff" stroke="#e5e9f1"/>
+        <circle cx="30" cy="31" r="8" fill="#eaf1ff"/><rect x="44" y="25" width="70" height="12" rx="3" fill="#dfe6f1"/>
+        <!-- idiomas -->
+        <rect x="300" y="19" width="150" height="24" rx="12" fill="#f3f5f9" stroke="#e5e9f1"/>
+        <rect x="304" y="22" width="30" height="18" rx="9" fill="#0667ff"/><text x="319" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">EN</text>
+        <text x="352" y="35" font-size="10" fill="#5c6b7f">ES  FR  PT  DE  IT</text>
+        <!-- copiar -->
+        <rect x="596" y="18" width="106" height="26" rx="8" fill="#0667ff"/><text x="649" y="35" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">Copiar p/ PMS</text>
+        <!-- left sidebar -->
+        <rect x="10" y="62" width="196" height="306" rx="10" fill="#fff" stroke="#e5e9f1"/>
+        <text x="24" y="84" font-size="10" font-weight="700" letter-spacing="1" fill="#8a94a3">TEMPLATES</text>
+        <rect x="22" y="92" width="172" height="26" rx="7" fill="#f3f5f9" stroke="#e5e9f1"/><text x="32" y="109" font-size="10.5" fill="#8a94a3">⌕ Filtrar por código…</text>
+        <!-- group 1 -->
+        <rect x="22" y="126" width="172" height="22" rx="6" fill="#eaf1ff"/><text x="32" y="141" font-size="10.5" font-weight="700" fill="#0667ff">✉ RELATIONSHIP EMAIL</text>
+        <rect x="26" y="152" width="164" height="30" rx="7" fill="#fff" stroke="#eef1f6"/><text x="36" y="165" font-size="10.5" font-family="Consolas,monospace" font-weight="700" fill="#15202e">NEW</text><text x="36" y="177" font-size="9.5" fill="#8a94a3">Confirmação de reserva</text>
+        <!-- group 2 -->
+        <rect x="22" y="190" width="172" height="22" rx="6" fill="#fef3c7"/><text x="32" y="205" font-size="10.5" font-weight="700" fill="#b45309">▤ TEMPLATE EMAIL</text>
+        <rect x="26" y="216" width="164" height="30" rx="7" fill="#eef5ff" stroke="#cfe0ff"/><text x="36" y="229" font-size="10.5" font-family="Consolas,monospace" font-weight="700" fill="#0048c7">CONFIRMATIONLETTER</text><text x="36" y="241" font-size="9.5" fill="#8a94a3">Carta de Confirmação</text>
+        <!-- center preview -->
+        <rect x="214" y="62" width="288" height="306" rx="10" fill="#fff" stroke="#e5e9f1"/>
+        <rect x="214" y="62" width="288" height="24" rx="10" fill="#f3f5f9"/><text x="228" y="78" font-size="10" font-weight="600" fill="#5c6b7f">PRÉ-VISUALIZAÇÃO AO VIVO</text>
+        <rect x="246" y="100" width="224" height="60" rx="6" fill="#dfe6f1"/>
+        <rect x="246" y="170" width="150" height="14" rx="3" fill="#15202e"/>
+        <rect x="246" y="192" width="224" height="8" rx="4" fill="#e5e9f1"/><rect x="246" y="206" width="200" height="8" rx="4" fill="#e5e9f1"/>
+        <rect x="246" y="226" width="224" height="70" rx="8" fill="#f7f9fc" stroke="#eef1f6"/>
+        <rect x="258" y="238" width="60" height="8" rx="4" fill="#cfd8e6"/><rect x="398" y="238" width="60" height="8" rx="4" fill="#0667ff"/>
+        <rect x="258" y="258" width="60" height="8" rx="4" fill="#cfd8e6"/><rect x="398" y="258" width="60" height="8" rx="4" fill="#dfe6f1"/>
+        <rect x="258" y="278" width="60" height="8" rx="4" fill="#cfd8e6"/><rect x="398" y="278" width="60" height="8" rx="4" fill="#dfe6f1"/>
+        <!-- right editor -->
+        <rect x="510" y="62" width="200" height="306" rx="10" fill="#fff" stroke="#e5e9f1"/>
+        <rect x="520" y="72" width="60" height="22" rx="7" fill="#0667ff"/><text x="550" y="87" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Conteúdo</text>
+        <text x="592" y="87" font-size="10" fill="#8a94a3">Tags</text><text x="640" y="87" font-size="10" fill="#8a94a3">Estilo</text>
+        <rect x="520" y="104" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="123" font-size="10.5" fill="#5c6b7f">▤ Definições do PMS</text>
+        <rect x="520" y="140" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="159" font-size="10.5" fill="#5c6b7f">✉ Assunto &amp; idioma</text>
+        <rect x="520" y="176" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="195" font-size="10.5" fill="#5c6b7f">⚡ Tags rápidas</text>
+        <rect x="520" y="212" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="231" font-size="10.5" fill="#5c6b7f">▤ Caixa de dados</text>
+        <rect x="520" y="248" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="267" font-size="10.5" fill="#5c6b7f">≡ Contactos (rodapé)</text>
+        <!-- callout pins -->
+        <g font-size="12" font-weight="700">
+          <circle cx="319" cy="31" r="11" fill="#15202e"/><text x="319" y="35" text-anchor="middle" fill="#fff">1</text>
+          <circle cx="649" cy="31" r="11" fill="#15202e"/><text x="649" y="35" text-anchor="middle" fill="#fff">2</text>
+          <circle cx="108" cy="137" r="11" fill="#15202e"/><text x="108" y="141" text-anchor="middle" fill="#fff">3</text>
+          <circle cx="358" cy="74" r="11" fill="#15202e"/><text x="358" y="78" text-anchor="middle" fill="#fff">4</text>
+          <circle cx="610" cy="83" r="11" fill="#15202e"/><text x="610" y="87" text-anchor="middle" fill="#fff">5</text>
+        </g>
+      </svg>
+      <figcaption><b>1</b> Idiomas · <b>2</b> Copiar p/ PMS · <b>3</b> Os teus templates (dois módulos + filtro) · <b>4</b> Pré-visualização ao vivo · <b>5</b> Editor (Conteúdo · Tags · Estilo)</figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ PASSO A PASSO ============ -->
+  <section id="passos">
+    <h2><span class="ix">➜</span> Passo a passo</h2>
+    <p class="sub">Do hotel novo até ao email pronto a colar no PMS.</p>
+    <div class="steps">
+
+      <div class="step"><div class="num">1</div><div>
+        <h3>Criar o projeto (o hotel)</h3>
+        <p>No ecrã de entrada: <b>Novo Projeto</b> → escreve o nome do hotel. Se quiseres, cola o <b>website</b> e carrega <b>Analisar</b> — a IA capta o logótipo, as cores e os contactos automaticamente.</p>
+        <p>Escolhe já que templates queres criar, dos <b>dois módulos</b>. Podes acrescentar mais depois.</p>
+      </div></div>
+
+      <div class="step"><div class="num">2</div><div>
+        <h3>Escolher um template</h3>
+        <p>Na barra lateral, os templates estão em dois grupos: <span class="tag blue">Relationship Email</span> e <span class="tag amber">Template Email</span>. O <b>código</b> (ex.: <code>NEW</code>) é o nome principal; a descrição fica por baixo.</p>
+        <p>Usa o <b>filtro</b> no topo para procurar por código ou descrição, ou o <b>+</b> de cada grupo para criar um novo.</p>
+      </div></div>
+
+      <div class="step"><div class="num">3</div><div>
+        <h3>Editar o conteúdo</h3>
+        <p>No painel direito, separador <b>Conteúdo</b>: preenche o <b>Assunto</b>, a <b>Caixa de dados</b> (o resumo da reserva) e o <b>Corpo</b>. Arrasta peças — <b>Título, Parágrafo, Botão, Imagem, Sub-modelo</b> — e reordena pelo <b>⠿</b>.</p>
+        <p>Tudo atualiza a pré-visualização ao centro em tempo real. Dica: carrega em <b>Editar à vista</b> (o lápis) para clicar diretamente no email.</p>
+      </div></div>
+
+      <div class="step"><div class="num">4</div><div>
+        <h3>Inserir as tags certas</h3>
+        <p>Clica num campo e depois numa tag em <b>Tags rápidas</b> ou no separador <b>Tags</b> — entra no sítio do cursor. A app só mostra as tags <b>válidas para aquele módulo e fonte de dados</b>, por isso não te enganas.</p>
+      </div></div>
+
+      <div class="step"><div class="num">5</div><div>
+        <h3>Traduzir para os outros idiomas</h3>
+        <p>Em cima tens os separadores <b>EN · ES · FR · PT · DE · IT</b> (a mesma ordem do PMS). Escreve em PT e depois usa <b>Traduzir com IA</b> para preencher cada idioma. Para gerar ou reescrever texto de raiz, usa <b>Texto com IA</b> e escolhe o tom (divertido, casual, neutro ou profissional).</p>
+      </div></div>
+
+      <div class="step"><div class="num">6</div><div>
+        <h3>Afinar o aspeto</h3>
+        <p>No separador <b>Estilo</b> escolhes o <b>design</b>, a <b>paleta</b>, o <b>tipo de letra</b>, o <b>logótipo</b> e a <b>imagem de topo</b>. <b>Aplicar marca a todo o projeto</b> propaga o logótipo e os contactos a todos os templates do hotel de uma vez.</p>
+      </div></div>
+
+      <div class="step"><div class="num">7</div><div>
+        <h3>Copiar para o PMS</h3>
+        <p>Carrega em <b>Copiar p/ PMS</b> (canto superior direito). Copia o <b>Assunto</b> e o <b>HTML</b> desse idioma. Nos Template Email recebes também a ficha completa dos campos do PMS, prontos a colar. Ver o detalhe na secção seguinte.</p>
+      </div></div>
+
+      <div class="step"><div class="num">8</div><div>
+        <h3>Repetir por idioma</h3>
+        <p>Cada idioma tem o seu próprio HTML. Se envias em vários idiomas, faz <b>Copiar p/ PMS</b> em cada separador e cola no separador de idioma correspondente no PMS.</p>
+      </div></div>
+
+    </div>
+  </section>
+
+  <!-- ============ COPIAR PARA O PMS ============ -->
+  <section id="pms">
+    <h2><span class="ix">⧉</span> Copiar para o PMS</h2>
+    <p class="sub">A janela <b>Copiar p/ PMS</b> mostra tudo o que precisas de colar, por ordem.</p>
+
+    <figure>
+      <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" font-family="Poppins,sans-serif">
+        <!-- janela app -->
+        <rect x="12" y="14" width="360" height="222" rx="12" fill="#fff" stroke="#e5e9f1"/>
+        <text x="32" y="42" font-size="13" font-weight="700" fill="#15202e">Copiar p/ PMS</text>
+        <!-- barra do código -->
+        <rect x="32" y="54" width="320" height="40" rx="9" fill="#f3f5f9" stroke="#e5e9f1"/>
+        <rect x="32" y="54" width="3" height="40" rx="2" fill="#0667ff"/>
+        <text x="46" y="70" font-size="8.5" font-weight="700" letter-spacing="1" fill="#8a94a3">TEMPLATE NO PMS</text>
+        <text x="46" y="86" font-size="13" font-weight="700" font-family="Consolas,monospace" fill="#15202e">CONFIRMATIONLETTER</text>
+        <!-- assunto -->
+        <text x="32" y="116" font-size="10" font-weight="600" fill="#5c6b7f">1 · Assunto</text>
+        <rect x="32" y="122" width="320" height="26" rx="7" fill="#f7f9fc" stroke="#e5e9f1"/><text x="42" y="139" font-size="10.5" fill="#8a94a3">Reserva confirmada — @Model[0].HotelName1</text>
+        <!-- html -->
+        <text x="32" y="168" font-size="10" font-weight="600" fill="#5c6b7f">2 · HTML</text>
+        <rect x="32" y="174" width="320" height="40" rx="7" fill="#15202e"/>
+        <text x="42" y="190" font-size="9" font-family="Consolas,monospace" fill="#8fd0ff">&lt;table&gt; … &lt;/table&gt;</text>
+        <rect x="250" y="220" width="102" height="10" rx="5" fill="#0667ff" opacity="0"/>
+        <!-- botao copiar -->
+        <rect x="252" y="182" width="90" height="24" rx="7" fill="#0667ff"/><text x="297" y="198" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">⧉ Copiar HTML</text>
+        <!-- seta -->
+        <path d="M384 125 L432 125" stroke="#0667ff" stroke-width="2.5" fill="none" marker-end="url(#ah)"/>
+        <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0 0 L7 3 L0 6 z" fill="#0667ff"/></marker></defs>
+        <!-- janela PMS -->
+        <rect x="446" y="14" width="262" height="222" rx="12" fill="#fff" stroke="#e5e9f1"/>
+        <rect x="446" y="14" width="262" height="30" rx="12" fill="#f3f5f9"/>
+        <text x="462" y="34" font-size="11" font-weight="700" fill="#5c6b7f">HostPMS · Modelos de E-mail</text>
+        <text x="462" y="66" font-size="10" fill="#8a94a3">Assunto</text>
+        <rect x="462" y="72" width="230" height="22" rx="6" fill="#f7f9fc" stroke="#e5e9f1"/>
+        <text x="462" y="112" font-size="10" fill="#8a94a3">Texto  ·  botão &lt;&gt; Código fonte</text>
+        <rect x="462" y="118" width="230" height="100" rx="7" fill="#f7f9fc" stroke="#e5e9f1"/>
+        <text x="474" y="136" font-size="9" font-family="Consolas,monospace" fill="#5c6b7f">cola aqui o HTML ↵</text>
+        <rect x="474" y="146" width="180" height="7" rx="3" fill="#e5e9f1"/>
+        <rect x="474" y="160" width="206" height="7" rx="3" fill="#e5e9f1"/>
+        <rect x="474" y="174" width="150" height="7" rx="3" fill="#e5e9f1"/>
+      </svg>
+      <figcaption>Copia o Assunto e o HTML da app → cola no separador do idioma certo, no PMS.</figcaption>
+    </figure>
+
+    <div class="note warn"><span class="ico">⚠</span><div><b>Ao atualizar um template já existente no PMS:</b> apaga primeiro o HTML antigo do campo <b>Texto</b> (botão <code>&lt;&gt;</code> Código fonte) e cola o novo por cima. Não colar por cima sem apagar.</div></div>
+    <div class="note tip"><span class="ico">✓</span><div>O HTML dos <b>Template Email</b> sai já preparado para o motor do PMS (as tags <span class="tag amber">@Model[0]…</span> ficam intactas e os restantes <code>@</code> são tratados automaticamente). Não precisas de mexer no código.</div></div>
+  </section>
+
+  <!-- ============ DICAS ============ -->
+  <section id="dicas">
+    <h2><span class="ix">★</span> Boas práticas</h2>
+    <div class="card">
+      <div class="steps" style="gap:12px">
+        <div class="step" style="box-shadow:none;border:0;padding:0"><div class="num" style="background:var(--navy)">◷</div><div>
+          <h3>Guarda-se sozinho</h3>
+          <p>O trabalho é guardado na cloud automaticamente — vês <b>Cloud · sincronizado</b> no topo. Não há botão de gravar.</p>
+        </div></div>
+        <div class="step" style="box-shadow:none;border:0;padding:0"><div class="num" style="background:var(--navy)">#</div><div>
+          <h3>Um código, um template</h3>
+          <p>O <b>código</b> é o identificador no PMS. Não repitas o mesmo código no mesmo módulo — se acontecer, a app marca-o a <b>vermelho</b> e avisa.</p>
+        </div></div>
+        <div class="step" style="box-shadow:none;border:0;padding:0"><div class="num" style="background:var(--navy)">⧉</div><div>
+          <h3>Sub-modelos</h3>
+          <p>Para reaproveitar um bloco (ex.: uma assinatura), inclui-o com <code>@@@CODIGO(0)</code>. O sub-modelo é só o corpo — a moldura vem do template principal.</p>
+        </div></div>
+        <div class="step" style="box-shadow:none;border:0;padding:0"><div class="num" style="background:var(--navy)">✎</div><div>
+          <h3>Começar por inspiração</h3>
+          <p><b>Gerar template</b> cria um design novo com ajuda da IA; a <b>Galeria de modelos</b> tem temas prontos (Natal, Páscoa, Passagem de Ano…) para adaptares.</p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Relationship · Host Hotel Systems</span>
+    <a class="btn primary" href="../index.html">Abrir a app →</a>
+  </footer>
+
+</div>
+</body>
+</html>
