@@ -1316,7 +1316,13 @@ function fragmentHTML(o){
   ).join("\n");
   return renderBodyEditable(o.body,0,renderB,o);
 }
-function houseHTML(o){ o=o||{}; o.palette=o.palette||PALETTES.azul; if(o.fragment) return fragmentHTML(o); return (DESIGNS[o.design]||designModerno)(o); }
+function houseHTML(o){ o=o||{}; o.palette=o.palette||PALETTES.azul;
+  let html = o.fragment ? fragmentHTML(o) : (DESIGNS[o.design]||designModerno)(o);
+  /* O nome comercial no cabeçalho/rodapé é @COMMERCIALNAME@ (token do Relationship Email).
+     No Template Email o motor é Razor e esse token parte a análise → troca-se pela tag da fonte. */
+  if(o.nameTag && o.nameTag!=="@COMMERCIALNAME@") html=html.split("@COMMERCIALNAME@").join(o.nameTag);
+  return html;
+}
 
 
 /* ===== Galeria atual: modelos RelationshipEmail no estilo da casa (tokens @TAGNAME@) ===== */
@@ -1669,6 +1675,7 @@ function buildEmail(lang, editable, forExport){
     const bh=(t.brand&&t.brand.hero)||"";
     const hero=isSub?"":((bh&&bh!==DEFAULT_HERO)?bh:(forExport?"":DEFAULT_HERO));
     return houseHTML({ fragment:!!isSub, design:t.design||"moderno", font:t.font||"sans", lang:lang, palette: shadedPalette(pal(t.palette), t.shade), width: (t.settings&&t.settings.width)||0,
+      nameTag: tkind(t)==="pms" ? "@Model[0].HotelName1" : "@COMMERCIALNAME@",
       logo:isSub?"":((t.brand&&t.brand.logo)||""), hero:hero, contacts:isSub?null:(t.contacts||null), data:isSub?[]:(L.data||[]), body:L.body||[], editable: editable===true });
   }
   const s=t.settings; const L=t[lang];
@@ -2451,11 +2458,32 @@ function closeModal(){ $("modalBg").classList.remove("show"); }
 /* Converte caracteres fora do ASCII (ç ã é ü ß …) em entidades numéricas — o HTML fica
    imune a sistemas de envio que não preservam UTF-8 (motores de email legados). */
 function toEntities(html){ return (html||"").replace(/[\u0080-\uFFFF]/g, c=>"&#"+c.charCodeAt(0)+";"); }
+/* Razor-safe: no Template Email o motor do PMS \u00E9 Razor, onde um '@' literal tem de ser '@@'.
+   S\u00F3 as tags nativas @Model[0]... e os sub-modelos @@@CODIGO(0) ficam com '@' simples.
+   Protege emails de contacto (reservas@hotel.pt) e qualquer '@' escrito \u00E0 m\u00E3o no texto. */
+function razorSafe(s){
+  s=(s==null?"":String(s));
+  let out="", i=0, n=s.length;
+  while(i<n){
+    if(s[i]==="@"){
+      if(s.startsWith("@@@",i)){ out+="@@@"; i+=3; continue; }          // sub-modelo: @@ literal + @expr
+      if(s.startsWith("@@",i)){ out+="@@"; i+=2; continue; }             // j\u00E1 escapado
+      if(/^@Model\[0\]/.test(s.slice(i))){ out+="@"; i+=1; continue; }   // express\u00E3o Razor nativa
+      out+="@@"; i+=1; continue;                                         // '@' solto \u2192 escapa
+    }
+    out+=s[i]; i++;
+  }
+  return out;
+}
 function openExport(){
   const lang=state.lang;
-  const html=toEntities(buildEmail(lang,false,true));
-  const subject=curLang().subject;
   const t=cur(), K=kinfo(t), isPms=tkind(t)==="pms";
+  /* Template Email = motor Razor \u2192 escapa '@' soltos; Relationship Email usa outro motor, fica intocado. */
+  let rawHtml=buildEmail(lang,false,true);
+  if(isPms) rawHtml=razorSafe(rawHtml);
+  const html=toEntities(rawHtml);
+  let subject=curLang().subject;
+  if(isPms) subject=razorSafe(subject);
   /* Nos modelos do PMS há mais campos a preencher além do assunto+HTML — damos a ficha toda. */
   let fichaI="";
   if(isPms){
