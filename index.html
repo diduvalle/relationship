@@ -334,12 +334,13 @@
   /* topbar em grelha: as 3 zonas têm as larguras das 3 colunas — as linhas verticais continuam pelo header */
   .topbar{display:grid;grid-template-columns:250px minmax(0,1fr) 340px;padding:0;gap:0}
   .tb-zone{display:flex;align-items:center;height:100%;min-width:0}
-  .tb-l{padding:0 16px;border-right:1px solid var(--line)}
+  .tb-l{padding:0 12px 0 16px;border-right:1px solid var(--line);justify-content:space-between;gap:8px}
   .tb-c{padding:0 18px;gap:12px}
   .tb-r{padding:0 16px;gap:10px;border-left:1px solid var(--line);justify-content:flex-end}
-  .tb-help{text-decoration:none;gap:6px}
-  .tb-help:hover{text-decoration:none}
-  @media (max-width:1200px){ .tb-help .tb-help-t{display:none} }
+  /* Ajuda = ícone «?» discreto junto ao logótipo (a zona direita já está cheia) */
+  .tb-help{flex:0 0 auto;width:34px;height:34px;padding:0;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);text-decoration:none}
+  .tb-help:hover{text-decoration:none;color:var(--accent);border-color:var(--accent)}
+  .tb-help svg{width:16px;height:16px}
   .tb-doc{display:flex;align-items:center;gap:9px;min-width:0;flex:1 1 auto;overflow:hidden}
   /* CÓDIGO em cima (é o nome no PMS), descrição por baixo — empilhados para o seletor de idiomas nunca ser cortado */
   .tb-id{display:flex;flex-direction:column;justify-content:center;gap:0;min-width:0;flex:1 1 auto}
@@ -488,6 +489,7 @@
           <span class="byhost">by Host Hotel Systems</span>
         </span>
       </div>
+      <a class="btn ghost tb-help" href="howto/" target="_blank" rel="noopener" title="Como usar — abre o manual num separador novo" aria-label="Ajuda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></a>
     </div>
     <div class="tb-zone tb-c">
       <div class="tb-doc">
@@ -512,10 +514,6 @@
       </div>
     </div>
     <div class="tb-zone tb-r">
-      <a class="btn ghost tb-help" href="howto/" target="_blank" rel="noopener" title="Como usar a plataforma — abre o manual num separador novo" aria-label="Ajuda">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        <span class="tb-help-t">Ajuda</span>
-      </a>
       <button class="btn ghost" id="btnPreview" title="Ver o email em grande, com todos os idiomas">👁 Pré-visualizar</button>
       <button class="btn primary" id="btnExport" title="Obter o Assunto + HTML para colar no PMS">⤓ Copiar p/ PMS</button>
     </div>
