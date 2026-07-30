@@ -53,7 +53,8 @@
 
   section{margin-top:44px;scroll-margin-top:80px}
   h2{font-size:23px;font-weight:700;color:var(--navy);margin:0 0 6px;letter-spacing:-.2px;display:flex;align-items:center;gap:11px}
-  h2 .ix{flex:0 0 auto;width:30px;height:30px;border-radius:9px;background:var(--chip);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+  h2 .ix{flex:0 0 auto;width:32px;height:32px;border-radius:9px;background:var(--chip);color:var(--accent);display:inline-flex;align-items:center;justify-content:center}
+  h2 .ix svg{width:17px;height:17px}
   .sub{color:var(--muted);margin:0 0 18px;font-size:14.5px}
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-card);padding:22px 24px}
@@ -145,7 +146,7 @@
 
   <!-- ============ OS DOIS MÓDULOS ============ -->
   <section id="modulos">
-    <h2><span class="ix">◆</span> Antes de começar: os dois módulos</h2>
+    <h2><span class="ix"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span> Antes de começar: os dois módulos</h2>
     <p class="sub">O HostPMS tem <b>dois sítios diferentes</b> para emails, cada um com as suas tags. Saber qual estás a fazer é o mais importante — o resto é fácil.</p>
 
     <figure>
@@ -154,9 +155,11 @@
         <rect x="255" y="16" width="210" height="58" rx="12" fill="#eaf1ff" stroke="#cfe0ff"/>
         <text x="360" y="42" text-anchor="middle" font-size="15" font-weight="700" fill="#15202e">Projeto = o Hotel</text>
         <text x="360" y="61" text-anchor="middle" font-size="11.5" fill="#5c6b7f">marca, logótipo e contactos partilhados</text>
-        <!-- connectors -->
-        <path d="M330 74 L190 108" stroke="#c4cdda" stroke-width="2" fill="none"/>
-        <path d="M390 74 L530 108" stroke="#c4cdda" stroke-width="2" fill="none"/>
+        <!-- connectors: haste central + dois ramos suaves com a cor de cada módulo -->
+        <path d="M360 74 L360 91" stroke="#cbd5e3" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M360 91 C360 103 184 98 184 110" stroke="#9cc0ff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M360 91 C360 103 536 98 536 110" stroke="#eecb8a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <circle cx="360" cy="91" r="3.2" fill="#cbd5e3"/>
         <!-- left card: relationship email -->
         <rect x="26" y="110" width="316" height="168" rx="14" fill="#fff" stroke="#e5e9f1"/>
         <rect x="26" y="110" width="316" height="4" rx="2" fill="#0667ff"/>
@@ -209,7 +212,7 @@
 
   <!-- ============ O ECRÃ ============ -->
   <section id="ecra">
-    <h2><span class="ix">▦</span> O ecrã, de relance</h2>
+    <h2><span class="ix"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span> O ecrã, de relance</h2>
     <p class="sub">Três colunas: <b>os teus templates</b> à esquerda, a <b>pré-visualização ao vivo</b> ao centro e o <b>editor</b> à direita. Em cima, os idiomas e o botão de exportar.</p>
     <figure>
       <svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" font-family="Poppins,sans-serif">
@@ -252,13 +255,13 @@
         <rect x="520" y="176" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="195" font-size="10.5" fill="#5c6b7f">⚡ Tags rápidas</text>
         <rect x="520" y="212" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="231" font-size="10.5" fill="#5c6b7f">▤ Caixa de dados</text>
         <rect x="520" y="248" width="180" height="30" rx="7" fill="#f7f9fc" stroke="#eef1f6"/><text x="532" y="267" font-size="10.5" fill="#5c6b7f">≡ Contactos (rodapé)</text>
-        <!-- callout pins -->
-        <g font-size="12" font-weight="700">
-          <circle cx="319" cy="31" r="11" fill="#15202e"/><text x="319" y="35" text-anchor="middle" fill="#fff">1</text>
-          <circle cx="649" cy="31" r="11" fill="#15202e"/><text x="649" y="35" text-anchor="middle" fill="#fff">2</text>
-          <circle cx="108" cy="137" r="11" fill="#15202e"/><text x="108" y="141" text-anchor="middle" fill="#fff">3</text>
-          <circle cx="358" cy="74" r="11" fill="#15202e"/><text x="358" y="78" text-anchor="middle" fill="#fff">4</text>
-          <circle cx="610" cy="83" r="11" fill="#15202e"/><text x="610" y="87" text-anchor="middle" fill="#fff">5</text>
+        <!-- callout pins: em zonas livres, com anel branco para não taparem texto -->
+        <g font-size="11.5" font-weight="700">
+          <circle cx="285" cy="31" r="11" fill="#15202e" stroke="#fff" stroke-width="2"/><text x="285" y="35" text-anchor="middle" fill="#fff">1</text>
+          <circle cx="566" cy="31" r="11" fill="#15202e" stroke="#fff" stroke-width="2"/><text x="566" y="35" text-anchor="middle" fill="#fff">2</text>
+          <circle cx="186" cy="80" r="11" fill="#15202e" stroke="#fff" stroke-width="2"/><text x="186" y="84" text-anchor="middle" fill="#fff">3</text>
+          <circle cx="486" cy="74" r="11" fill="#15202e" stroke="#fff" stroke-width="2"/><text x="486" y="78" text-anchor="middle" fill="#fff">4</text>
+          <circle cx="698" cy="83" r="11" fill="#15202e" stroke="#fff" stroke-width="2"/><text x="698" y="87" text-anchor="middle" fill="#fff">5</text>
         </g>
       </svg>
       <figcaption><b>1</b> Idiomas · <b>2</b> Copiar p/ PMS · <b>3</b> Os teus templates (dois módulos + filtro) · <b>4</b> Pré-visualização ao vivo · <b>5</b> Editor (Conteúdo · Tags · Estilo)</figcaption>
@@ -267,7 +270,7 @@
 
   <!-- ============ PASSO A PASSO ============ -->
   <section id="passos">
-    <h2><span class="ix">➜</span> Passo a passo</h2>
+    <h2><span class="ix"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a3 3 0 0 0 3-3V8"/></svg></span> Passo a passo</h2>
     <p class="sub">Do hotel novo até ao email pronto a colar no PMS.</p>
     <div class="steps">
 
@@ -319,7 +322,7 @@
 
   <!-- ============ COPIAR PARA O PMS ============ -->
   <section id="pms">
-    <h2><span class="ix">⧉</span> Copiar para o PMS</h2>
+    <h2><span class="ix"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span> Copiar para o PMS</h2>
     <p class="sub">A janela <b>Copiar p/ PMS</b> mostra tudo o que precisas de colar, por ordem.</p>
 
     <figure>
@@ -367,7 +370,7 @@
 
   <!-- ============ DICAS ============ -->
   <section id="dicas">
-    <h2><span class="ix">★</span> Boas práticas</h2>
+    <h2><span class="ix"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 5.9 6.5.95-4.7 4.58 1.1 6.47L12 17.9 6.2 20.9l1.1-6.47L2.6 9.85l6.5-.95L12 2.5Z"/></svg></span> Boas práticas</h2>
     <div class="card">
       <div class="steps" style="gap:12px">
         <div class="step" style="box-shadow:none;border:0;padding:0"><div class="num" style="background:var(--navy)">◷</div><div>
