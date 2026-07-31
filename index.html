@@ -985,8 +985,11 @@ async function cloudLoad(){
     if(local && local.length){ state.projects=local; for(const p of state.projects){ await cloudSyncProject(p); } toast("Projetos migrados para a cloud ✓"); }
     else { const p=newProject("Hotel exemplo"); state.projects=[p]; await cloudSyncProject(p); }
   }
-  state.currentProjectId=state.projects[0].id;
-  state.currentTemplateId=(state.projects[0].templates[0]||{}).id;
+  /* Abrir sempre no PRIMEIRO projeto da lista (ordem alfabética, tal como aparece na barra lateral),
+     em vez de projects[0] — que vinha ordenado por updated_at e caía num projeto arbitrário. */
+  const firstShown=state.projects.slice().sort((a,b)=>(a.hotel||"").localeCompare(b.hotel||"","pt",{sensitivity:"base"}))[0];
+  state.currentProjectId=firstShown.id;
+  state.currentTemplateId=(firstShown.templates[0]||{}).id;
 }
 function updateCloudBadge(){ const b=document.getElementById("cloudBadge"); if(!b) return; b.style.display="flex"; b.innerHTML='<span class="cb-dot"></span><span class="cb-mail">Cloud</span>'; }
 async function bootstrap(){
