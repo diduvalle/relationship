@@ -81,21 +81,31 @@
   .note.warn{background:var(--amberbg);border:1px solid var(--amberln);color:#8a4b09}
   .note b{font-weight:700}
 
-  /* Duas colunas de módulo */
-  .mods{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}
-  .mod{border-radius:var(--radius);padding:18px 18px 16px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--sh-sm)}
-  .mod.blue{border-top:3px solid var(--accent)}
-  .mod.amber{border-top:3px solid #d99213}
-  .mod .badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:4px 9px;border-radius:999px;margin-bottom:10px}
-  .mod.blue .badge{background:var(--chip);color:var(--accent)}
-  .mod.amber .badge{background:var(--amberbg);color:var(--amber)}
-  .mod h3{margin:0 0 8px;font-size:16px;color:var(--navy)}
-  .mod ul{margin:0;padding:0;list-style:none}
-  .mod li{position:relative;padding:5px 0 5px 20px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line)}
-  .mod li:first-child{border-top:0}
-  .mod li:before{content:"";position:absolute;left:2px;top:12px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
-  .mod.amber li:before{background:#d99213}
-  .mod li b{color:var(--txt);font-weight:600}
+  /* Diagrama dos dois módulos: caixa que agrupa (sem linhas soltas) */
+  .diagram{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--sh-card);padding:22px;margin-top:20px}
+  .dg-top{display:flex;align-items:center;gap:13px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .dg-ico{flex:0 0 auto;width:42px;height:42px;border-radius:11px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+  .dg-ico svg{width:21px;height:21px}
+  .dg-title{font-size:16px;font-weight:700;color:var(--navy)}
+  .dg-desc{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.45}
+  .dg-arrow{position:relative;text-align:center;height:46px}
+  .dg-arrow:before{content:"";position:absolute;left:50%;top:0;width:2px;height:46px;background:var(--line);transform:translateX(-50%)}
+  .dg-arrow span{position:relative;z-index:1;display:inline-block;margin-top:12px;background:var(--panel);padding:2px 12px;font-size:11.5px;color:var(--muted)}
+  .dg-split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .dg-card{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--panel)}
+  .dg-card.blue{border-top:3px solid var(--accent)}
+  .dg-card.amber{border-top:3px solid #d99213}
+  .dg-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+  .dg-card.blue .dg-badge{background:var(--chip);color:var(--accent)}
+  .dg-card.amber .dg-badge{background:var(--amberbg);color:var(--amber)}
+  .dg-h{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:9px}
+  .dg-list{list-style:none;margin:0;padding:0}
+  .dg-list li{position:relative;padding:5px 0 5px 18px;font-size:13px;color:var(--muted);line-height:1.5}
+  .dg-list li:before{content:"";position:absolute;left:2px;top:11px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .dg-card.amber .dg-list li:before{background:#d99213}
+  .dg-list b{color:var(--txt);font-weight:600}
+  .dg-ex{color:#9aa4b2;font-size:12px}
+  .dg-foot{margin-top:11px;padding-top:10px;border-top:1px solid var(--line);font-size:11.5px;color:#8a94a3}
 
   footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 
@@ -149,63 +159,34 @@
     <h2><span class="ix"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span> Antes de começar: os dois módulos</h2>
     <p class="sub">O HostPMS tem <b>dois sítios diferentes</b> para emails, cada um com as suas tags. Saber qual estás a fazer é o mais importante — o resto é fácil.</p>
 
-    <figure>
-      <svg viewBox="0 0 720 296" xmlns="http://www.w3.org/2000/svg" font-family="Poppins,sans-serif">
-        <!-- projeto -->
-        <rect x="255" y="16" width="210" height="58" rx="12" fill="#eaf1ff" stroke="#cfe0ff"/>
-        <text x="360" y="42" text-anchor="middle" font-size="15" font-weight="700" fill="#15202e">Projeto = o Hotel</text>
-        <text x="360" y="61" text-anchor="middle" font-size="11.5" fill="#5c6b7f">marca, logótipo e contactos partilhados</text>
-        <!-- connectors: haste central + dois ramos suaves com a cor de cada módulo -->
-        <path d="M360 74 L360 91" stroke="#cbd5e3" stroke-width="2" fill="none" stroke-linecap="round"/>
-        <path d="M360 91 C360 103 184 98 184 110" stroke="#9cc0ff" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-        <path d="M360 91 C360 103 536 98 536 110" stroke="#eecb8a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-        <circle cx="360" cy="91" r="3.2" fill="#cbd5e3"/>
-        <!-- left card: relationship email -->
-        <rect x="26" y="110" width="316" height="168" rx="14" fill="#fff" stroke="#e5e9f1"/>
-        <rect x="26" y="110" width="316" height="4" rx="2" fill="#0667ff"/>
-        <rect x="44" y="128" width="150" height="22" rx="11" fill="#eaf1ff"/>
-        <text x="56" y="143" font-size="11" font-weight="700" fill="#0667ff">RELATIONSHIP EMAIL</text>
-        <text x="44" y="176" font-size="13.5" font-weight="600" fill="#15202e">Ciclo de estadia (automáticos)</text>
-        <text x="44" y="198" font-size="12" fill="#5c6b7f">Disparados por evento: NEW, BEFORE-</text>
-        <text x="44" y="214" font-size="12" fill="#5c6b7f">CHECKIN, AFTER-CHECKOUT…</text>
-        <text x="44" y="240" font-size="12" fill="#5c6b7f">Tags:</text>
-        <rect x="80" y="229" width="86" height="19" rx="5" fill="#eaf1ff" stroke="#cfe0ff"/>
-        <text x="90" y="242" font-size="11.5" font-family="Consolas,monospace" fill="#0048c7">@TAGNAME@</text>
-        <text x="44" y="266" font-size="11" fill="#8a94a3">PMS: Utilitários → Relationship Email</text>
-        <!-- right card: template email -->
-        <rect x="378" y="110" width="316" height="168" rx="14" fill="#fff" stroke="#e5e9f1"/>
-        <rect x="378" y="110" width="316" height="4" rx="2" fill="#d99213"/>
-        <rect x="396" y="128" width="128" height="22" rx="11" fill="#fef3c7"/>
-        <text x="408" y="143" font-size="11" font-weight="700" fill="#b45309">TEMPLATE EMAIL</text>
-        <text x="396" y="176" font-size="13.5" font-weight="600" fill="#15202e">Modelos livres</text>
-        <text x="396" y="198" font-size="12" fill="#5c6b7f">Confirmação, cotação, pagamento,</text>
-        <text x="396" y="214" font-size="12" fill="#5c6b7f">faturas… sobre reservas.</text>
-        <text x="396" y="240" font-size="12" fill="#5c6b7f">Tags:</text>
-        <rect x="432" y="229" width="104" height="19" rx="5" fill="#fef3c7" stroke="#f4d489"/>
-        <text x="442" y="242" font-size="11.5" font-family="Consolas,monospace" fill="#b45309">@Model[0]…</text>
-        <text x="396" y="266" font-size="11" fill="#8a94a3">PMS: Config. Geral → Modelos de E-mail</text>
-      </svg>
-      <figcaption>Um projeto é o hotel; cada template pertence a um dos dois módulos.</figcaption>
-    </figure>
-
-    <div class="mods">
-      <div class="mod blue">
-        <span class="badge">✉ Relationship Email</span>
-        <h3>Emails automáticos do ciclo</h3>
-        <ul>
-          <li>Usa tags <span class="tag blue">@TAGNAME@</span> (ex.: <span class="tag blue">@GUESTNAME@</span>)</li>
-          <li>Um por evento: <b>NEW, BEFORE-CHECKIN, CHECKOUT…</b></li>
-          <li>No PMS: <b>Utilitários → Relationship Email</b></li>
-        </ul>
+    <div class="diagram">
+      <div class="dg-top">
+        <span class="dg-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v15"/><path d="M15 21V10a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v11"/><path d="M8 8h.01M8 11h.01M8 14h.01M11 8h.01M11 11h.01M11 14h.01"/></svg></span>
+        <div>
+          <div class="dg-title">O projeto é o hotel</div>
+          <div class="dg-desc">A marca, o logótipo e os contactos são partilhados por todos os templates deste hotel.</div>
+        </div>
       </div>
-      <div class="mod amber">
-        <span class="badge">▤ Template Email</span>
-        <h3>Modelos livres sobre reservas</h3>
-        <ul>
-          <li>Usa tags <span class="tag amber">@Model[0].Campo</span></li>
-          <li>Confirmação, cotação, pagamento, <b>faturas</b>…</li>
-          <li>No PMS: <b>Config. Geral → Relacionamento com o hóspede → Modelos de E-mail</b></li>
-        </ul>
+      <div class="dg-arrow"><span>cada template é de um destes dois módulos</span></div>
+      <div class="dg-split">
+        <div class="dg-card blue">
+          <span class="dg-badge">✉ Relationship Email</span>
+          <div class="dg-h">Ciclo de estadia — automáticos</div>
+          <ul class="dg-list">
+            <li>Um por evento: <b>NEW · BEFORE-CHECKIN · CHECKOUT…</b></li>
+            <li>Tags <span class="tag blue">@TAGNAME@</span> <span class="dg-ex">ex. @GUESTNAME@</span></li>
+          </ul>
+          <div class="dg-foot">PMS · Utilitários → Relationship Email</div>
+        </div>
+        <div class="dg-card amber">
+          <span class="dg-badge">▤ Template Email</span>
+          <div class="dg-h">Modelos livres sobre reservas</div>
+          <ul class="dg-list">
+            <li>Confirmação, cotação, pagamento, <b>faturas</b>…</li>
+            <li>Tags <span class="tag amber">@Model[0].Campo</span></li>
+          </ul>
+          <div class="dg-foot">PMS · Config. Geral → Modelos de E-mail</div>
+        </div>
       </div>
     </div>
   </section>
