@@ -1,0 +1,58 @@
+# Mantém o projeto Supabase acordado.
+#
+# PORQUÊ: no plano gratuito, o Supabase pausa o projeto ao fim de 7 dias sem
+# atividade. Repor exige entrar no painel do Supabase e carregar em "Restore"
+# (não é automático) e, se ficar pausado muito tempo, o projeto acaba por ser
+# APAGADO. Como a app só é usada de vez em quando, era exatamente esse o risco.
+#
+# COMO: uma leitura minúscula à base de dados, uma vez por dia. Nunca chega
+# aos 7 dias, logo nunca pausa.
+#
+# CHAVE: é a mesma chave "publishable" que já está à vista no index.html
+# (é pública por definição — só dá acesso de leitura via RLS). Por isso não é
+# preciso criar nenhum secret. Se um dia a chave for trocada no index.html,
+# tem de ser trocada aqui também.
+#
+# NOTA: o GitHub desativa agendamentos em repositórios sem atividade durante
+# 60 dias. Se isso acontecer recebes um email e basta reativar com um clique
+# no separador Actions. Qualquer push para o repositório reinicia essa contagem.
+
+name: Keep-alive Supabase
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # todos os dias às 06:17 UTC
+  workflow_dispatch: # permite correr à mão pelo separador Actions
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tocar na base de dados
+        run: |
+          URL="https://xaowygyhbyzhjxhavqhh.supabase.co/rest/v1/projects?select=id&limit=1"
+          KEY="sb_publishable_pYLKsCwEY6zMQjmtEG9PDQ_KzMYNZ_2"
+
+          CODE=$(curl -sS -o /tmp/resposta.txt -w "%{http_code}" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            --max-time 30 --retry 3 --retry-delay 10 --retry-all-errors \
+            "$URL")
+
+          echo "HTTP $CODE"
+
+          if [ "$CODE" != "200" ]; then
+            echo "### :x: Supabase respondeu HTTP $CODE" >> "$GITHUB_STEP_SUMMARY"
+            echo "A base de dados pode estar em pausa. Ver painel do Supabase." >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            head -c 500 /tmp/resposta.txt >> "$GITHUB_STEP_SUMMARY"
+            echo '' >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          echo "### :white_check_mark: Supabase acordado" >> "$GITHUB_STEP_SUMMARY"
+          echo "Leitura feita a $(date -u '+%Y-%m-%d %H:%M UTC')." >> "$GITHUB_STEP_SUMMARY"
