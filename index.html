@@ -387,6 +387,13 @@
   .tplfind.on button{display:block}
   .tplfind button:hover{color:var(--txt)}
   .tpl-item .t-hit{background:#fde68a;color:var(--navy);border-radius:2px}
+  /* aviso discreto: templates fora da identidade do hotel */
+  .stdwarn{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 9px;border:1px solid #f0c674;background:#fef8e7;border-radius:9px}
+  .stdwarn .sw-ic{flex:0 0 auto;display:flex;color:#b45309}
+  .stdwarn .sw-tx{flex:1;min-width:0;font-size:11px;line-height:1.35;color:#8a4b09}
+  .stdwarn .sw-tx b{font-weight:700}
+  .stdwarn .sw-btn{flex:0 0 auto;border:1px solid #e0b057;background:var(--panel);color:#8a4b09;font-family:inherit;font-size:11px;font-weight:600;padding:5px 10px;border-radius:7px;cursor:pointer;white-space:nowrap}
+  .stdwarn .sw-btn:hover{background:#fffaf0;border-color:#b45309}
   /* código duplicado: o PMS não aceita dois modelos com o mesmo código */
   .tpl-item .t-warn{flex:0 0 auto;color:#b45309;font-size:12px;font-weight:700;margin-left:4px}
   .codeconflict input{border-color:#dc2626 !important;background:#fef2f2 !important}
@@ -1035,29 +1042,41 @@ function isStockHero(u){ return isPlaceholderHero(u) || String(u||"").indexOf("l
    ser ele a definir o aspeto padrão do hotel. (A imagem loremflickr identifica os antigos.) */
 function isSeasonalTpl(t){ return !!(t && (t.seasonal===true || String((t.brand||{}).hero||"").indexOf("loremflickr.com")>=0)); }
 
+/* Valor dominante de um campo. É o que torna o padrão ESTÁVEL: não depende de qual
+   template está selecionado — senão o alerta de "fora do padrão" andava aos saltos e a
+   app chegava a criar um template e a acusá-lo logo a seguir. Empate → o que aparece primeiro. */
+function majorityOf(list,key){
+  const count={}, first={};
+  list.forEach((t,i)=>{ const v=t[key];
+    if(v===null||v===undefined||v==="") return;
+    count[v]=(count[v]||0)+1; if(!(v in first)) first[v]=i; });
+  let best=null;
+  Object.keys(count).forEach(v=>{
+    if(best===null || count[v]>count[best] || (count[v]===count[best] && first[v]<first[best])) best=v;
+  });
+  return best;
+}
 function projectIdentity(p){
   p=p||proj(); const id={};
   if(!p || !p.templates || !p.templates.length) return id;
   /* Sub-modelos não contam: são fragmentos, não têm marca própria. */
   const list=p.templates.filter(t=>t && !(tkind(t)==="pms" && t.pms && t.pms.sub));
-  /* Ordem de preferência: o template aberto, depois os que já têm logótipo, depois os restantes. */
-  const open=list.filter(t=>t.id===state.currentTemplateId);
-  const branded=list.filter(t=>t.brand && t.brand.logo);
-  const seen={}, ordered=[];
-  [].concat(open,branded,list).forEach(t=>{ if(!seen[t.id]){ seen[t.id]=1; ordered.push(t); } });
+  /* Primeiro os que já têm logótipo — ordem fixa, independente da seleção. */
+  const ordered=list.filter(t=>t.brand && t.brand.logo).concat(list.filter(t=>!(t.brand && t.brand.logo)));
   ordered.forEach(t=>{
     const b=t.brand||{};
     /* Logótipo e contactos são do hotel — valem mesmo vindos de um tema sazonal. */
     if(!id.logo && b.logo) id.logo=b.logo;
     if(!id.contacts && t.contacts) id.contacts=t.contacts;
     if(!id.hero && !isStockHero(b.hero)) id.hero=b.hero;
-    /* O aspeto, não: um tema sazonal é deliberadamente diferente da casa. */
-    if(isSeasonalTpl(t)) return;
-    if(!id.design && t.design) id.design=t.design;
-    if(!id.palette && t.palette) id.palette=t.palette;
-    if(!id.font && t.font) id.font=t.font;
-    if(id.shade==null && t.shade!=null) id.shade=t.shade;
   });
+  /* O aspeto é o DOMINANTE entre os templates normais: um tema sazonal nunca o define. */
+  const look=ordered.filter(t=>!isSeasonalTpl(t));
+  const d=majorityOf(look,"design"), pa=majorityOf(look,"palette"), f=majorityOf(look,"font"), sh=majorityOf(look,"shade");
+  if(d) id.design=d;
+  if(pa) id.palette=pa;
+  if(f) id.font=f;
+  if(sh!==null) id.shade=Number(sh);
   return id;
 }
 
@@ -1084,6 +1103,46 @@ function applyIdentity(t,opts){
     if(id.shade!=null) t.shade=id.shade;
   }
   return t;
+}
+
+/* O que falta a este template para estar no padrão do hotel.
+   Assinalamos o que está em FALTA (sem logótipo, imagem ainda genérica, sem contactos) —
+   nunca uma imagem diferente, que pode ser escolha deliberada para aquele email.
+   No aspeto sim, assinalamos a diferença: foi isso que se pediu ao uniformizar. */
+function stdDiff(t,id){
+  const out=[];
+  if(!t||!id) return out;
+  const isSub=tkind(t)==="pms" && t.pms && t.pms.sub;
+  const b=t.brand||{};
+  if(!isSub){
+    if(id.logo && !b.logo) out.push("logótipo");
+    if(id.hero && isPlaceholderHero(b.hero)) out.push("imagem de topo");
+    if(id.contacts && !t.contacts) out.push("contactos");
+  }
+  /* Um tema sazonal é propositadamente diferente — o aspeto dele não é um defeito. */
+  if(!isSeasonalTpl(t)){
+    if(id.design && t.design!==id.design) out.push("design");
+    if(id.palette && t.palette!==id.palette) out.push("paleta");
+    if(id.font && t.font!==id.font) out.push("letra");
+  }
+  return out;
+}
+function offStandard(p){
+  p=p||proj();
+  if(!p || !p.templates || p.templates.length<2) return [];
+  const id=projectIdentity(p);
+  if(!id.logo && !id.hero && !id.design) return [];
+  return p.templates.filter(t=>stdDiff(t,id).length>0);
+}
+function alignStandard(){
+  const p=proj(); if(!p) return;
+  const id=projectIdentity(p), off=offStandard(p);
+  if(!off.length){ toast("Já está tudo no padrão de «"+p.hotel+"»"); return; }
+  const campos={}; off.forEach(t=>stdDiff(t,id).forEach(c=>{campos[c]=1;}));
+  if(!confirm("Alinhar "+off.length+" template(s) com o padrão de «"+p.hotel+"»?\n\nVai acertar: "+Object.keys(campos).join(", ")+"."
+    +"\n\nOs temas sazonais mantêm o aspeto e a imagem próprios; os sub-modelos continuam sem logótipo.")) return;
+  off.forEach(t=>applyIdentity(t,{identity:id, look:!isSeasonalTpl(t)}));
+  dirty(); renderAll(); toast(off.length+" template(s) alinhados com «"+p.hotel+"»");
 }
 
 /* Block factory */
@@ -2460,6 +2519,16 @@ function renderTplList(){
   const q=(state.tplFilter||"").trim().toLowerCase();
   const fbox=document.querySelector(".tplfind"); if(fbox) fbox.classList.toggle("on",!!q);
   const hits=t=>!q || (tcode(t)+" "+(t.name||"")).toLowerCase().includes(q);
+  /* Aviso discreto: há templates que não seguem a identidade do hotel. */
+  const off=offStandard(p);
+  if(off.length){
+    const w=document.createElement("div");
+    w.className="stdwarn";
+    w.innerHTML='<span class="sw-ic">'+ic("image",13)+'</span>'
+      +'<span class="sw-tx"><b>'+off.length+'</b> '+(off.length===1?"template não segue":"templates não seguem")+" a identidade de «"+esc(p.hotel)+"»</span>"
+      +'<button class="sw-btn" id="btnAlign" title="Aplicar o logótipo, a imagem e o aspeto do hotel aos que estão fora do padrão">Alinhar</button>';
+    box.appendChild(w);
+  }
   /* Dois grupos: os dois módulos do PMS. O + de cada grupo cria já do tipo certo — sem perguntas. */
   ["life","pms"].forEach(k=>{
     const K=KINDS[k], all=p.templates.filter(t=>tkind(t)===k), list=all.filter(hits);
@@ -2497,6 +2566,7 @@ function renderTplList(){
     });
   });
   box.querySelectorAll("[data-newkind]").forEach(b=>b.addEventListener("click",()=>newTemplateOfKind(b.dataset.newkind)));
+  const ab=box.querySelector("#btnAlign"); if(ab) ab.addEventListener("click",alignStandard);
 }
 /* Cria template já do módulo certo (o + do grupo é a resposta ao "que tipo?") */
 function newTemplateOfKind(k){
