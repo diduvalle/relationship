@@ -1020,6 +1020,72 @@ let _ctr=0;
 function newProject(hotel){ return { id:"prj"+(_ctr++)+"_"+Math.floor(performance.now()), hotel: hotel||"Novo hotel", templates: STARTERS.map(instStarter) }; }
 function proj(){ return state.projects.find(p=>p.id===state.currentProjectId) || state.projects[0]; }
 
+/* ===================== IDENTIDADE DO HOTEL (padronização) =====================
+   A marca pertence ao PROJETO (o hotel), mas está guardada em cada template. Para que
+   um template novo nasça já padronizado, descobrimos a identidade a partir dos templates
+   que já existem no projeto e aplicamo-la ao recém-criado.
+   NOTA: só usar ao ACRESCENTAR a um projeto existente — nunca ao criar um projeto novo,
+   senão herdava a marca do hotel anterior. */
+
+/* Imagem genérica (o placeholder picsum) — pode ser substituída pela foto do hotel. */
+function isPlaceholderHero(u){ u=String(u||""); return !u.trim() || u.indexOf("picsum.photos")>=0; }
+/* Não serve como foto do hotel: além do placeholder, as decorativas dos temas sazonais. */
+function isStockHero(u){ return isPlaceholderHero(u) || String(u||"").indexOf("loremflickr.com")>=0; }
+/* Um tema sazonal (Natal, Páscoa…) tem aspeto propositadamente diferente: nunca pode
+   ser ele a definir o aspeto padrão do hotel. (A imagem loremflickr identifica os antigos.) */
+function isSeasonalTpl(t){ return !!(t && (t.seasonal===true || String((t.brand||{}).hero||"").indexOf("loremflickr.com")>=0)); }
+
+function projectIdentity(p){
+  p=p||proj(); const id={};
+  if(!p || !p.templates || !p.templates.length) return id;
+  /* Sub-modelos não contam: são fragmentos, não têm marca própria. */
+  const list=p.templates.filter(t=>t && !(tkind(t)==="pms" && t.pms && t.pms.sub));
+  /* Ordem de preferência: o template aberto, depois os que já têm logótipo, depois os restantes. */
+  const open=list.filter(t=>t.id===state.currentTemplateId);
+  const branded=list.filter(t=>t.brand && t.brand.logo);
+  const seen={}, ordered=[];
+  [].concat(open,branded,list).forEach(t=>{ if(!seen[t.id]){ seen[t.id]=1; ordered.push(t); } });
+  ordered.forEach(t=>{
+    const b=t.brand||{};
+    /* Logótipo e contactos são do hotel — valem mesmo vindos de um tema sazonal. */
+    if(!id.logo && b.logo) id.logo=b.logo;
+    if(!id.contacts && t.contacts) id.contacts=t.contacts;
+    if(!id.hero && !isStockHero(b.hero)) id.hero=b.hero;
+    /* O aspeto, não: um tema sazonal é deliberadamente diferente da casa. */
+    if(isSeasonalTpl(t)) return;
+    if(!id.design && t.design) id.design=t.design;
+    if(!id.palette && t.palette) id.palette=t.palette;
+    if(!id.font && t.font) id.font=t.font;
+    if(id.shade==null && t.shade!=null) id.shade=t.shade;
+  });
+  return id;
+}
+
+/* Aplica a identidade do hotel a um template acabado de criar.
+   opts.look===false → herda só a marca (usar quando o utilizador acabou de escolher
+   um aspeto: wizard, variantes da galeria e temas sazonais). */
+function applyIdentity(t,opts){
+  if(!t) return t;
+  opts=opts||{};
+  const id=opts.identity||projectIdentity();
+  const clone=o=>JSON.parse(JSON.stringify(o));
+  const isSub=tkind(t)==="pms" && t.pms && t.pms.sub;
+  if(!isSub){
+    t.brand=t.brand||{logo:"",hero:""};
+    if(id.logo) t.brand.logo=id.logo;
+    /* A imagem de topo só é substituída se a do template for genérica — as dos temas mantêm-se. */
+    if(id.hero && isPlaceholderHero(t.brand.hero)) t.brand.hero=id.hero;
+    if(id.contacts && !t.contacts) t.contacts=clone(id.contacts);
+  }
+  if(opts.look!==false){
+    if(id.design) t.design=id.design;
+    if(id.palette) t.palette=id.palette;
+    if(id.font) t.font=id.font;
+    if(id.shade!=null) t.shade=id.shade;
+  }
+  return t;
+}
+
 /* Block factory */
 function newBlock(type){
   const b={ id:"b"+(_ctr++)+"_"+Math.floor(performance.now()), type };
@@ -2435,7 +2501,7 @@ function renderTplList(){
 /* Cria template já do módulo certo (o + do grupo é a resposta ao "que tipo?") */
 function newTemplateOfKind(k){
   if(k==="pms"){ openPmsNew(); return; }
-  const p=proj(); const t=blankTemplate("Novo email "+(p.templates.filter(x=>tkind(x)==="life").length+1));
+  const p=proj(); const t=applyIdentity(blankTemplate("Novo email "+(p.templates.filter(x=>tkind(x)==="life").length+1)));
   p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll();
 }
 
@@ -2872,11 +2938,13 @@ const SEA_META={ carnaval:[1,"fev"], valentim:[2,"fev"], diapai:[3,"mar"], pasco
 function instSeasonal(s){
   const clone=o=>JSON.parse(JSON.stringify(o));
   const t={ id:"tpl"+(_ctr++)+"_"+Math.floor(performance.now()), name:s.name, mode:"house",
-    design:s.design, font:s.font, palette:s.palette, shade:s.shade,
+    design:s.design, font:s.font, palette:s.palette, shade:s.shade, seasonal:true,
     brand:{ logo:"", hero:s.hero }, settings:{ width:0 } };
   LANG_CODES.forEach(lc=>{ const c=s[lc]||s.pt; t[lc]={ subject:c.subject, data:clone(c.data||[]), body:clone(c.body||[]) }; });
+  /* O tema tem aspeto e imagem próprios (é esse o objetivo) — herda só o logótipo e contactos do hotel. */
+  applyIdentity(t,{look:false});
   proj().templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
-  save(); closeModal(); renderAll(); toast("«"+s.name+"» criado em "+proj().hotel+" — troca a imagem de topo pela do teu hotel.");
+  save(); closeModal(); renderAll(); toast("«"+s.name+"» criado em "+proj().hotel+" — a imagem de topo é a do tema.");
 }
 let galSel=0; let galExtra={};
 function galVars(ei){ return GAL_VARIANTS.concat(galExtra[ei]||[]); }
@@ -2919,6 +2987,7 @@ function galPick(vi){
   const st=STARTERS[galSel], v=galVars(galSel)[vi];
   const t=instStarter(st);
   t.design=v.design; t.palette=v.palette; t.font=v.font; t.shade=v.shade;
+  applyIdentity(t,{look:false}); /* o aspeto foi escolhido agora — herda só a marca do hotel */
   proj().templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
   save(); closeModal(); renderAll(); toast("Modelo «"+st.name+" · "+v.label+"» criado em "+proj().hotel);
 }
@@ -3069,8 +3138,9 @@ function buildPmsTemplate(st,srcOverride,base){
   return t;
 }
 function instPms(st,srcOverride){
-  const p=proj(), base=p.templates.find(x=>tkind(x)==="life")||p.templates[0]||{};
-  const t=buildPmsTemplate(st,srcOverride,base);
+  const p=proj();
+  /* a identidade vem do hotel (de qualquer template que já a tenha), não da posição na lista */
+  const t=applyIdentity(buildPmsTemplate(st,srcOverride,{}));
   p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; state.lang="pt";
   save(); closeModal(); renderAll();
   toast(st?("«"+(st.code||st.name)+"» criado — já nos 6 idiomas."):"Template Email criado.");
@@ -3145,6 +3215,7 @@ function wizardGenerate(){
   const st=STARTERS[wz.typeIdx];
   const t=instStarter(st);
   t.design=wz.design; t.font=wz.font; t.palette=wz.palette; t.shade=wz.shade;
+  applyIdentity(t,{look:false}); /* o aspeto foi escolhido no wizard — herda só a marca do hotel */
   const order=DEFAULT_TAGS.map(x=>x[2]).filter(c=>wz.tags.includes(c));
   t.pt.data=order.map(c=>[wzPtLabel(c)+":", c]);
   t.en.data=order.map(c=>[(WZ_ENLBL[c]||wzPtLabel(c))+":", c]);
@@ -3570,7 +3641,7 @@ function inspectEdit(key){
   }
 }
 document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>switchTab(b.getAttribute("data-tab"))));
-$("btnNewTpl").addEventListener("click",()=>{ const p=proj(); const t=blankTemplate("Novo template "+(p.templates.length+1)); p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
+$("btnNewTpl").addEventListener("click",()=>{ const p=proj(); const t=applyIdentity(blankTemplate("Novo template "+(p.templates.length+1))); p.templates.push(t); state.currentTemplateId=t.id; state.selectedBlock=null; save(); renderAll(); });
 $("btnDupTpl").addEventListener("click",()=>{
   const p=proj(); const c=JSON.parse(JSON.stringify(cur()));
   c.id="tpl"+(_ctr++)+"_"+Math.floor(performance.now());
