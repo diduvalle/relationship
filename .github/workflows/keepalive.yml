@@ -65,6 +65,9 @@ jobs:
       # lá chegar: se o repositório estiver calado há 20 dias, gravamos um batimento.
       # Em desenvolvimento activo não gera ruído nenhum (os teus próprios commits chegam).
       - name: Batimento (evita a desativação por inatividade)
+        # SEMPRE, mesmo que a base de dados não responda: se o Supabase estiver em baixo
+        # uns dias, é precisamente quando NÃO podemos deixar o agendamento morrer.
+        if: always()
         run: |
           ULTIMO=$(git log -1 --format=%ct)
           DIAS=$(( ( $(date -u +%s) - ULTIMO ) / 86400 ))
