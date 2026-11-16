@@ -25,12 +25,14 @@ on:
   workflow_dispatch: # permite correr à mão pelo separador Actions
 
 permissions:
-  contents: read
+  contents: write # necessário para o batimento que mantém o agendamento vivo
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Tocar na base de dados
         run: |
           URL="https://xaowygyhbyzhjxhavqhh.supabase.co/rest/v1/projects?select=id&limit=1"
@@ -56,3 +58,25 @@ jobs:
 
           echo "### :white_check_mark: Supabase acordado" >> "$GITHUB_STEP_SUMMARY"
           echo "Leitura feita a $(date -u '+%Y-%m-%d %H:%M UTC')." >> "$GITHUB_STEP_SUMMARY"
+
+      # O GitHub desativa agendamentos em repositórios sem atividade há 60 dias — foi
+      # exatamente o que aconteceu a 13/10/2026, 60 dias certos após o último push.
+      # Um push NÃO reativa um workflow já desativado, por isso o que interessa é nunca
+      # lá chegar: se o repositório estiver calado há 20 dias, gravamos um batimento.
+      # Em desenvolvimento activo não gera ruído nenhum (os teus próprios commits chegam).
+      - name: Batimento (evita a desativação por inatividade)
+        run: |
+          ULTIMO=$(git log -1 --format=%ct)
+          DIAS=$(( ( $(date -u +%s) - ULTIMO ) / 86400 ))
+          echo "Último commit há $DIAS dia(s)."
+          if [ "$DIAS" -lt 20 ]; then
+            echo "Repositório activo — não é preciso batimento."
+            exit 0
+          fi
+          date -u '+%Y-%m-%dT%H:%M:%SZ' > .keepalive
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .keepalive
+          git commit -m "keep-alive: batimento de $(date -u '+%Y-%m-%d')" || exit 0
+          git pull --rebase --autostash || true
+          git push || echo "Push falhou — sem problema, tenta no próximo dia."
